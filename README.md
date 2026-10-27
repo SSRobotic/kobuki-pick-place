@@ -113,3 +113,5 @@ echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 - SO-100: ไฟล์ของ TheRobotStudio ผ่าน [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie/tree/main/trs_so_arm100) (Apache-2.0)
 - YDLIDAR X2: ขึ้นรูปเองตามแบบในดาต้าชีท
 - รายละเอียดอยู่ใน `robot/meshes/NOTICE.txt`
+#   k o b u k i - p i c k - p l a c e -  
+ 
