@@ -1,0 +1,18 @@
+robot_cad.json - 3D models used by the Kobuki Pick & Place team handbook
+
+1. Kobuki main body and wheel (kobuki_body, kobuki_wheel)
+   Source: https://github.com/kobuki-base/kobuki_ros/tree/devel/kobuki_description/meshes
+   (main_body.dae, wheel.dae, images/main_body.jpg, images/wheel.jpg)
+   Copyright Yujin Robot. Licensed BSD (as declared in kobuki_description/package.xml).
+   Changes: converted from COLLADA to glTF, placed at the kobuki.urdf.xacro visual origins,
+   textures resized and re-encoded as JPEG.
+
+2. SO-ARM100 arm parts (so100_*)
+   Source: https://github.com/google-deepmind/mujoco_menagerie/tree/main/trs_so_arm100/assets
+   Original design by TheRobotStudio (https://github.com/TheRobotStudio/SO-ARM100).
+   Licensed under the Apache License 2.0 - see SO100_LICENSE.txt.
+   Changes: converted from STL to glTF with crease-angle normals; printed parts recoloured orange.
+
+3. YDLIDAR X2
+   No CAD file is published by the manufacturer. The page builds it in code from the
+   dimension drawing in the YDLIDAR X2 datasheet (96.0 x 60.5 x 50.3 mm).

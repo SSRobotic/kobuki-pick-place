@@ -1,0 +1,14 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# local / generated
+__pycache__/
+*.pyc
+*.bak
+backup_*/
+robot/backup_*/
+frames_*.gv
+frames_*.pdf
+robot/ros_check.txt
+*.log

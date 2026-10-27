@@ -1,0 +1,15 @@
+meshes/ - 3D models used by kobuki_x2.urdf (RViz)
+
+kobuki/main_body.dae, kobuki/wheel.dae, kobuki/images/*.jpg
+  Source: https://github.com/kobuki-base/kobuki_ros/tree/devel/kobuki_description/meshes
+  Copyright Yujin Robot. Licensed BSD (as declared in kobuki_description/package.xml). Unmodified.
+
+so100/*.stl
+  Source: https://github.com/google-deepmind/mujoco_menagerie/tree/main/trs_so_arm100/assets
+  Original design by TheRobotStudio (https://github.com/TheRobotStudio/SO-ARM100).
+  Licensed under the Apache License 2.0 - see so100/LICENSE_Apache-2.0.txt. Unmodified;
+  the joint layout in kobuki_x2.urdf is copied from trs_so_arm100/so_arm100.xml.
+
+ydlidar_x2.stl
+  Made for this project from the dimension drawing in the YDLIDAR X2 datasheet
+  (96.0 x 60.5 x 50.3 mm); YDLIDAR publishes no CAD file for the X2.

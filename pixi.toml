@@ -1,0 +1,16 @@
+[workspace]
+authors = ["SSRobotic <sarunyaphat2545@gmail.com>"]
+channels = ["https://conda.anaconda.org/robostack-humble", "conda-forge"]
+name = "ROS2_Windows_Humble"
+platforms = ["win-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+ros-humble-desktop = ">=0.10.0,<0.11"
+pyserial = ">=3.5,<4"
+ros-humble-slam-toolbox = ">=2.6.10,<3"
+ros-humble-nav2-map-server = ">=1.1.20,<2"
+ros-humble-navigation2 = ">=1.1.20,<2"
+ros-humble-nav2-bringup = ">=1.1.20,<2"

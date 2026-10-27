@@ -1,0 +1,10 @@
+# SCM syntax highlighting & preventing 3-way merges
+pixi.lock merge=binary linguist-language=YAML linguist-generated=true -diff
+# shell scripts must keep LF so they run on Ubuntu even if copied from a Windows clone
+*.sh text eol=lf
+# meshes, maps and pictures are binary data
+*.stl binary
+*.jpg binary
+*.png binary
+*.pgm binary
+*.pdf binary

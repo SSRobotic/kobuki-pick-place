@@ -1,0 +1,176 @@
+<?xml version="1.0"?>
+<!-- Kobuki + YDLIDAR X2 + SO-100 for RViz, drawn with the manufacturers' CAD (folder meshes/, see meshes/NOTICE.txt).
+     base_link = floor under robot centre, +X = robot front.
+     Mesh paths start with MESH_URI; robot_model.launch.py swaps it for this folder's meshes/ path, so always start the model with that launch file.
+     Edit the LiDAR mount in joint "laser_joint" (z height, yaw from lidar_calib.py).
+     The SO-100 mount (joint "so100_mount_joint") and the LiDAR deck are estimates until measured on the real robot. -->
+<robot name="kobuki_x2">
+  <material name="so100_printed"><color rgba="0.93 0.40 0.08 1"/></material>
+  <material name="so100_servo"><color rgba="0.06 0.06 0.07 1"/></material>
+  <material name="lidar"><color rgba="0.1 0.1 0.11 1"/></material>
+  <material name="deck"><color rgba="0.85 0.86 0.89 1"/></material>
+  <material name="metal"><color rgba="0.67 0.69 0.72 1"/></material>
+
+  <link name="base_link">
+    <!-- Yujin Kobuki body (kobuki_description main_body.dae, placed like kobuki.urdf.xacro: base_joint z 0.0102 + visual z 0.05199).
+         Keep it the only visual here: RViz colours a link from its first visual, which would paint over the texture. -->
+    <visual>
+      <origin xyz="0.001 0 0.06219" rpy="0 0 0"/>
+      <geometry><mesh filename="MESH_URI/kobuki/main_body.dae"/></geometry>
+    </visual>
+  </link>
+
+  <!-- LiDAR deck on its own link so its colours do not mix with the textured body -->
+  <link name="lidar_deck">
+    <!-- 3 mm plate on four 30 mm hex standoffs, so the laser centre sits at z = 0.20 (estimate) -->
+    <visual>
+      <origin xyz="-0.0125 0 0.1561" rpy="0 0 0"/>
+      <geometry><box size="0.095 0.125 0.003"/></geometry>
+      <material name="deck"/>
+    </visual>
+    <visual>
+      <origin xyz="-0.05 0.05 0.1395" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.0032" length="0.0302"/></geometry>
+      <material name="metal"/>
+    </visual>
+    <visual>
+      <origin xyz="-0.05 -0.05 0.1395" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.0032" length="0.0302"/></geometry>
+      <material name="metal"/>
+    </visual>
+    <visual>
+      <origin xyz="0.025 0.05 0.1395" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.0032" length="0.0302"/></geometry>
+      <material name="metal"/>
+    </visual>
+    <visual>
+      <origin xyz="0.025 -0.05 0.1395" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.0032" length="0.0302"/></geometry>
+      <material name="metal"/>
+    </visual>
+  </link>
+  <joint name="lidar_deck_joint" type="fixed">
+    <parent link="base_link"/><child link="lidar_deck"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- wheels (fixed: only for looks; odometry comes from kobuki_ros2.py) -->
+  <link name="wheel_left_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="-1.5708 0 0"/>
+      <geometry><mesh filename="MESH_URI/kobuki/wheel.dae"/></geometry>
+    </visual>
+  </link>
+  <joint name="wheel_left_joint" type="fixed">
+    <parent link="base_link"/><child link="wheel_left_link"/>
+    <origin xyz="0 0.115 0.035" rpy="0 0 0"/>
+  </joint>
+  <link name="wheel_right_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="-1.5708 0 0"/>
+      <geometry><mesh filename="MESH_URI/kobuki/wheel.dae"/></geometry>
+    </visual>
+  </link>
+  <joint name="wheel_right_joint" type="fixed">
+    <parent link="base_link"/><child link="wheel_right_link"/>
+    <origin xyz="0 -0.115 0.035" rpy="0 0 0"/>
+  </joint>
+
+  <!-- YDLIDAR X2 (built from the datasheet drawing; origin = laser centre). Frame name must stay "laser" (= /scan frame_id). -->
+  <link name="laser">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="MESH_URI/ydlidar_x2.stl"/></geometry>
+      <material name="lidar"/>
+    </visual>
+  </link>
+  <joint name="laser_joint" type="fixed">
+    <parent link="base_link"/><child link="laser"/>
+    <!-- calibrated: LiDAR 0 deg points to robot right -> yaw -90 deg; scan node uses the mirror option -->
+    <origin xyz="0 0 0.20" rpy="0 0 -1.5708"/>
+  </joint>
+
+  <!-- SO-100 arm: links and joints copied from MuJoCo Menagerie trs_so_arm100/so_arm100.xml.
+       Joint angles follow that file (0 = arm lying straight forward); LeRobot's calibrated readings need converting before they go on /joint_states. -->
+  <link name="so100_base">
+    <visual><geometry><mesh filename="MESH_URI/so100/Base.stl"/></geometry><material name="so100_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Base_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+  </link>
+  <joint name="so100_mount_joint" type="fixed">
+    <parent link="base_link"/><child link="so100_base"/>
+    <!-- on the Kobuki top (z 0.1244), 6 cm ahead of centre, turned so the arm reaches forward (estimate) -->
+    <origin xyz="0.06 0 0.1244" rpy="0 0 1.5708"/>
+  </joint>
+
+  <link name="so100_shoulder">
+    <visual><geometry><mesh filename="MESH_URI/so100/Rotation_Pitch.stl"/></geometry><material name="so100_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Rotation_Pitch_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+  </link>
+  <joint name="shoulder_pan" type="revolute">
+    <parent link="so100_base"/><child link="so100_shoulder"/>
+    <origin xyz="0 -0.0452 0.0165" rpy="1.5708 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.92" upper="1.92" effort="3.5" velocity="3.0"/>
+  </joint>
+
+  <link name="so100_upper_arm">
+    <visual><geometry><mesh filename="MESH_URI/so100/Upper_Arm.stl"/></geometry><material name="so100_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Upper_Arm_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+  </link>
+  <joint name="shoulder_lift" type="revolute">
+    <parent link="so100_shoulder"/><child link="so100_upper_arm"/>
+    <origin xyz="0 0.1025 0.0306" rpy="1.57079 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-3.32" upper="0.174" effort="3.5" velocity="3.0"/>
+  </joint>
+
+  <link name="so100_lower_arm">
+    <visual><geometry><mesh filename="MESH_URI/so100/Lower_Arm.stl"/></geometry><material name="so100_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Lower_Arm_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+  </link>
+  <joint name="elbow_flex" type="revolute">
+    <parent link="so100_upper_arm"/><child link="so100_lower_arm"/>
+    <origin xyz="0 0.11257 0.028" rpy="-1.57079 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.174" upper="3.14" effort="3.5" velocity="3.0"/>
+  </joint>
+
+  <link name="so100_wrist">
+    <visual><geometry><mesh filename="MESH_URI/so100/Wrist_Pitch_Roll.stl"/></geometry><material name="so100_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Wrist_Pitch_Roll_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+  </link>
+  <joint name="wrist_flex" type="revolute">
+    <parent link="so100_lower_arm"/><child link="so100_wrist"/>
+    <origin xyz="0 0.0052 0.1349" rpy="-1.57079 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-1.66" upper="1.66" effort="3.5" velocity="3.0"/>
+  </joint>
+
+  <link name="so100_gripper">
+    <visual><geometry><mesh filename="MESH_URI/so100/Fixed_Jaw.stl"/></geometry><material name="so100_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Fixed_Jaw_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+  </link>
+  <joint name="wrist_roll" type="revolute">
+    <parent link="so100_wrist"/><child link="so100_gripper"/>
+    <origin xyz="0 -0.0601 0" rpy="0 1.57079 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.79" upper="2.79" effort="3.5" velocity="3.0"/>
+  </joint>
+
+  <link name="so100_jaw">
+    <visual><geometry><mesh filename="MESH_URI/so100/Moving_Jaw.stl"/></geometry><material name="so100_printed"/></visual>
+  </link>
+  <joint name="gripper" type="revolute">
+    <parent link="so100_gripper"/><child link="so100_jaw"/>
+    <origin xyz="-0.0202 -0.0244 0" rpy="3.14159 0 3.14159"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-0.174" upper="1.75" effort="3.5" velocity="3.0"/>
+  </joint>
+
+  <!-- point between the jaw pads: use it as the grasp target -->
+  <link name="gripper_tip"/>
+  <joint name="gripper_tip_joint" type="fixed">
+    <parent link="so100_gripper"/><child link="gripper_tip"/>
+    <origin xyz="0.001 -0.085 0" rpy="0 0 0"/>
+  </joint>
+</robot>

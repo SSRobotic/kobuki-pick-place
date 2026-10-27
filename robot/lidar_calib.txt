@@ -1,0 +1,15 @@
+time: 2026-10-18 17:24:52
+odom motion between scans: 0.298 m, 50.3 deg
+points: A=2313 B=2317
+top hypotheses (overlap fraction, yaw deg, mirrored):
+  0.598  yaw=272  mirrored=True
+  0.595  yaw=274  mirrored=True
+  0.593  yaw=270  mirrored=True
+  0.585  yaw=276  mirrored=True
+  0.581  yaw=268  mirrored=True
+  0.568  yaw=278  mirrored=True
+  0.560  yaw=266  mirrored=True
+  0.546  yaw=280  mirrored=True
+current-style check yaw=0 mirrored=False: 0.007
+current-style check yaw=180 mirrored=False: 0.015
+BEST: yaw=-88 deg (-1.5359 rad), mirrored=True
