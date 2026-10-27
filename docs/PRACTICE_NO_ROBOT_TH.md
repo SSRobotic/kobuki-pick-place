@@ -397,7 +397,7 @@ mkdir -p ~/maps && ros2 run nav2_map_server map_saver_cli -f ~/maps/practice_map
 ```
 Windows:
 ```powershell
-mkdir D:\maps -Force; pixi run ros2 run nav2_map_server map_saver_cli -f D:\maps\practice_map
+mkdir $HOME\maps -Force; pixi run ros2 run nav2_map_server map_saver_cli -f $HOME\maps\practice_map
 ```
 ✅ ต้องเห็น `Map saved successfully` และได้ 2 ไฟล์:
 - `practice_map.pgm` = รูปแผนที่ (ขาว/ดำ/เทา)
@@ -516,7 +516,7 @@ ros2 launch ./nav2.launch.py
 Windows: `pixi run ros2 launch robot\nav2.launch.py`
 
 ใช้แผนที่ของตัวเองแทน: ต่อท้าย `map:=` ตามด้วยไฟล์ `.yaml` เช่น
-`pixi run ros2 launch robot\nav2.launch.py map:=D:\maps\practice_map.yaml`
+`pixi run ros2 launch robot\nav2.launch.py map:=$HOME\maps\practice_map.yaml`
 
 ✅ รอประมาณ 10 วินาที ต้องเห็น (ไล่ลงมา):
 ```

@@ -457,27 +457,58 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
 
 <!-- 05 SETUP -->
 <section class="chapter" id="setup">
-  <h2>เตรียมเครื่อง (ไม่ต้องลง ROS ใหม่)</h2>
-  <p class="sub">เลือกระบบที่ใช้ด้วยปุ่ม <strong>Windows / Ubuntu</strong> มุมขวาบน คำสั่งทั้งเว็บจะเปลี่ยนตาม</p>
+  <h2>เตรียมเครื่อง: ลงโปรแกรม + เอาไฟล์มา</h2>
+  <p class="sub">เลือกระบบที่ใช้ด้วยปุ่ม <strong>Windows / Ubuntu</strong> มุมขวาบน คำสั่งทั้งเว็บจะเปลี่ยนตาม ไฟล์ทุกไฟล์ของทีมอยู่ใน GitHub ที่ <a href="https://github.com/SSRobotic/kobuki-pick-place" class="repo-link">github.com/SSRobotic/kobuki-pick-place</a> ทำขั้น 1–3 ครั้งเดียวต่อเครื่อง</p>
   <div class="tbl"><table>
-    <thead><tr><th></th><th>Windows (เคยรันทำแผนที่ได้แล้ว 18 ต.ค.)</th><th>Ubuntu VM (ใช้ต่อกับ Nav2)</th></tr></thead>
+    <thead><tr><th></th><th>Windows 10/11</th><th>Ubuntu 22.04</th></tr></thead>
     <tbody>
-      <tr><td>โฟลเดอร์งาน</td><td><code>D:\ROS2_Windows_Humble</code> ไฟล์อยู่ใน <code>robot\</code></td><td><code>~/kobuki_x2_ubuntu</code> (แตกจาก <code>kobuki_x2_ubuntu.zip</code>)</td></tr>
+      <tr><td>ROS 2 Humble มาจาก</td><td><code>pixi install</code> (โหลดชุดเดียวกับทีมให้เอง)</td><td><code>apt</code></td></tr>
+      <tr><td>โฟลเดอร์งาน</td><td><code>~\kobuki-pick-place</code> ไฟล์อยู่ใน <code>robot\</code></td><td><code>~/kobuki-pick-place/robot</code></td></tr>
       <tr><td>ขึ้นต้นทุกคำสั่ง</td><td><code>pixi run</code></td><td><code>source /opt/ros/humble/setup.bash</code> ครั้งเดียวต่อหน้าต่าง</td></tr>
       <tr><td>terminal</td><td>PowerShell</td><td>Terminal (Ctrl+Alt+T)</td></tr>
     </tbody></table></div>
 
   <div class="step"><span class="n">1</span><div>
+    <h3>ลง git <span class="need free">ครั้งเดียว</span></h3>
+    <p class="win-only">ดาวน์โหลดจาก <a href="https://git-scm.com/download/win">git-scm.com/download/win</a> กด Next จนจบ หรือสั่งใน PowerShell:</p>
+    <div class="cmd" data-title="ลง git" data-win="winget install --id Git.Git -e" data-ubu="sudo apt update&#10;sudo apt install -y git"></div>
+    <p class="win-only">ลงเสร็จแล้ว<strong>ปิด PowerShell แล้วเปิดใหม่</strong></p>
+  </div></div>
+
+  <div class="step"><span class="n">2</span><div>
+    <h3>เอาไฟล์ของทีมมาลงเครื่อง (git clone) <span class="need free">ครั้งเดียว</span></h3>
+    <div class="cmd" data-title="clone" data-win="cd ~&#10;git clone https://github.com/SSRobotic/kobuki-pick-place.git" data-ubu="cd ~&#10;git clone https://github.com/SSRobotic/kobuki-pick-place.git" data-out="Cloning into 'kobuki-pick-place'..."></div>
+    <div class="expect">ได้โฟลเดอร์ <code>kobuki-pick-place</code> ในโฟลเดอร์ผู้ใช้ ข้างในมี <code>robot/</code>, <code>docs/</code>, <code>README.md</code></div>
+    <p><strong>เพื่อนแก้ไฟล์แล้ว อยากได้ของใหม่:</strong> เข้าโฟลเดอร์ <code>kobuki-pick-place</code> แล้วสั่ง <code>git pull</code></p>
+  </div></div>
+
+  <div class="step"><span class="n">3</span><div>
+    <h3>ลง ROS 2 Humble + SLAM + Nav2 <span class="need free">ครั้งเดียว</span></h3>
+    <div class="win-only">
+      <p>ใช้ <strong>pixi</strong> ไม่ต้องลง ROS เอง pixi อ่านไฟล์ <code>pixi.lock</code> ในโฟลเดอร์แล้วโหลดชุดที่ทีมใช้ให้ (ทุกเครื่องเวอร์ชันตรงกัน)</p>
+      <ol>
+        <li>ลง pixi (คำสั่งข้างล่าง) แล้ว<strong>ปิด PowerShell แล้วเปิดใหม่</strong></li>
+        <li>เข้าโฟลเดอร์แล้วสั่ง <code>pixi install</code> โหลดประมาณ 0.9 GB ใช้พื้นที่ประมาณ 5.5 GB รอ 10–30 นาที</li>
+      </ol>
+    </div>
+    <div class="ubuntu-only">
+      <p>ถ้ายังไม่มี ROS 2 Humble ให้ลงตาม <a href="https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html">คู่มือทางการ</a> ก่อน แล้วลงแพ็กเกจที่ทีมใช้ด้วยคำสั่งข้างล่าง</p>
+    </div>
+    <div class="cmd" data-title="ลง pixi (ครั้งเดียว)" data-win="powershell -ExecutionPolicy ByPass -c &quot;irm -useb https://pixi.sh/install.ps1 | iex&quot;" data-ubu=""></div>
+    <div class="cmd" data-title="ลง ROS + แพ็กเกจ" data-win="cd ~\kobuki-pick-place&#10;pixi install" data-ubu="sudo apt install -y ros-humble-desktop ros-humble-slam-toolbox ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-teleop-twist-keyboard python3-serial python3-numpy" data-out=""></div>
+  </div></div>
+
+  <div class="step"><span class="n">1</span><div>
     <h3>เปิด terminal และเข้าโฟลเดอร์งาน <span class="need free">ไม่ต้องมีหุ่น</span></h3>
     <p>ทำแบบนี้ <strong>ทุกครั้งที่เปิดหน้าต่างใหม่</strong> ทุกหน้าต่างในคู่มือนี้เริ่มด้วยขั้นนี้</p>
-    <div class="cmd" data-title="ทุกหน้าต่าง" data-win="cd D:\ROS2_Windows_Humble" data-ubu="source /opt/ros/humble/setup.bash&#10;cd ~/kobuki_x2_ubuntu"></div>
+    <div class="cmd" data-title="ทุกหน้าต่าง" data-win="cd ~\kobuki-pick-place" data-ubu="source /opt/ros/humble/setup.bash&#10;cd ~/kobuki-pick-place/robot"></div>
     <p class="ubuntu-only">ไม่อยากพิมพ์ <code>source</code> ทุกครั้ง: รัน <code>echo "source /opt/ros/humble/setup.bash" &gt;&gt; ~/.bashrc</code> ครั้งเดียวพอ</p>
   </div></div>
 
   <div class="step"><span class="n">2</span><div>
     <h3>เช็คว่า ROS ใช้ได้</h3>
     <div class="cmd" data-title="ทดสอบ" data-win="pixi run ros2 topic list" data-ubu="ros2 topic list" data-out="/parameter_events&#10;/rosout"></div>
-    <div class="expect">2 บรรทัดนี้ = ROS พร้อมใช้ ถ้าขึ้น <code>command not found</code> แปลว่ายังไม่ได้ทำข้อ 1</div>
+    <div class="expect">2 บรรทัดนี้ = ROS พร้อมใช้ ถ้าขึ้น <code>command not found</code> แปลว่ายังไม่ได้ทำขั้นก่อนหน้า (Windows: ลืม <code>cd</code> เข้าโฟลเดอร์ / Ubuntu: ลืม <code>source</code>)</div>
   </div></div>
 
   <div class="step"><span class="n">3</span><div>
@@ -684,7 +715,7 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
 
   <div class="step"><span class="n">1</span><div>
     <h3>เซฟแผนที่</h3>
-    <div class="cmd" data-title="หน้าต่าง 7 · สำรอง" data-win="mkdir D:\maps -Force; pixi run ros2 run nav2_map_server map_saver_cli -f D:\maps\practice_map" data-ubu="mkdir -p ~/maps &amp;&amp; ros2 run nav2_map_server map_saver_cli -f ~/maps/practice_map" data-out="[INFO] [map_saver]: Saving map from 'map' topic to 'practice_map' file&#10;[WARN] [map_saver]: Free threshold unspecified. Setting it to default value: 0.250000&#10;[WARN] [map_saver]: Occupied threshold unspecified. Setting it to default value: 0.650000&#10;[INFO] [map_io]: Received a 153 X 121 map @ 0.05 m/pix&#10;[INFO] [map_io]: Writing map occupancy data to practice_map.pgm&#10;[INFO] [map_io]: Writing map metadata to practice_map.yaml&#10;[INFO] [map_saver]: Map saved successfully"></div>
+    <div class="cmd" data-title="หน้าต่าง 7 · สำรอง" data-win="mkdir $HOME\maps -Force; pixi run ros2 run nav2_map_server map_saver_cli -f $HOME\maps\practice_map" data-ubu="mkdir -p ~/maps &amp;&amp; ros2 run nav2_map_server map_saver_cli -f ~/maps/practice_map" data-out="[INFO] [map_saver]: Saving map from 'map' topic to 'practice_map' file&#10;[WARN] [map_saver]: Free threshold unspecified. Setting it to default value: 0.250000&#10;[WARN] [map_saver]: Occupied threshold unspecified. Setting it to default value: 0.650000&#10;[INFO] [map_io]: Received a 153 X 121 map @ 0.05 m/pix&#10;[INFO] [map_io]: Writing map occupancy data to practice_map.pgm&#10;[INFO] [map_io]: Writing map metadata to practice_map.yaml&#10;[INFO] [map_saver]: Map saved successfully"></div>
     <p>บรรทัด <code>WARN</code> สองบรรทัดเป็นเรื่องปกติ แค่บอกว่าใช้ค่ามาตรฐาน</p>
     <div class="expect">ได้ 2 ไฟล์: <code>practice_map.pgm</code> (รูปแผนที่) และ <code>practice_map.yaml</code> (ค่าตั้ง เช่น <code>resolution: 0.05</code>) <strong>วันจริงเซฟชื่อ <code>my_map</code> ไฟล์นี้คือสิ่งที่ Nav2 ต้องใช้</strong></div>
   </div></div>
@@ -733,7 +764,7 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
     <h3>เสียบ USB 2 เส้น <span class="need hw">ต้องมีหุ่น</span></h3>
     <div class="win-only">
       <p>Kobuki ปกติเป็น <code>COM10</code> และ LiDAR เป็น <code>COM11</code> เลขอาจเปลี่ยน ไม่ต้องใส่ <code>--port</code> สคริปต์หาเองจาก serial number ของอุปกรณ์</p>
-      <div class="cmd" data-title="เช็คฐานล้อ 10 วินาที (อ่านอย่างเดียว ไม่ขยับ) · รันจากโฟลเดอร์วิชา" data-win=".\windows_robot\check_base.ps1" data-ubu="" data-out="Serial devices: [ ... COM10 ... SER=KOBUKI_AB0JKFLSA ... ]&#10;Result: PASS&#10;Report: ...\windows_robot\reports\latest.json"></div>
+      <div class="cmd" data-title="เช็คฐานล้อ 10 วินาที (อ่านอย่างเดียว ไม่ขยับ)" data-win="pixi run python robot\kobuki_monitor.py --seconds 10" data-ubu="" data-out="Serial devices: [ ... COM10 ... SER=KOBUKI_AB0JKFLSA ... ]&#10;Result: PASS&#10;Report: ...\robot\reports\latest.json"></div>
       <p>ผลจริงวันที่ 11 ต.ค.: อ่านได้ 500 แพ็กเก็ต ไม่มีเสีย แบต 16.0 V bumper / cliff / wheel drop = 0</p>
     </div>
     <div class="ubuntu-only">
@@ -833,7 +864,7 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
   <div class="cmd" data-title="SLAM" data-win="pixi run ros2 run slam_toolbox async_slam_toolbox_node --ros-args --params-file robot\slam_params.yaml" data-ubu="ros2 run slam_toolbox async_slam_toolbox_node --ros-args --params-file slam_params.yaml"></div>
   <div class="cmd" data-title="RViz (ค่าสำเร็จรูป)" data-win="pixi run rviz2 -d robot\mapping.rviz" data-ubu="rviz2 -d mapping.rviz"></div>
   <div class="cmd" data-title="Teleop" data-win="pixi run ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p speed:=0.08 -p turn:=0.35" data-ubu="ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p speed:=0.08 -p turn:=0.35"></div>
-  <div class="cmd" data-title="เซฟแผนที่" data-win="pixi run ros2 run nav2_map_server map_saver_cli -f D:\maps\my_map" data-ubu="ros2 run nav2_map_server map_saver_cli -f ~/maps/my_map"></div>
+  <div class="cmd" data-title="เซฟแผนที่" data-win="mkdir $HOME\maps -Force; pixi run ros2 run nav2_map_server map_saver_cli -f $HOME\maps\my_map" data-ubu="ros2 run nav2_map_server map_saver_cli -f ~/maps/my_map"></div>
   <div class="cmd" data-title="ตรวจระบบ" data-win="pixi run python robot\ros_check.py" data-ubu="python3 ros_check.py"></div>
   <div class="cmd" data-title="หาพิกัดที่คลิก" data-win="pixi run ros2 topic echo /clicked_point" data-ubu="ros2 topic echo /clicked_point"></div>
   <p class="foot">ทำโดยทีม SSRobotics สำหรับวิชา 01208567 ปรับปรุงล่าสุด 27 ต.ค. 2026 · ผล log และแผนที่ในหน้านี้มาจากการรันจริงบนเครื่องทีม (Windows, ROS 2 Humble) ด้วยหุ่นปลอม ค่าหุ่นจริงมาจากการทดสอบวันที่ 11 และ 18 ต.ค.</p>

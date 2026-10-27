@@ -135,7 +135,7 @@ Windows: `pixi run ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-ar
 ```bash
 mkdir -p ~/maps && ros2 run nav2_map_server map_saver_cli -f ~/maps/my_map
 ```
-Windows: `pixi run ros2 run nav2_map_server map_saver_cli -f D:\maps\my_map`
+Windows: `mkdir $HOME\maps -Force; pixi run ros2 run nav2_map_server map_saver_cli -f $HOME\maps\my_map`
 
 ✅ ได้ไฟล์ `my_map.pgm` (รูปแผนที่) + `my_map.yaml` (ค่าตั้ง) — **ไฟล์นี้ต้องใช้ต่อกับ Nav2**
 
@@ -150,7 +150,7 @@ Windows: `pixi run ros2 run nav2_map_server map_saver_cli -f D:\maps\my_map`
 ```bash
 ros2 launch ./nav2.launch.py map:=$HOME/maps/my_map.yaml
 ```
-Windows: `pixi run ros2 launch robot\nav2.launch.py map:=D:\maps\my_map.yaml`
+Windows: `pixi run ros2 launch robot\nav2.launch.py map:=$HOME\maps\my_map.yaml`
 ✅ เห็น `[bt_navigator]: Activating` = พร้อม
 
 **หน้าต่าง 5: RViz** — Fixed Frame `map`, เพิ่ม Map `/global_costmap/costmap` (Color Scheme `costmap`) และ Path `/plan`

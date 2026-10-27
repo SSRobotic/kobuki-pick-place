@@ -25,7 +25,7 @@
 ต้องมี **git** ก่อน ([ดาวน์โหลดสำหรับ Windows](https://git-scm.com/download/win) / Ubuntu: `sudo apt install git`)
 
 ```bash
-git clone https://github.com/<ชื่อบัญชี>/kobuki-pick-place.git
+git clone https://github.com/SSRobotic/kobuki-pick-place.git
 ```
 จะได้โฟลเดอร์ `kobuki-pick-place` ในโฟลเดอร์ที่เปิด terminal อยู่ (ปกติคือโฟลเดอร์ผู้ใช้ `~`)
 
