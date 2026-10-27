@@ -1,15 +1,22 @@
 <?xml version="1.0"?>
-<!-- Kobuki + YDLIDAR X2 + SO-100 for RViz, drawn with the manufacturers' CAD (folder meshes/, see meshes/NOTICE.txt).
-     base_link = floor under robot centre, +X = robot front.
-     Mesh paths start with MESH_URI; robot_model.launch.py swaps it for this folder's meshes/ path, so always start the model with that launch file.
-     Edit the LiDAR mount in joint "laser_joint" (z height, yaw from lidar_calib.py).
-     The SO-100 mount (joint "so100_mount_joint") and the LiDAR deck are estimates until measured on the real robot. -->
+<!-- The team's robot as built (photos of the real robot, Oct 2026): Kobuki + two acrylic decks + YDLIDAR X2 + SO-100 + ASUS Xtion.
+     base_link = floor under the robot centre, +X = Kobuki front (bumper side, the way it drives), +Y = left.
+     The Kobuki port panel (USB, B0/B1/B2) is the REAR: the SO-100 and the Xtion work out of the back, so the robot
+     reverses up to the object.
+     Kobuki and SO-100 are the makers' CAD files; the other parts are sized from datasheets and the photos
+     (meshes/NOTICE.txt). Every position marked MEASURE is a photo estimate: measure it on demo day and change it here.
+     Mesh paths start with MESH_URI; robot_model.launch.py swaps it for this folder's meshes/ path. -->
 <robot name="kobuki_x2">
-  <material name="so100_printed"><color rgba="0.93 0.40 0.08 1"/></material>
-  <material name="so100_servo"><color rgba="0.06 0.06 0.07 1"/></material>
-  <material name="lidar"><color rgba="0.1 0.1 0.11 1"/></material>
-  <material name="deck"><color rgba="0.85 0.86 0.89 1"/></material>
-  <material name="metal"><color rgba="0.67 0.69 0.72 1"/></material>
+  <material name="arm_printed"><color rgba="0.09 0.09 0.10 1"/></material>
+  <material name="arm_servo"><color rgba="0.16 0.16 0.17 1"/></material>
+  <material name="lidar_black"><color rgba="0.08 0.08 0.09 1"/></material>
+  <material name="lidar_navy"><color rgba="0.10 0.16 0.42 1"/></material>
+  <material name="acrylic"><color rgba="0.82 0.90 0.96 0.40"/></material>
+  <material name="white_plastic"><color rgba="0.93 0.93 0.91 1"/></material>
+  <material name="aluminium"><color rgba="0.72 0.74 0.77 1"/></material>
+  <material name="black"><color rgba="0.07 0.07 0.08 1"/></material>
+  <material name="battery_red"><color rgba="0.85 0.12 0.10 1"/></material>
+  <material name="terminal_green"><color rgba="0.15 0.60 0.30 1"/></material>
 
   <link name="base_link">
     <!-- Yujin Kobuki body (kobuki_description main_body.dae, placed like kobuki.urdf.xacro: base_joint z 0.0102 + visual z 0.05199).
@@ -20,70 +27,64 @@
     </visual>
   </link>
 
-  <!-- LiDAR deck on its own link so its colours do not mix with the textured body -->
-  <link name="lidar_deck">
-    <!-- 3 mm plate on four 30 mm hex standoffs, so the laser centre sits at z = 0.20 (estimate) -->
-    <visual>
-      <origin xyz="-0.0125 0 0.1561" rpy="0 0 0"/>
-      <geometry><box size="0.095 0.125 0.003"/></geometry>
-      <material name="deck"/>
-    </visual>
-    <visual>
-      <origin xyz="-0.05 0.05 0.1395" rpy="0 0 0"/>
-      <geometry><cylinder radius="0.0032" length="0.0302"/></geometry>
-      <material name="metal"/>
-    </visual>
-    <visual>
-      <origin xyz="-0.05 -0.05 0.1395" rpy="0 0 0"/>
-      <geometry><cylinder radius="0.0032" length="0.0302"/></geometry>
-      <material name="metal"/>
-    </visual>
-    <visual>
-      <origin xyz="0.025 0.05 0.1395" rpy="0 0 0"/>
-      <geometry><cylinder radius="0.0032" length="0.0302"/></geometry>
-      <material name="metal"/>
-    </visual>
-    <visual>
-      <origin xyz="0.025 -0.05 0.1395" rpy="0 0 0"/>
-      <geometry><cylinder radius="0.0032" length="0.0302"/></geometry>
-      <material name="metal"/>
-    </visual>
+  <!-- Deck parts, one link per colour (RViz paints all visuals of a link with the first visual's material). -->
+  <!-- Two acrylic decks. MEASURE: bottom deck top 0.135 m, middle deck top 0.200 m (60 mm aluminium standoffs between them,
+       from the photo where the 180 mm Xtion fits under the middle deck) -->
+  <link name="decks">
+    <visual><origin xyz="-0.005 0 0.1325" rpy="0 0 0"/><geometry><mesh filename="MESH_URI/deck_plate.stl"/></geometry><material name="acrylic"/></visual>
+    <visual><origin xyz="-0.005 0 0.1975" rpy="0 0 0"/><geometry><mesh filename="MESH_URI/deck_plate.stl"/></geometry><material name="acrylic"/></visual>
   </link>
-  <joint name="lidar_deck_joint" type="fixed">
-    <parent link="base_link"/><child link="lidar_deck"/>
+  <joint name="decks_joint" type="fixed">
+    <parent link="base_link"/><child link="decks"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
-
-  <!-- ASUS Xtion PRO LIVE on a mast behind the LiDAR, looking down at the desk in front (estimate: measure on demo day).
-       Body 180 x 35 x 50 mm from the spec sheet. The mast stands behind the LiDAR turret and only hides a few degrees of the rear scan. -->
-  <link name="camera_mast">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry><cylinder radius="0.006" length="0.24"/></geometry>
-      <material name="metal"/>
-    </visual>
+  <!-- four aluminium standoffs + the heatsink on the bottom deck -->
+  <link name="standoffs">
+    <visual><origin xyz="0.10 0.12 0.165" rpy="0 0 0"/><geometry><cylinder radius="0.007" length="0.06"/></geometry><material name="aluminium"/></visual>
+    <visual><origin xyz="0.10 -0.12 0.165" rpy="0 0 0"/><geometry><cylinder radius="0.007" length="0.06"/></geometry><material name="aluminium"/></visual>
+    <visual><origin xyz="-0.115 0.12 0.165" rpy="0 0 0"/><geometry><cylinder radius="0.007" length="0.06"/></geometry><material name="aluminium"/></visual>
+    <visual><origin xyz="-0.115 -0.12 0.165" rpy="0 0 0"/><geometry><cylinder radius="0.007" length="0.06"/></geometry><material name="aluminium"/></visual>
+    <visual><origin xyz="0.06 0.09 0.145" rpy="0 0 0"/><geometry><box size="0.10 0.06 0.02"/></geometry><material name="aluminium"/></visual>
   </link>
-  <joint name="camera_mast_joint" type="fixed">
-    <parent link="base_link"/><child link="camera_mast"/>
-    <origin xyz="-0.055 0 0.2776" rpy="0 0 0"/>
+  <joint name="standoffs_joint" type="fixed">
+    <parent link="base_link"/><child link="standoffs"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
-  <link name="camera_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry><box size="0.035 0.18 0.05"/></geometry>
-      <material name="lidar"/>
-    </visual>
+  <!-- white plate under the arm, white bracket under the LiDAR -->
+  <link name="white_plates">
+    <visual><origin xyz="-0.075 -0.03 0.204" rpy="0 0 0"/><geometry><box size="0.12 0.13 0.008"/></geometry><material name="white_plastic"/></visual>
+    <visual><origin xyz="0.075 -0.035 0.2025" rpy="0 0 0"/><geometry><box size="0.09 0.075 0.005"/></geometry><material name="white_plastic"/></visual>
   </link>
-  <joint name="camera_joint" type="fixed">
-    <parent link="base_link"/><child link="camera_link"/>
-    <!-- 0.42 m up, tilted 35 deg (0.61 rad) down -->
-    <origin xyz="-0.04 0 0.42" rpy="0 0.61 0"/>
+  <joint name="white_plates_joint" type="fixed">
+    <parent link="base_link"/><child link="white_plates"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
-  <!-- optical frame: z forward, x right, y down (the frame camera images and the detector use) -->
-  <link name="camera_color_optical_frame"/>
-  <joint name="camera_optical_joint" type="fixed">
-    <parent link="camera_link"/><child link="camera_color_optical_frame"/>
-    <origin xyz="0.02 0 0" rpy="-1.5708 0 -1.5708"/>
+  <!-- PINSEN 40000 mAh tool battery that powers the arm, servo bus board on the side of the arm base,
+       LiDAR USB adapter box (middle deck) -->
+  <link name="battery">
+    <visual><origin xyz="-0.07 0.085 0.25" rpy="0 0 0"/><geometry><box size="0.12 0.085 0.10"/></geometry><material name="black"/></visual>
+    <visual><origin xyz="-0.075 0.026 0.245" rpy="0 0 0"/><geometry><box size="0.045 0.003 0.045"/></geometry><material name="black"/></visual>
+    <visual><origin xyz="0.06 0.075 0.2125" rpy="0 0 0"/><geometry><box size="0.05 0.055 0.025"/></geometry><material name="black"/></visual>
+  </link>
+  <joint name="battery_joint" type="fixed">
+    <parent link="base_link"/><child link="battery"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <!-- the battery's red power button faces the rear -->
+  <link name="battery_button">
+    <visual><origin xyz="-0.131 0.085 0.235" rpy="0 0 0"/><geometry><box size="0.004 0.03 0.03"/></geometry><material name="battery_red"/></visual>
+  </link>
+  <joint name="battery_button_joint" type="fixed">
+    <parent link="base_link"/><child link="battery_button"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <!-- green power terminal on the servo bus board -->
+  <link name="servo_terminal">
+    <visual><origin xyz="-0.075 0.031 0.232" rpy="0 0 0"/><geometry><box size="0.012 0.008 0.01"/></geometry><material name="terminal_green"/></visual>
+  </link>
+  <joint name="servo_terminal_joint" type="fixed">
+    <parent link="base_link"/><child link="servo_terminal"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
   <!-- wheels (fixed: only for looks; odometry comes from kobuki_ros2.py) -->
@@ -108,35 +109,69 @@
     <origin xyz="0 -0.115 0.035" rpy="0 0 0"/>
   </joint>
 
-  <!-- YDLIDAR X2 (built from the datasheet drawing; origin = laser centre). Frame name must stay "laser" (= /scan frame_id). -->
+  <!-- YDLIDAR X2 on the middle deck, front half, a little right of centre; its motor side points to the front.
+       Frame name must stay "laser" (= /scan frame_id). MEASURE x, y, z (laser centre = 7.9 mm under the top of the cap). -->
   <link name="laser">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry><mesh filename="MESH_URI/ydlidar_x2.stl"/></geometry>
-      <material name="lidar"/>
+      <origin xyz="0 0 0" rpy="0 0 1.5708"/>
+      <geometry><mesh filename="MESH_URI/ydlidar_x2_base.stl"/></geometry>
+      <material name="lidar_black"/>
     </visual>
   </link>
   <joint name="laser_joint" type="fixed">
     <parent link="base_link"/><child link="laser"/>
-    <!-- calibrated: LiDAR 0 deg points to robot right -> yaw -90 deg; scan node uses the mirror option -->
-    <origin xyz="0 0 0.20" rpy="0 0 -1.5708"/>
+    <!-- yaw -90 deg + the driver's mirror option: calibrated on the real robot (lidar_calib.py, 18 Oct) - keep it -->
+    <origin xyz="0.075 -0.035 0.247" rpy="0 0 -1.5708"/>
+  </joint>
+  <!-- the spinning navy cap (own link: its own colour) -->
+  <link name="laser_cap">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 1.5708"/>
+      <geometry><mesh filename="MESH_URI/ydlidar_x2_top.stl"/></geometry>
+      <material name="lidar_navy"/>
+    </visual>
+  </link>
+  <joint name="laser_cap_joint" type="fixed">
+    <parent link="laser"/><child link="laser_cap"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
-  <!-- SO-100 arm: links and joints copied from MuJoCo Menagerie trs_so_arm100/so_arm100.xml.
-       Joint angles follow that file (0 = arm lying straight forward); LeRobot's calibrated readings need converting before they go on /joint_states. -->
+  <!-- ASUS Xtion PRO LIVE standing on the bottom deck, under the middle deck, looking out of the rear (level in the photos).
+       MEASURE the height and how much it is tilted down; camera_check.py fixes the tilt/turn from a tape measurement. -->
+  <link name="camera_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="MESH_URI/xtion.stl"/></geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/><child link="camera_link"/>
+    <!-- body centre 42.5 mm above the bottom deck; yaw 180 deg = looking backwards; pitch = tilt down (rad) -->
+    <origin xyz="-0.135 0 0.1775" rpy="0 0 3.14159"/>
+  </joint>
+  <!-- colour lens (right end of the face as seen from behind the robot - estimate) -> optical frame: z forward, x right, y down -->
+  <link name="camera_color_optical_frame"/>
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/><child link="camera_color_optical_frame"/>
+    <origin xyz="0.0175 0.045 0" rpy="-1.5708 0 -1.5708"/>
+  </joint>
+
+  <!-- SO-100 arm (black prints, as built): links and joints copied from MuJoCo Menagerie trs_so_arm100/so_arm100.xml.
+       Joint angles follow that file (0 = arm lying straight out); LeRobot's calibrated readings need converting first. -->
   <link name="so100_base">
-    <visual><geometry><mesh filename="MESH_URI/so100/Base.stl"/></geometry><material name="so100_printed"/></visual>
-    <visual><geometry><mesh filename="MESH_URI/so100/Base_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Base.stl"/></geometry><material name="arm_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Base_Motor.stl"/></geometry><material name="arm_servo"/></visual>
   </link>
   <joint name="so100_mount_joint" type="fixed">
     <parent link="base_link"/><child link="so100_base"/>
-    <!-- on the Kobuki top (z 0.1244), 6 cm ahead of centre, turned so the arm reaches forward (estimate) -->
-    <origin xyz="0.06 0 0.1244" rpy="0 0 1.5708"/>
+    <!-- on the white plate, rear half, a little right of centre; yaw -90 deg = the arm reaches out of the rear. MEASURE x, y, z -->
+    <origin xyz="-0.055 -0.03 0.208" rpy="0 0 -1.5708"/>
   </joint>
 
   <link name="so100_shoulder">
-    <visual><geometry><mesh filename="MESH_URI/so100/Rotation_Pitch.stl"/></geometry><material name="so100_printed"/></visual>
-    <visual><geometry><mesh filename="MESH_URI/so100/Rotation_Pitch_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Rotation_Pitch.stl"/></geometry><material name="arm_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Rotation_Pitch_Motor.stl"/></geometry><material name="arm_servo"/></visual>
   </link>
   <joint name="shoulder_pan" type="revolute">
     <parent link="so100_base"/><child link="so100_shoulder"/>
@@ -146,8 +181,8 @@
   </joint>
 
   <link name="so100_upper_arm">
-    <visual><geometry><mesh filename="MESH_URI/so100/Upper_Arm.stl"/></geometry><material name="so100_printed"/></visual>
-    <visual><geometry><mesh filename="MESH_URI/so100/Upper_Arm_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Upper_Arm.stl"/></geometry><material name="arm_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Upper_Arm_Motor.stl"/></geometry><material name="arm_servo"/></visual>
   </link>
   <joint name="shoulder_lift" type="revolute">
     <parent link="so100_shoulder"/><child link="so100_upper_arm"/>
@@ -157,8 +192,8 @@
   </joint>
 
   <link name="so100_lower_arm">
-    <visual><geometry><mesh filename="MESH_URI/so100/Lower_Arm.stl"/></geometry><material name="so100_printed"/></visual>
-    <visual><geometry><mesh filename="MESH_URI/so100/Lower_Arm_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Lower_Arm.stl"/></geometry><material name="arm_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Lower_Arm_Motor.stl"/></geometry><material name="arm_servo"/></visual>
   </link>
   <joint name="elbow_flex" type="revolute">
     <parent link="so100_upper_arm"/><child link="so100_lower_arm"/>
@@ -168,8 +203,8 @@
   </joint>
 
   <link name="so100_wrist">
-    <visual><geometry><mesh filename="MESH_URI/so100/Wrist_Pitch_Roll.stl"/></geometry><material name="so100_printed"/></visual>
-    <visual><geometry><mesh filename="MESH_URI/so100/Wrist_Pitch_Roll_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Wrist_Pitch_Roll.stl"/></geometry><material name="arm_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Wrist_Pitch_Roll_Motor.stl"/></geometry><material name="arm_servo"/></visual>
   </link>
   <joint name="wrist_flex" type="revolute">
     <parent link="so100_lower_arm"/><child link="so100_wrist"/>
@@ -179,8 +214,8 @@
   </joint>
 
   <link name="so100_gripper">
-    <visual><geometry><mesh filename="MESH_URI/so100/Fixed_Jaw.stl"/></geometry><material name="so100_printed"/></visual>
-    <visual><geometry><mesh filename="MESH_URI/so100/Fixed_Jaw_Motor.stl"/></geometry><material name="so100_servo"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Fixed_Jaw.stl"/></geometry><material name="arm_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Fixed_Jaw_Motor.stl"/></geometry><material name="arm_servo"/></visual>
   </link>
   <joint name="wrist_roll" type="revolute">
     <parent link="so100_wrist"/><child link="so100_gripper"/>
@@ -190,7 +225,7 @@
   </joint>
 
   <link name="so100_jaw">
-    <visual><geometry><mesh filename="MESH_URI/so100/Moving_Jaw.stl"/></geometry><material name="so100_printed"/></visual>
+    <visual><geometry><mesh filename="MESH_URI/so100/Moving_Jaw.stl"/></geometry><material name="arm_printed"/></visual>
   </link>
   <joint name="gripper" type="revolute">
     <parent link="so100_gripper"/><child link="so100_jaw"/>

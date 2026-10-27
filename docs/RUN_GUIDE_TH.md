@@ -1,6 +1,7 @@
 # คู่มือรันคำสั่ง ตั้งแต่เปิดเครื่อง → ได้แผนที่ → หุ่นวิ่งไป Station เอง (ทวนใหม่ทีละขั้น)
 
 ยังไม่ได้ติดตั้ง? ทำตาม `README.md` หน้าแรกของ repo ก่อน (Windows ใช้ pixi / Ubuntu ใช้ apt) แล้วค่อยกลับมาที่คู่มือนี้
+วันเดโม (ประกอบหุ่น วัดตำแหน่ง แขน กล้อง ภารกิจเต็ม): ดู **[DEMO_DAY_TH.md](DEMO_DAY_TH.md)** คู่มือนี้คือขั้นแผนที่ + Nav2
 ใช้ได้ 2 เครื่อง เลือกอย่างใดอย่างหนึ่ง:
 
 | | Ubuntu VM (ใช้ต่อกับ Nav2) | Windows (เคยรันทำแผนที่ได้แล้ว 18 ต.ค.) |
@@ -57,8 +58,9 @@ python3 lidar_ros2.py --mirror
 ```
 Windows: `pixi run python robot\lidar_ros2.py --mirror`
 
-✅ ต้องเห็น `First complete scan: ... valid returns`
+✅ ต้องเห็น `Dropping returns within 0.24 m of the robot centre ...` แล้ว `First complete scan: ... valid returns`
 `--mirror` = กลับทิศมุม (X2 หมุนตามเข็ม) — ค่านี้ calibrate แล้ว **ต้องใส่เสมอ**
+จุดที่เลเซอร์โดนตัวหุ่นเอง (แขน แบต) ถูกตัดทิ้งให้อัตโนมัติ (`--self-radius 0.24` อ่านตำแหน่ง LiDAR จาก `kobuki_x2.urdf`)
 
 ---
 
@@ -82,7 +84,7 @@ ros2 launch ./robot_model.launch.py
 ```
 Windows: `pixi run ros2 launch robot\robot_model.launch.py`
 
-ทำหน้าที่บอก ROS ว่า LiDAR อยู่ตรงไหนบนตัวหุ่น (สูง 0.20 m หมุน -90°) จากไฟล์ `kobuki_x2.urdf`
+ทำหน้าที่บอก ROS ว่า LiDAR อยู่ตรงไหนบนตัวหุ่น (หน้ากลางหุ่น 7.5 ซม. สูง 0.247 m หมุน -90°) จากไฟล์ `kobuki_x2.urdf`
 และวาดหุ่นด้วยไฟล์ CAD ในโฟลเดอร์ `meshes/` (ต้องอยู่ข้างไฟล์ launch) พร้อมส่งท่าพับของแขน SO-100 ผ่าน `arm_rest_publisher.py`
 วันที่มีไดรเวอร์แขนจริง: เติม `arm:=none` ท้ายคำสั่ง
 
@@ -163,7 +165,8 @@ python3 mission_nav2.py
 ```
 Windows: `pixi run python robot\mission_nav2.py`
 
-> พิกัด Station ใน `mission_nav2.py` (ตัวแปร `GOALS`) ตั้งไว้สำหรับห้องจำลอง **วันจริงต้องแก้ตามแผนที่ห้องจริง** (หาพิกัดด้วย Publish Point)
+> พิกัด Station ใน `mission_nav2.py` (ตัวแปร `STATIONS` = ตำแหน่งวัตถุ + ทิศที่หุ่นถอยเข้าหา) ตั้งไว้สำหรับห้องจำลอง
+> **วันจริงต้องแก้ตามแผนที่ห้องจริง** (หาพิกัดด้วย Publish Point) ดู [DEMO_DAY_TH.md](DEMO_DAY_TH.md) ขั้น 7
 > รายละเอียดทั้งหมด + การตั้ง RViz ดู [PRACTICE_NO_ROBOT_TH.md](PRACTICE_NO_ROBOT_TH.md) ภาค 4
 
 ---
@@ -196,7 +199,7 @@ Windows: `pixi run python robot\ros_check.py` — เขียนผลลง `r
 1. หน้าต่าง 1: ขั้น 4 (Robot model)
 2. หน้าต่าง 2: `rviz2` (Windows: `pixi run rviz2`)
 3. ใน RViz: ช่อง **Fixed Frame** พิมพ์ `base_link` → กด **Add** > **RobotModel** → ตั้ง Description Topic = `/robot_description`
-   - จะเห็นหุ่นจากไฟล์ CAD: Kobuki (จุดเหลืองบนหลัง), LiDAR X2 บนแผ่นรอง, แขน SO-100 สีส้มพับอยู่ด้านหน้า
+   - จะเห็นหุ่นแบบที่ทีมประกอบ: Kobuki (จุดเหลืองบนหลัง), แผ่นอะคริลิก 2 ชั้น, LiDAR ฝาน้ำเงินด้านหน้า, แขน SO-100 สีดำด้านหลัง, กล้อง Xtion ใต้ชั้นกลาง
 4. หน้าต่าง 3: `ros2 node list` และ `ros2 topic list` ดูว่ามีอะไรรันอยู่ (ต้องเห็น `/robot_state_publisher`)
    - ถ้าค้างหรือว่างเปล่า: `ros2 daemon stop` แล้ว `ros2 daemon start` แล้วลองใหม่
 

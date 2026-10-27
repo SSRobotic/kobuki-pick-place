@@ -8,10 +8,13 @@ Try it by hand while robot_model.launch.py arm:=sim (or the real driver) is runn
     pixi run python robot\\arm_control.py rest            (Windows)      python3 arm_control.py rest   (Ubuntu)
     ... arm_control.py carry | open | close
     ... arm_control.py reach 0.30 0.0 0.30                 (move the jaw centre to x y z in base_link)
+    ... arm_control.py joints 0 -1.57 1.57 1.57 0.3        (pan lift elbow wrist gripper, rad: this one = HOME pose)
 """
 import math
+import os
 import sys
 import time
+import xml.etree.ElementTree as ET
 
 import numpy as np
 import rclpy
@@ -23,7 +26,20 @@ WRIST_ROLL = -math.pi / 2       # held still: jaws open sideways
 OPEN, GRIP = 0.8, 0.27          # gripper angle: 74 mm open / about 40 mm = the 4 cm cube
 REST = [0.0, -3.32, 3.11, 1.18, -0.17]   # so_arm100.xml "rest" key (folded), gripper closed
 CARRY = [0.0, -2.3, 2.2, 1.66, GRIP]     # holds the cube in front, gripper pointing down
-MOUNT = (0.06, 0.0, 0.1244, math.pi / 2)  # so100_mount_joint in kobuki_x2.urdf (x, y, z, yaw) - estimate
+
+
+def mount_from_urdf():
+    """(x, y, z, yaw) of joint so100_mount_joint in kobuki_x2.urdf, so the arm position is set in one place only."""
+    try:
+        origin = ET.parse(os.path.join(os.path.dirname(os.path.abspath(__file__)), "kobuki_x2.urdf")).getroot().find(
+            "joint[@name='so100_mount_joint']/origin")
+        x, y, z = (float(v) for v in origin.get("xyz").split())
+        return x, y, z, float(origin.get("rpy").split()[2])
+    except (OSError, ET.ParseError, AttributeError):
+        return 0.06, 0.0, 0.1244, math.pi / 2
+
+
+MOUNT = mount_from_urdf()
 
 
 def rot(axis, a):
@@ -91,16 +107,27 @@ class ArmController:
     def current(self):
         return [self.q.get(n, 0.0) for n in JOINTS[:4]] + [self.q.get("gripper", 0.0)]
 
-    def move(self, q5, timeout=10.0, tol=0.02):
-        """q5 = [shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, gripper]. True when the arm got there."""
+    def move(self, q5, timeout=10.0, tol=0.03):
+        """q5 = [shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, gripper]. True when the arm got there,
+        or stopped close to it (real servos sag a little under load, and a gripper closed on the cube stops early)."""
         goal = dict(zip(JOINTS[:4], q5[:4]), wrist_roll=WRIST_ROLL, gripper=q5[4])
         msg = JointState(name=list(goal), position=[float(v) for v in goal.values()])
-        start = time.time()
+        start, last, still_since = time.time(), None, None
         while time.time() - start < timeout:
             msg.header.stamp = self.node.get_clock().now().to_msg()
             self.pub.publish(msg)
             rclpy.spin_once(self.node, timeout_sec=0.05)
-            if self.q and all(abs(self.q.get(n, 1e9) - v) < tol for n, v in goal.items()):
+            if not self.q:
+                continue
+            err = max(abs(self.q.get(n, 1e9) - v) for n, v in goal.items())
+            if err < tol:
+                return True
+            now = [self.q.get(n, 0.0) for n in goal]
+            still = last is not None and max(abs(a - b) for a, b in zip(now, last)) < 0.002
+            still_since = (still_since or time.time()) if still else None
+            last = now
+            if still_since and time.time() - still_since > 0.6 and time.time() - start > 1.0 and err < 0.15:
+                self.node.get_logger().info(f"arm stopped {math.degrees(err):.1f} deg short of the target - accepted")
                 return True
         self.node.get_logger().warn("arm did not reach its target in time")
         return False
@@ -155,6 +182,8 @@ def main():
         ok = arm.move(CARRY)
     elif cmd in ("open", "close"):
         ok = arm.gripper(OPEN if cmd == "open" else GRIP)
+    elif cmd == "joints" and len(sys.argv) == 7:   # shoulder_pan shoulder_lift elbow_flex wrist_flex gripper (rad)
+        ok = arm.move([float(v) for v in sys.argv[2:7]])
     elif cmd == "reach" and len(sys.argv) == 5:
         target = [float(v) for v in sys.argv[2:5]]
         q, error = inverse(target, arm.current())

@@ -3,16 +3,17 @@
 Works the same on fake_camera.py and on the real Xtion:
   1. threshold the colour in HSV, keep the biggest blob, take its centre pixel
   2. turn that pixel into a ray with the camera intrinsics (/camera/color/camera_info)
-  3. intersect the ray with the desk-top plane (desk height is known), using TF for the camera pose
+  3. intersect the ray with the surface the objects sit on (the floor here: height 0), using TF for the camera pose
 This needs no depth image - good, because the Xtion cannot measure depth closer than ~0.8 m.
 Publishes geometry_msgs/PointStamped in the odom frame:
   /detected/cube     centre of the cube
-  /detected/station  centre of the place marker (on the desk top)
+  /detected/station  centre of the place marker
 and /detector/debug_image (what it saw; add an Image display in RViz).
     pixi run python robot\\cube_detector.py      (Windows, from the project folder)
     python3 cube_detector.py                     (Ubuntu, inside robot/)
-Demo day: measure the desk height and set the colours of the real cube/marker, e.g.
-    ... cube_detector.py --ros-args -p desk_height:=0.74 -p cube_hsv_low:=[0,120,70] -p cube_hsv_high:=[10,255,255]
+Demo day: set the colours of the real cube/marker (hsv_tuner.py finds them), e.g.
+    ... cube_detector.py --ros-args -p cube_hsv_low:=[0,120,70] -p cube_hsv_high:=[10,255,255]
+and if the objects stand on something instead of the floor: -p surface_height:=0.05
 """
 import cv2
 import numpy as np
@@ -38,7 +39,7 @@ class CubeDetector(Node):
         p = self.declare_parameter
         self.image_topic = p("image_topic", "/camera/color/image_raw").value
         self.frame = p("frame", "odom").value
-        self.desk_height = p("desk_height", 0.22).value
+        self.surface_height = p("surface_height", 0.0).value   # m: what the cube / marker stand on (floor = 0)
         self.cube_size = p("cube_size", 0.04).value
         self.min_area = p("min_area", 30).value
         # OpenCV HSV: H 0-179, S 0-255, V 0-255. Defaults = the green cube / blue marker of the fake room.
@@ -55,7 +56,7 @@ class CubeDetector(Node):
                                  lambda m: setattr(self, "k", np.array(m.k).reshape(3, 3)), qos_profile_sensor_data)
         self.create_subscription(Image, self.image_topic, self.on_image, qos_profile_sensor_data)
         self.last_log = 0.0
-        self.get_logger().info(f"Cube detector on {self.image_topic}, desk height {self.desk_height:.2f} m")
+        self.get_logger().info(f"Cube detector on {self.image_topic}, objects on a surface {self.surface_height:.2f} m high")
 
     def on_image(self, msg):
         if self.k is None:
@@ -85,7 +86,7 @@ class CubeDetector(Node):
             u, v = m["m10"] / m["m00"], m["m01"] / m["m00"]
             # pixel -> ray in the optical frame -> ray in odom -> hit the plane at the object's centre height
             ray = rot @ np.linalg.solve(self.k, np.array([u, v, 1.0]))
-            z = self.desk_height + (self.cube_size / 2 if name == "cube" else 0.0)
+            z = self.surface_height + (self.cube_size / 2 if name == "cube" else 0.0)
             if abs(ray[2]) < 1e-6:
                 continue
             t = (z - origin[2]) / ray[2]

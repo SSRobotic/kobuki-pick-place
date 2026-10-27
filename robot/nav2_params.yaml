@@ -22,7 +22,7 @@ amcl:
     lambda_short: 0.1
     laser_likelihood_max_dist: 2.0
     laser_max_range: 8.0
-    laser_min_range: 0.12
+    laser_min_range: 0.20        # ignore hits on the robot itself (battery, arm base), same as slam_params.yaml
     laser_model_type: "likelihood_field"
     max_beams: 60
     max_particles: 2000
@@ -185,7 +185,7 @@ local_costmap:
           raytrace_max_range: 3.0
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+          obstacle_min_range: 0.20   # ignore hits on the robot itself
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 5.0
@@ -217,7 +217,7 @@ global_costmap:
           raytrace_max_range: 3.0
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+          obstacle_min_range: 0.20   # ignore hits on the robot itself
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True

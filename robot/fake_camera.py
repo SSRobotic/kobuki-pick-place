@@ -1,14 +1,16 @@
 """Fake ASUS Xtion PRO LIVE colour camera for practising without the robot.
 
 Draws what the camera on the robot (TF frame camera_color_optical_frame from kobuki_x2.urdf) would see
-in the fake room of fake_robot.py: floor, walls, furniture, the two station desks, the green cube
-(/sim/cube) and the blue place marker. Publishes the same topics a real camera driver does:
+in the fake room of fake_robot.py: floor, walls, furniture, the desks, the green cube on the floor
+(/sim/cube) and the blue place marker on the floor. Publishes the same topics a real camera driver does:
   /camera/color/image_raw (bgr8, 640x480, 4 Hz) and /camera/color/camera_info
 so cube_detector.py runs unchanged on fake and real images. The arm is not drawn (it never hides anything here).
 Needs fake_robot.py and robot_model.launch.py running.
     pixi run python robot\\fake_camera.py      (Windows, from the project folder)
     python3 fake_camera.py                     (Ubuntu, inside robot/)
 """
+import math
+
 import cv2
 import numpy as np
 import rclpy
@@ -41,6 +43,21 @@ def quat_matrix(q):
                      [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)]])
 
 
+def rot_x(a):
+    c, s = math.cos(a), math.sin(a)
+    return np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
+
+
+def rot_y(a):
+    c, s = math.cos(a), math.sin(a)
+    return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+
+
+def rot_z(a):
+    c, s = math.cos(a), math.sin(a)
+    return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+
+
 def rect_sides(x0, y0, x1, y1):
     return [(x0, y0, x1, y0), (x1, y0, x1, y1), (x1, y1, x0, y1), (x0, y1, x0, y0)]
 
@@ -52,6 +69,10 @@ class FakeCamera(Node):
         self.info_pub = self.create_publisher(CameraInfo, "/camera/color/camera_info", 2)
         self.cube = None
         self.create_subscription(PoseStamped, "/sim/cube", lambda m: setattr(self, "cube", m.pose.position), 10)
+        # practise camera_check.py: the camera is "really" bolted on at this roll/pitch/yaw (rad), whatever the
+        # URDF says, e.g. 5 deg down and 2 deg off: -p real_camera_rpy:=[0.0,0.087,3.18]. Unset = as camera_joint in the URDF.
+        rpy = self.declare_parameter("real_camera_rpy", [0.0, 0.0, 0.0, 0.0]).value
+        self.real_rpy = rpy if len(rpy) == 3 else None
         self.tf_buffer = Buffer()
         TransformListener(self.tf_buffer, self)
 
@@ -70,7 +91,7 @@ class FakeCamera(Node):
             for seg in rect_sides(x0, y0, x1, y1):
                 self.static.append(("v", (*seg, 0.0, top), kind + "_side"))
         mx, my, h = MARKER_XY[0], MARKER_XY[1], MARKER_SIZE / 2
-        self.static.append(("h", (mx - h, my - h, mx + h, my + h, DESK_TOP + 0.001), "marker"))
+        self.static.append(("h", (mx - h, my - h, mx + h, my + h, 0.001), "marker"))   # on the floor
 
         self.create_timer(0.25, self.render)
         self.get_logger().info("Fake Xtion ready: /camera/color/image_raw (640x480) from TF frame camera_color_optical_frame")
@@ -78,10 +99,17 @@ class FakeCamera(Node):
     def render(self):
         try:
             tf = self.tf_buffer.lookup_transform("odom", "camera_color_optical_frame", Time()).transform
+            if self.real_rpy:
+                base = self.tf_buffer.lookup_transform("odom", "base_link", Time()).transform
         except TransformException:
             return  # robot_model.launch.py not running yet
         o = np.array([tf.translation.x, tf.translation.y, tf.translation.z])
-        d = self.rays @ quat_matrix(tf.rotation).T
+        rot = quat_matrix(tf.rotation)
+        if self.real_rpy:   # same lens position as the URDF camera, but pointing the "real" way
+            r, p, y = self.real_rpy
+            mount = rot_z(y) @ rot_y(p) @ rot_x(r) @ rot_z(-math.pi / 2) @ rot_x(-math.pi / 2)   # + optical frame turn
+            rot = quat_matrix(base.rotation) @ mount
+        d = self.rays @ rot.T
         best = np.full(len(d), np.inf)
         color = np.zeros(len(d), dtype=np.int32)
         names = list(COLORS)

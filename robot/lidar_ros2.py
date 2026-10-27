@@ -7,7 +7,9 @@ receipt times; resampled rays have no individual time measurements.
 """
 import argparse
 import math
+import os
 import time
+import xml.etree.ElementTree as ET
 
 import rclpy
 import serial
@@ -19,13 +21,39 @@ from serial.tools import list_ports
 from lidar_monitor import X2PacketReader
 
 
+def laser_mount():
+    """(x, y, yaw) of laser_joint in kobuki_x2.urdf next to this file, or None."""
+    try:
+        o = ET.parse(os.path.join(os.path.dirname(os.path.abspath(__file__)), "kobuki_x2.urdf")).getroot().find(
+            "joint[@name='laser_joint']/origin")
+        x, y, _ = (float(v) for v in o.get("xyz").split())
+        return x, y, float(o.get("rpy").split()[2])
+    except (OSError, ET.ParseError, AttributeError, ValueError):
+        return None
+
+
+def outside_robot(mount, radius):
+    """keep(angle, distance) for make_scan: False for returns within `radius` of the robot centre.
+
+    The X2 sits next to the arm and the battery, so its beam hits them (up to ~0.29 m from the laser);
+    anything that close to the centre is the robot itself."""
+    lx, ly, yaw = mount
+    c, s = math.cos(yaw), math.sin(yaw)
+
+    def keep(angle, distance):
+        px, py = distance * math.cos(angle), distance * math.sin(angle)
+        return math.hypot(lx + c * px - s * py, ly + s * px + c * py) >= radius
+    return keep
+
+
 def make_scan(points, stamp_ns, scan_time, frame="laser", bins=720,
-              range_min=0.12, range_max=8.0, mirror=False):
+              range_min=0.12, range_max=8.0, mirror=False, keep=None):
     """Resample corrected angles into ROS's uniform angular grid.
 
     Keep the nearest valid return when two rays land in one bin. Missing,
     zero, and out-of-range returns remain infinity, never obstacle points.
     Default angle direction matches the SDK with Inverted=False/Reversion=False.
+    keep(angle_rad, distance) -> False drops a return (see outside_robot).
     """
     msg = LaserScan()
     msg.header.stamp.sec, msg.header.stamp.nanosec = divmod(int(stamp_ns), 1_000_000_000)
@@ -46,6 +74,8 @@ def make_scan(points, stamp_ns, scan_time, frame="laser", bins=720,
         if mirror:
             degrees = -degrees
         angle = (math.radians(degrees) + math.pi) % math.tau - math.pi
+        if keep is not None and not keep(angle, distance):
+            continue
         index = int(math.floor((angle + math.pi) / msg.angle_increment + 0.5)) % bins
         ranges[index] = min(ranges[index], float(distance))
     msg.ranges = ranges
@@ -90,10 +120,20 @@ class ScanAssembler:
 
 
 class X2ScanNode(Node):
-    def __init__(self, port, frame, mirror=False):
+    def __init__(self, port, frame, mirror=False, min_range=0.12, self_radius=0.0):
         super().__init__("windows_ydlidar_x2")
         self.frame = frame
         self.mirror = mirror
+        self.min_range = min_range
+        self.keep = None
+        if self_radius > 0:
+            mount = laser_mount()
+            if mount:
+                self.keep = outside_robot(mount, self_radius)
+                self.get_logger().info(f"Dropping returns within {self_radius:.2f} m of the robot centre "
+                                       f"(laser at x={mount[0]:.3f} y={mount[1]:+.3f} in kobuki_x2.urdf)")
+            else:
+                self.get_logger().warning("kobuki_x2.urdf not found next to lidar_ros2.py - self filter off")
         self.publisher = self.create_publisher(LaserScan, "/scan", qos_profile_sensor_data)
         self.parser = X2PacketReader()
         self.assembler = ScanAssembler()
@@ -120,7 +160,7 @@ class X2ScanNode(Node):
             stamp_ns = self.get_clock().now().nanoseconds
             for points, stamp, duration in self.assembler.feed(
                     packets, stamp_ns, now, self.parser.bad_checksums):
-                self.publisher.publish(make_scan(points, stamp, duration, self.frame, mirror=self.mirror))
+                self.publisher.publish(make_scan(points, stamp, duration, self.frame, range_min=self.min_range, mirror=self.mirror, keep=self.keep))
                 self.scans += 1
                 if self.scans == 1:
                     valid = sum(0.12 <= d <= 8.0 for _, d in points)
@@ -143,6 +183,11 @@ def main():
     ap.add_argument("--port", help="COM port; auto-selects a unique CP210x adapter")
     ap.add_argument("--frame", default="laser")
     ap.add_argument("--mirror", action="store_true", help="Flip angle direction (clockwise X2 -> ROS counter-clockwise)")
+    ap.add_argument("--min-range", type=float, default=0.12,
+                    help="Drop returns closer than this to the laser (m)")
+    ap.add_argument("--self-radius", type=float, default=0.24,
+                    help="Drop returns within this distance of the robot centre (m) - the arm, battery and decks "
+                         "(needs kobuki_x2.urdf next to this file; 0 = off)")
     args, ros_args = ap.parse_known_args()
     candidates = [p.device for p in list_ports.comports() if p.vid == 0x10C4 and p.pid == 0xEA60]
     port = args.port or (candidates[0] if len(candidates) == 1 else None)
@@ -152,7 +197,7 @@ def main():
     node = None
     code = 0
     try:
-        node = X2ScanNode(port, args.frame, args.mirror)
+        node = X2ScanNode(port, args.frame, args.mirror, args.min_range, args.self_radius)
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass

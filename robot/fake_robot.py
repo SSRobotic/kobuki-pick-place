@@ -6,10 +6,11 @@ drives around the final-project room (floor plan from the project PDF) using
   /scan (frame "laser", Best Effort), /odom, TF odom -> base_link,
   plus /stations (MarkerArray) showing Station 1, Station 2 and Initial.
 Run robot_model.launch.py, SLAM, RViz and teleop exactly as with the real robot.
-For the full mission there is also a green 4 cm cube on the Station 1 desk and a blue place marker on the
-Station 2 desk (/sim/cube, drawn in /stations). The cube sticks to the SO-100 jaws when they close around it
-(needs robot_model.launch.py arm:=sim) and drops onto the desk when they open. fake_camera.py films all this.
-Start somewhere else with: --ros-args -p start_pose:=[5.04,1.32,0.0]
+For the full mission there is also a green 4 cm cube on the floor at Station 1 and a blue place marker on the
+floor at Station 2 (/sim/cube, drawn in /stations). The cube sticks to the SO-100 jaws when they close around it
+(needs robot_model.launch.py arm:=sim) and drops to the floor when they open. fake_camera.py films all this.
+The scan comes from where the LiDAR really sits (laser_joint in kobuki_x2.urdf).
+Start somewhere else with: --ros-args -p start_pose:=[5.03,1.32,3.14159]   (move the cube: -p cube_xy:=[x,y])
 
     python3 fake_robot.py                      (Ubuntu)
     pixi run python robot\\fake_robot.py        (Windows, from the project folder)
@@ -31,7 +32,6 @@ from visualization_msgs.msg import Marker, MarkerArray
 PX = 0.015               # metres per pixel of the floor plan picture in the PDF
 START_PX = (425, 940)    # "Initial Location" = odom origin; robot starts facing Station 1 (up)
 ROBOT_RADIUS = 0.18      # Kobuki is ~0.35 m wide
-LASER_YAW = -math.pi / 2  # same as joint laser_joint in kobuki_x2.urdf
 MAX_V, MAX_W = 0.12, 0.6  # same limits as kobuki_ros2.py --enable-motion
 CMD_TIMEOUT = 0.4
 
@@ -48,16 +48,32 @@ BOXES_PX = [  # (left, top, right, bottom) desks and furniture
 ]
 STATIONS_PX = {"Station 1": (337, 604), "Station 2": (597, 750), "Initial": (425, 940)}
 
-# Objects for the pick & place practice. Heights are guesses: measure the real desks on demo day.
-DESK_TOP = 0.22                 # m, top of both station desks (BOXES_PX[0] and BOXES_PX[1])
-FURNITURE_TOP = 0.45            # m, the other boxes (only the camera cares)
+# Objects for the pick & place practice: both stations are on the floor (as on demo day).
+DESK_TOP = 0.75                 # m, the two desks next to the stations (only the camera draws them)
+FURNITURE_TOP = 0.45            # m, the other boxes
 CUBE_SIZE = 0.04                # m, the coloured cube to pick
-CUBE_START = (5.50, 1.32)       # on the Station 1 desk, 7 cm from its edge
-MARKER_XY = (2.85, -3.12)       # blue square on the Station 2 desk = where to place the cube
+CUBE_START = (5.30, 1.32)       # on the floor at Station 1, in front of its desk
+MARKER_XY = (2.85, -2.90)       # blue square on the floor at Station 2 = where to place the cube
 MARKER_SIZE = 0.10
 GRIP_CLOSED = 0.35              # gripper joint below this = closed (rad, so_arm100.xml "Jaw")
 GRIP_OPEN = 0.5                 # above this = open
 GRAB_DISTANCE = 0.03            # jaw centre must be this close to the cube centre to catch it
+
+
+def laser_mount():
+    """(x, y, yaw) of laser_joint in kobuki_x2.urdf, so the fake scan starts where the real LiDAR is."""
+    import os
+    import xml.etree.ElementTree as ET
+    try:
+        o = ET.parse(os.path.join(os.path.dirname(os.path.abspath(__file__)), "kobuki_x2.urdf")).getroot().find(
+            "joint[@name='laser_joint']/origin")
+        x, y, _ = (float(v) for v in o.get("xyz").split())
+        return x, y, float(o.get("rpy").split()[2])
+    except (OSError, ET.ParseError, AttributeError):
+        return 0.0, 0.0, -math.pi / 2
+
+
+LASER_X, LASER_Y, LASER_YAW = laser_mount()
 
 
 def to_m(px, py):
@@ -136,8 +152,9 @@ class FakeRobot(Node):
 
         # the cube starts a little off the nominal spot each run, so the camera really has to find it
         jitter = self.declare_parameter("cube_jitter", 0.03).value
-        self.cube = [CUBE_START[0] + random.uniform(-jitter, jitter), CUBE_START[1] + random.uniform(-jitter, jitter),
-                     DESK_TOP + CUBE_SIZE / 2]
+        cx, cy = self.declare_parameter("cube_xy", list(CUBE_START)).value
+        self.cube = [cx + random.uniform(-jitter, jitter), cy + random.uniform(-jitter, jitter), 0.0]
+        self.cube[2] = surface_height(self.cube[0], self.cube[1]) + CUBE_SIZE / 2
         self.held = False
         self.gripper = None
         self.tf_buffer = Buffer()
@@ -153,8 +170,8 @@ class FakeRobot(Node):
         for name, (px, py) in STATIONS_PX.items():
             x, y = to_m(px, py)
             self.get_logger().info(f"  {name}: x={x:.2f} y={y:.2f} (odom)")
-        self.get_logger().info(f"  Cube on Station 1 desk: x={self.cube[0]:.3f} y={self.cube[1]:.3f} | "
-                               f"place marker on Station 2 desk: x={MARKER_XY[0]:.2f} y={MARKER_XY[1]:.2f}")
+        self.get_logger().info(f"  Cube on the floor at Station 1: x={self.cube[0]:.3f} y={self.cube[1]:.3f} | "
+                               f"place marker at Station 2: x={MARKER_XY[0]:.2f} y={MARKER_XY[1]:.2f}")
 
     def on_joints(self, msg):
         if "gripper" in msg.name:
@@ -230,7 +247,9 @@ class FakeRobot(Node):
         n = 720
         inc = 2 * math.pi / n
         angles = -math.pi + inc * np.arange(n)                 # laser frame, counter-clockwise
-        ranges = raycast(self.segs, self.x, self.y, angles + self.yaw + LASER_YAW, 8.0)
+        lx = self.x + math.cos(self.yaw) * LASER_X - math.sin(self.yaw) * LASER_Y
+        ly = self.y + math.sin(self.yaw) * LASER_X + math.cos(self.yaw) * LASER_Y
+        ranges = raycast(self.segs, lx, ly, angles + self.yaw + LASER_YAW, 8.0)
         ranges = ranges + np.random.normal(0.0, 0.01, n)       # ~1 cm noise
         ranges[np.random.random(n) < 0.05] = np.inf            # a few missing returns, like the X2
         ranges[ranges < 0.12] = np.inf
@@ -265,7 +284,7 @@ class FakeRobot(Node):
                 markers.markers.append(m)
         for i, (pos, size, rgb) in enumerate((
                 (self.cube, (CUBE_SIZE,) * 3, (0.2, 0.75, 0.25)),
-                ((*MARKER_XY, DESK_TOP + 0.001), (MARKER_SIZE, MARKER_SIZE, 0.002), (0.1, 0.35, 0.85)))):
+                ((*MARKER_XY, 0.001), (MARKER_SIZE, MARKER_SIZE, 0.002), (0.1, 0.35, 0.85)))):
             m = Marker()
             m.header.frame_id = "odom"
             m.ns, m.id, m.type = "objects", i, Marker.CUBE

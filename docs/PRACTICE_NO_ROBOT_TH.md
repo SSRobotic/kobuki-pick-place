@@ -45,16 +45,18 @@ Windows: `pixi run ros2 launch robot\robot_model.launch.py`
 ✅ ต้องเห็น:
 ```
 [robot_state_publisher-1] ... got segment base_link
-[robot_state_publisher-1] ... got segment gripper_tip
+[robot_state_publisher-1] ... got segment battery
+   ... (battery_button, camera_color_optical_frame, camera_link, decks, gripper_tip)
 [robot_state_publisher-1] ... got segment laser
-[robot_state_publisher-1] ... got segment lidar_deck
-[robot_state_publisher-1] ... got segment so100_base
-   ... (so100_gripper, so100_jaw, so100_lower_arm, so100_shoulder, so100_upper_arm, so100_wrist)
+[robot_state_publisher-1] ... got segment laser_cap
+   ... (servo_terminal, so100_base, so100_gripper, so100_jaw, so100_lower_arm, so100_shoulder, so100_upper_arm, so100_wrist)
+[robot_state_publisher-1] ... got segment standoffs
 [robot_state_publisher-1] ... got segment wheel_left_link
 [robot_state_publisher-1] ... got segment wheel_right_link
+[robot_state_publisher-1] ... got segment white_plates
 ```
 **คืออะไร:** อ่านไฟล์ `kobuki_x2.urdf` แล้วประกาศให้ ROS รู้ว่าหุ่นมีชิ้นส่วนอะไร อยู่ตรงไหน
-(เช่น LiDAR สูง 0.20 m จากพื้น หมุน -90°) ส่งออกทาง topic `/robot_description` และ `/tf_static`
+(เช่น LiDAR สูง 0.247 m จากพื้น หมุน -90°) ส่งออกทาง topic `/robot_description` และ `/tf_static`
 launch นี้เปิดอีกโปรแกรมด้วย คือ `arm_rest_publisher.py` ส่งมุมข้อต่อแขน SO-100 ท่าพับทาง `/joint_states`
 (ไม่มีตัวนี้ แขนจะไม่ขึ้นใน RViz) วันที่มีไดรเวอร์แขนจริงแล้วให้สั่ง `... robot_model.launch.py arm:=none`
 > รูปหุ่นใน RViz มาจากไฟล์ CAD ในโฟลเดอร์ `meshes/` (Kobuki ของ Yujin, SO-100 ของ TheRobotStudio, X2 ขึ้นรูปตามดาต้าชีท)
@@ -128,7 +130,10 @@ Windows: `pixi run rviz2`
 | Description Topic > **Durability Policy** | **`Transient Local`** ← สำคัญ |
 | Alpha | `1` |
 
-✅ เห็นหุ่นจากไฟล์ CAD: Kobuki สีดำมี **จุดเหลืองบนหลัง** · LiDAR X2 สีดำบนแผ่นรองสีเทา · **แขน SO-100 สีส้มพับอยู่ด้านหน้า (ฝั่งที่แขนยื่นไป = ด้านหน้าหุ่น)**
+✅ เห็นหุ่นตามที่ทีมประกอบจริง: Kobuki สีดำ **จุดเหลืองบนหลัง** · แผ่นอะคริลิกใส 2 ชั้น · LiDAR X2 **ฝาน้ำเงิน** ด้านหน้า ·
+   แบตสีดำปุ่มแดง · **แขน SO-100 สีดำ ฐานหันออกท้ายหุ่น** · กล้อง Xtion ใต้ชั้นกลาง มองออกท้าย (ด้านหน้า = กันชน, ด้านหลัง = แผงพอร์ต)
+
+   ![หุ่นใน RViz (มองจากหลังเฉียงซ้าย)](img/demo_robot_layout.png)
    ถ้า RobotModel ขึ้น error `Could not load resource` = หาโฟลเดอร์ `meshes/` ไม่เจอ ต้องเปิดผ่าน `robot_model.launch.py` เท่านั้น
 
 > **ทำไมต้อง Transient Local:** `robot_state_publisher` ส่งโมเดล **ครั้งเดียว** ตอนเปิด
@@ -177,8 +182,8 @@ ros2 topic list -t
 ```bash
 ros2 run tf2_ros tf2_echo base_link laser
 ```
-✅ `Translation: [0.000, 0.000, 0.200]` และ `Rotation: in RPY (degree) [0.000, -0.000, -90.000]`
-→ LiDAR สูง 20 ซม. หมุน -90° ตรงกับ URDF (กด `Ctrl+C` ออก)
+✅ `Translation: [0.075, -0.035, 0.247]` และ `Rotation: in RPY (degree) [0.000, -0.000, -90.000]`
+→ LiDAR อยู่หน้ากลางหุ่น 7.5 ซม. เยื้องขวา 3.5 ซม. สูง 24.7 ซม. หมุน -90° ตรงกับ URDF (กด `Ctrl+C` ออก)
 
 ```bash
 ros2 run tf2_tools view_frames
@@ -631,28 +636,30 @@ Windows: `pixi run python robot\mission_nav2.py --nav-only`
 | state | ทำอะไร | วันเดโมต้องเปลี่ยน |
 |---|---|---|
 | INIT | บอก AMCL ว่าอยู่ Initial รอ Nav2 พร้อม พับแขน | เหมือนเดิม |
-| NAV_STATION1 | **Nav2** ไป (5.04, 1.32) หันเข้าโต๊ะ | แก้พิกัดตามแผนที่ห้องจริง |
-| DETECT_OBJECT | กล้องหาลูกบาศก์ (ภาค 5) | ตั้งสีและความสูงโต๊ะจริง |
+| NAV_STATION1 | **Nav2** ไปจอดห่างลูกบาศก์ 0.65 ม. ที่ (4.65, 1.32) **ท้ายหุ่นหันเข้าหา** | แก้ `STATIONS` ตามแผนที่ห้องจริง |
+| DETECT_OBJECT | กล้องหาลูกบาศก์ (ภาค 5) | ตั้งสีจริง |
 | PICK | เข้าใกล้ + แขนหยิบ (ภาค 5) | ไดรเวอร์แขนจริง |
-| NAV_STATION2 | **Nav2** ไป (2.85, −2.58) หันเข้าโต๊ะ | แก้พิกัด |
+| NAV_STATION2 | **Nav2** ไปจอดห่างจุดวาง 0.65 ม. ที่ (2.85, −2.25) ท้ายหุ่นหันเข้าหา | แก้ `STATIONS` |
 | DETECT_STATION | กล้องหาจุดวาง (ภาค 5) | ตั้งสีจุดวางจริง |
 | PLACE | เข้าใกล้ + แขนวาง (ภาค 5) | ไดรเวอร์แขนจริง |
 | RETURN_HOME | **Nav2** กลับ (0, 0) | เหมือนเดิม |
 
 ถ้า Nav2 ไปไม่ถึง (ติด/หาเส้นทางไม่ได้) state นั้นจะลองใหม่เอง สูงสุด 3 ครั้ง แล้วจบด้วย `aborted`
 
-**แก้พิกัด Station:** เปิด `mission_nav2.py` แก้ตรง `GOALS = {...}` เป็น `(x, y, มุมหัน)`
-ค่า x, y ได้จาก Publish Point (ข้อ 3.3) มุมเป็นเรเดียน: หันขึ้น (แกน X) = `0`, หันซ้าย = `math.pi / 2`, หันขวา = `-math.pi / 2`, หันลง = `math.pi`
+**แก้พิกัด Station:** เปิด `mission_nav2.py` แก้ตรง `STATIONS = {...}` เป็น `(x วัตถุ, y วัตถุ, ทิศที่หุ่นเข้าหา)`
+ค่า x, y = ตำแหน่ง **วัตถุ** จาก Publish Point (ข้อ 3.3) โปรแกรมคำนวณจุดจอดเอง (ห่าง 0.65 ม. ท้ายหุ่นหันเข้าวัตถุ)
+ทิศเป็นเรเดียน = ทิศจากจุดจอดไปหาวัตถุ: ทาง +x = `0`, ทาง +y = `math.pi / 2`, ทาง −y = `-math.pi / 2`, ทาง −x = `math.pi`
+(ผลรันตัวอย่างข้างบนเป็นรุ่นแรกที่แขนอยู่ด้านหน้า จุดจอดตอนนี้คือ `x=4.65 y=1.32 yaw=180` และ `x=2.85 y=-2.25 yaw=90`)
 
 # ภาค 5 — ภารกิจเต็ม: กล้อง + แขน (จำลองทั้งหมด)
 
 ภาคนี้หุ่นทำครบทุกขั้นเองเหมือนวันเดโม: วิ่งไป Station 1 → **กล้องหาลูกบาศก์** → **แขนหยิบ** → วิ่งไป Station 2 → **กล้องหาจุดวาง** → **แขนวาง** → กลับบ้าน
 
-ในห้องจำลองมี:
-- **ลูกบาศก์สีเขียว 4 ซม.** บนโต๊ะ Station 1 (วางเยื้องตำแหน่งเดิมแบบสุ่ม ±3 ซม. ทุกครั้ง กล้องจึงต้องหาเองจริง ๆ)
-- **แผ่นสีฟ้า 10 ซม.** บนโต๊ะ Station 2 = จุดที่ต้องวาง
+ในห้องจำลองมี (เหมือนวันจริง: **วัตถุวางบนพื้น**):
+- **ลูกบาศก์สีเขียว 4 ซม.** บนพื้นที่ Station 1 (5.30, 1.32) (วางเยื้องแบบสุ่ม ±3 ซม. ทุกครั้ง กล้องจึงต้องหาเองจริง ๆ)
+- **แผ่นสีฟ้า 10 ซม.** บนพื้นที่ Station 2 (2.85, −2.90) = จุดที่ต้องวาง
 
-> โต๊ะสูง 0.22 ม. เป็นค่าสมมติ **วันจริงต้องวัดโต๊ะจริง** แล้วใส่ใน `cube_detector.py` (`desk_height`)
+**แขนกับกล้องทำงานด้านหลังหุ่น** (ตามที่ทีมประกอบ) หุ่นจึงจอดห่างวัตถุ 0.65 ม. ให้ท้ายหันเข้าหา กล้องดูตำแหน่ง แล้ว **ถอยหลัง** จนวัตถุอยู่ห่างกลางหุ่น 0.27 ม. ค่อยใช้แขน
 
 ```
 fake_camera ─/camera/color/image_raw─► cube_detector ─/detected/cube, /detected/station─┐
@@ -665,13 +672,14 @@ fake_robot (ห้อง + ลูกบาศก์)  ◄─/joint_states─ fak
 | ไฟล์ | ทำอะไร | วันจริงใช้ไหม |
 |---|---|---|
 | `fake_camera.py` | กล้อง Xtion ปลอม ถ่ายภาพห้องจำลองจากตำแหน่งกล้องบนหุ่น (640×480) | ไม่ใช้ ใช้ไดรเวอร์กล้องจริง |
-| `cube_detector.py` | หาลูกบาศก์ (สีเขียว) และจุดวาง (สีฟ้า) จากสีในภาพ แล้วคำนวณตำแหน่งจริงจากความสูงโต๊ะ | **ใช้** (ปรับสี + ความสูงโต๊ะ) |
+| `cube_detector.py` | หาลูกบาศก์ (สีเขียว) และจุดวาง (สีฟ้า) จากสีในภาพ แล้วคำนวณตำแหน่งบนพื้น | **ใช้** (ปรับสี) |
 | `fake_arm.py` | แขน SO-100 ปลอม ขยับตามคำสั่ง (`robot_model.launch.py arm:=sim` เปิดให้เอง) | ไม่ใช้ ใช้ไดรเวอร์แขนจริง |
 | `arm_control.py` | คำนวณมุมข้อต่อแขน (IK) + ท่าหยิบ/วาง ลองสั่งเองได้ | **ใช้** |
 | `mission.rviz` | ค่า RViz สำเร็จรูปของภาคนี้ (แผนที่ costmap เส้นทาง ลูกบาศก์ ภาพจากกล้อง) | ใช้ |
 
-**ทำไมไม่ใช้ระยะลึก (depth) ของ Xtion:** กล้องวัดระยะได้ตั้งแต่ ~0.8 ม. แต่ตอนหยิบ ลูกบาศก์อยู่ห่างกล้องแค่ ~0.4 ม.
-ตัวหาจึงใช้แค่ภาพสี: รู้ว่าลูกบาศก์อยู่บนโต๊ะ (รู้ความสูง) ลากเส้นจากกล้องผ่านจุดสีในภาพไปชนระนาบโต๊ะ = ได้ตำแหน่ง x, y
+**ทำไมไม่ใช้ระยะลึก (depth) ของ Xtion:** กล้องวัดระยะได้ตั้งแต่ ~0.8 ม. แต่ตอนมอง ลูกบาศก์อยู่ห่างกล้องแค่ ~0.5 ม.
+ตัวหาจึงใช้แค่ภาพสี: รู้ว่าลูกบาศก์อยู่บนพื้น ลากเส้นจากกล้องผ่านจุดสีในภาพไปชนพื้น = ได้ตำแหน่ง x, y
+(ถ้าวันจริงวัตถุวางบนอะไรสักอย่าง ใส่ความสูงด้วย `-p surface_height:=...`)
 
 ## ผังหน้าต่างภาค 5 (7 หน้าต่าง)
 
@@ -690,86 +698,80 @@ fake_robot (ห้อง + ลูกบาศก์)  ◄─/joint_states─ fak
 ## 5.1 ดูว่ากล้องเห็นอะไร (ก่อนเปิดภารกิจ)
 
 ใน RViz (`mission.rviz`) มีช่อง **Camera (detector)** มุมล่างซ้าย = ภาพจากกล้องปลอมพร้อมกรอบแดงรอบสิ่งที่หาเจอ
-ตอนหุ่นอยู่ที่ Initial กล้องยังไม่เห็นลูกบาศก์ (อยู่ไกล 5 ม. คนละห้อง) เป็นเรื่องปกติ
+ตอนหุ่นอยู่ที่ Initial กล้องยังไม่เห็นลูกบาศก์ (กล้องมองออกท้าย และลูกบาศก์อยู่ไกล 5 ม.) เป็นเรื่องปกติ
 
-ลองให้หุ่นปลอมเริ่มหน้าโต๊ะ Station 1 เลย (ปิดหน้าต่าง 1 แล้วเปิดใหม่ด้วยคำสั่งนี้):
+ลองให้หุ่นปลอมเริ่มที่จุดจอด Station 1 เลย (ท้ายหันเข้าลูกบาศก์: ปิดหน้าต่าง 1 แล้วเปิดใหม่ด้วยคำสั่งนี้):
 ```bash
-python3 fake_robot.py --ros-args -p start_pose:=[5.20,1.32,0.0]
+python3 fake_robot.py --ros-args -p start_pose:=[4.65,1.32,3.14159]
 ```
-Windows: `pixi run python robot\fake_robot.py --ros-args -p start_pose:=[5.20,1.32,0.0]`
+Windows: `pixi run python robot\fake_robot.py --ros-args -p start_pose:=[4.65,1.32,3.14159]`
 
-หน้าต่าง 4 จะขึ้น `seen: cube x=5.49 y=1.34` (ตำแหน่งในแผนที่) ทุก ~3 วินาที
+หน้าต่าง 4 จะขึ้น `seen: cube x=5.32 y=1.31` (ตำแหน่งในแผนที่) ทุก ~3 วินาที
 
 ## 5.2 ลองสั่งแขนเอง (หน้าต่างสำรอง)
 
 ```bash
 python3 arm_control.py open
-python3 arm_control.py reach 0.30 0.0 0.30
+python3 arm_control.py reach -0.27 0.0 0.10
 python3 arm_control.py rest
 ```
-Windows: `pixi run python robot\arm_control.py open` (เปลี่ยนคำท้ายเป็น `reach 0.30 0.0 0.30`, `carry`, `close`, `rest`)
+Windows: `pixi run python robot\arm_control.py open` (เปลี่ยนคำท้ายเป็น `reach -0.27 0.0 0.10`, `carry`, `close`, `rest`)
 
 `reach x y z` = ให้จุดกลางปากคีบไปที่ x (หน้า) y (ซ้าย) z (สูงจากพื้น) หน่วยเมตร เทียบกับกลางหุ่น
-ระยะที่แขนเอื้อมถึง (คำนวณจาก IK ทุก 2–5 ซม.):
-
-| สูงจากพื้น \ ข้างหน้า | 0.20 | 0.22–0.25 | 0.28–0.35 | 0.38 |
-|---|---|---|---|---|
-| 0.16–0.20 ม. | ✅ | ✅ | ✅ | ✅ |
-| 0.24 ม. | ❌ | ✅ | ✅ | ✅ |
-| 0.28 ม. | ❌ | ❌ | ✅ | มือจับเอียง |
-| 0.32–0.36 ม. | ❌ | ❌ | มือจับเอียง | มือจับเอียง |
-
-✅ = มือจับชี้ลงตรง ๆ ได้ / ❌ = เอื้อมไม่ถึง (ขึ้น `out of reach`)
-**แปลว่าโต๊ะจริงต้องเตี้ย:** จุดกลางลูกบาศก์ไม่ควรสูงเกิน ~0.28 ม. จากพื้น (โต๊ะสูงไม่เกิน ~0.26 ม.) เพราะแขนติดบนหลัง Kobuki สูงแค่ 0.12 ม.
+แขนเอื้อมออกท้าย x จึง **ติดลบ** (−0.27 = หลังกลางหุ่น 27 ซม.)
+ระยะเอื้อมถึงพื้น (ลูกบาศก์บนพื้น z = 0.02, มือจับชี้ลงตรง ๆ คำนวณจาก IK): **x = −0.20 ถึง −0.32 ม.** ภารกิจใช้ −0.27 (กลางช่วง)
+ใกล้กว่า −0.20 แขนพับไม่ลง ไกลกว่า −0.32 เอื้อมไม่ถึง (ขึ้น `out of reach`)
 
 ## 5.3 หน้าต่าง 7: ภารกิจเต็ม
 
 ปิดหุ่นปลอมแล้วเปิดใหม่แบบปกติ (เริ่มที่ Initial) แล้วรัน `mission_nav2.py`
 
-✅ ผลจริงจากการรันทดสอบ (หุ่นปลอม, Windows, 27 ต.ค.):
+✅ ผลจริงจากการรันทดสอบ (หุ่นปลอมแบบที่ทีมประกอบ, Windows, 28 ต.ค.):
 ```
 [INIT] robot is at Initial Location - telling AMCL and waiting for Nav2
 [INIT] Nav2 is active - folding the arm
-[NAV_STATION1] go to STATION1 x=5.04 y=1.32 yaw=0 deg
-[NAV_STATION1] arrived in 55 s
+[NAV_STATION1] go to STATION1 x=4.65 y=1.32 yaw=180 deg
+[NAV_STATION1] arrived in 57 s
 [DETECT_OBJECT] looking for the cube ...
-[DETECT_OBJECT] cube at x=5.476 y=1.325 (odom) = 0.47 m ahead, -0.09 m left of the robot
-  approach: cube is 0.47 m ahead, driving +0.17 m
-[PICK] cube at 0.303 -0.004 0.240 (base_link) - moving the arm
+[DETECT_OBJECT] cube at x=5.301 y=1.322 (odom) = -0.64 m ahead, +0.15 m left of the robot
+  approach: cube is 0.65 m behind, driving -0.38 m
+  cube is now too close for the camera - using where it was seen before
+[PICK] cube at -0.273 +0.006 0.020 (base_link) - moving the arm
 [PICK] done
-[NAV_STATION2] go to STATION2 x=2.85 y=-2.58 yaw=-90 deg
-[NAV_STATION2] arrived in 56 s
+[NAV_STATION2] go to STATION2 x=2.85 y=-2.25 yaw=90 deg
+[NAV_STATION2] arrived in 59 s
 [DETECT_STATION] looking for the station ...
-[DETECT_STATION] station at x=2.849 y=-3.118 (odom) = 0.55 m ahead, -0.07 m left of the robot
-  approach: station is 0.55 m ahead, driving +0.25 m
-[PLACE] station at 0.303 -0.005 0.220 (base_link) - moving the arm
+[DETECT_STATION] station at x=2.858 y=-2.908 (odom) = -0.61 m ahead, +0.17 m left of the robot
+  approach: station is 0.64 m behind, driving -0.37 m
+  station is now too close for the camera - using where it was seen before
+[PLACE] station at -0.273 +0.006 0.000 (base_link) - moving the arm
 [PLACE] done
 [RETURN_HOME] go to HOME x=0.00 y=0.00 yaw=0 deg
-[RETURN_HOME] arrived in 60 s
-Mission finished: succeeded in 207 s
+[RETURN_HOME] arrived in 64 s
+Mission finished: succeeded in 229 s
 ```
-(ในหน้าต่างจริงแต่ละบรรทัดขึ้นต้นด้วย `[INFO] [เวลา] [basic_navigator]:`)
+(ในหน้าต่างจริงแต่ละบรรทัดขึ้นต้นด้วย `[INFO] [เวลา] [basic_navigator]:` · "ahead" ติดลบ = อยู่หลังหุ่น)
 
 หน้าต่าง 1 (หุ่นปลอม) บอกผลจริงของลูกบาศก์:
 ```
-Cube on Station 1 desk: x=5.477 y=1.326 | place marker on Station 2 desk: x=2.85 y=-3.12
-Cube grabbed (jaw centre 0.1 cm from cube centre)
-Cube released at x=2.849 y=-3.119 z=0.240 - on the Station 2 marker
+Cube on the floor at Station 1: x=5.305 y=1.323 | place marker at Station 2: x=2.85 y=-2.90
+Cube grabbed (jaw centre 0.2 cm from cube centre)
+Cube released at x=2.858 y=-2.909 z=0.020 - on the Station 2 marker
 ```
-กล้องหาตำแหน่งลูกบาศก์คลาดจากของจริง 1 มม. และวางห่างกลางแผ่นฟ้า 1.4 มม.
+กล้องหาตำแหน่งลูกบาศก์คลาดจากของจริง 4 มม. และวางห่างกลางแผ่นฟ้า 1 ซม.
 
-![ภาพจากกล้องปลอมที่ Station 1 พร้อมกรอบที่ตัวหาเจอ](img/camera_station1_sim.png)
+![ภาพจากกล้องปลอมที่จุดจอด Station 1: ลูกบาศก์อยู่ล่างภาพ กรอบแดง = ตัวหาเจอ](img/camera_station1_sim.png)
 
-![เส้นทางจริงของหุ่นทั้งภารกิจ](img/mission_path_sim.png)
+![เส้นทางจริงของหุ่นทั้งภารกิจ: จอดหน้าแต่ละ Station แล้วถอยเข้า](img/mission_path_sim.png)
 
 **แต่ละขั้นทำอะไร:**
 
 | state | ทำอะไร |
 |---|---|
 | DETECT_OBJECT | รอให้ตัวหาเห็นลูกบาศก์ 5 ภาพ เอาค่ากลาง (median) ถ้าไม่เห็นใน 8 วิ หันซ้ายขวานิดหนึ่งแล้วลองใหม่ (สูงสุด 3 ครั้ง) |
-| PICK | หันหน้าเข้าลูกบาศก์ → ขับตรงเข้าไปจนลูกบาศก์อยู่ข้างหน้า 0.30 ม. → ดูใหม่อีกครั้ง (ใกล้ขึ้น แม่นขึ้น) → แขน: อ้าปาก → อยู่เหนือลูกบาศก์ 7 ซม. → ลง → หนีบ → ยก 8 ซม. → ถอยหลัง 0.2 ม. → พับแขนท่าถือของ |
+| PICK | หันท้ายเข้าลูกบาศก์ → ถอยตรงเข้าไปจนลูกบาศก์อยู่หลังกลางหุ่น 0.27 ม. → ดูใหม่ (ถ้าใกล้จนกล้องไม่เห็น ใช้ตำแหน่งเดิม) → แขน: อ้าปาก → อยู่เหนือลูกบาศก์ 7 ซม. → ลง → หนีบ → ยก 8 ซม. → ขับไปหน้า 0.2 ม. → พับแขนท่าถือของ |
 | DETECT_STATION | เหมือน DETECT_OBJECT แต่หาแผ่นสีฟ้า |
-| PLACE | เข้าใกล้แบบเดียวกัน → แขนไปเหนือแผ่น 8 ซม. → ลง → อ้าปาก → ยกขึ้น → ถอยหลัง → พับแขน |
+| PLACE | ถอยเข้าแบบเดียวกัน → แขนไปเหนือแผ่น 8 ซม. → ลง → อ้าปาก → ยกขึ้น → ขับไปหน้า 0.2 ม. → พับแขน |
 
 ถ้า PICK ไม่สำเร็จ (แขนเอื้อมไม่ถึง) จะกลับไป DETECT_OBJECT ใหม่ ครบ 3 ครั้งจบด้วย `aborted`
 
@@ -779,11 +781,12 @@ Cube released at x=2.849 y=-3.119 z=0.240 - on the Station 2 marker
 
 | ส่วน | ซิม | วันจริง |
 |---|---|---|
-| ภาพ | `fake_camera.py` | ไดรเวอร์ Xtion (ต้องได้ topic ภาพสี + camera_info) แล้วบอกตัวหาด้วย `-p image_topic:=...` |
-| สีลูกบาศก์ / จุดวาง | เขียว / ฟ้า | วัดสีจริง แล้วตั้ง `cube_hsv_low/high`, `marker_hsv_low/high` |
-| ความสูงโต๊ะ | 0.22 ม. | วัดจริง `-p desk_height:=...` |
-| แขน | `arm:=sim` | ไดรเวอร์ SO-100 จริง + `robot_model.launch.py arm:=none` |
-| ตำแหน่งกล้อง/แขนบนหุ่น | ค่าประมาณใน `kobuki_x2.urdf` | วัดจริง แก้ joint `camera_joint`, `so100_mount_joint` (และ `MOUNT` ใน `arm_control.py`) |
+| ภาพ | `fake_camera.py` | `camera_node.py` (Xtion หรือเว็บแคมสำรอง) topic เดียวกัน |
+| สีลูกบาศก์ / จุดวาง | เขียว / ฟ้า | หาด้วย `hsv_tuner.py` แล้วตั้ง `cube_hsv_low/high`, `marker_hsv_low/high` |
+| แขน | `arm:=sim` | `so100_driver.py` (หลัง `so100_calibrate.py`) + `robot_model.launch.py arm:=none` |
+| ตำแหน่งกล้อง/แขน/LiDAR บนหุ่น | ค่าประมาณจากรูปใน `kobuki_x2.urdf` | วัดจริง แก้ `laser_joint`, `camera_joint`, `so100_mount_joint` (โค้ดอ่านจากไฟล์นี้เอง) แล้ว `camera_check.py` |
+
+ทำทีละขั้นพร้อมรูปเทียบ: **[DEMO_DAY_TH.md](DEMO_DAY_TH.md)**
 
 ---
 
@@ -815,16 +818,16 @@ Cube released at x=2.849 y=-3.119 z=0.240 - on the Station 2 marker
 | เลเซอร์ไม่ทับกำแพงบนแผนที่ | AMCL ไม่รู้ว่าหุ่นอยู่ไหน | กด **2D Pose Estimate** ที่ตำแหน่งหุ่นจริง |
 | หุ่นหมุนวนที่เดิม / `number_of_recoveries` เพิ่มเรื่อย ๆ | ติด ทางแคบ | ดู costmap ว่าปิดทางไหม ลด `inflation_radius` ใน `nav2_params.yaml` |
 | `mission_nav2.py` ค้างที่ `Waiting for amcl_pose` | Nav2 (หน้าต่าง 4) ยังไม่เปิดหรือยังไม่พร้อม | เปิด Nav2 ก่อน รอ `bt_navigator: Activating` |
-| `[DETECT_OBJECT] no cube in the camera image` | หน้าต่าง 3 หรือ 4 ไม่ได้เปิด / หุ่นหันไม่ตรงโต๊ะ | เปิดกล้องปลอม + ตัวหา ดูช่อง Camera ใน RViz ว่ามีกรอบแดง |
-| `target ... cm out of reach` | ลูกบาศก์อยู่ไกล/สูงเกินแขน | ดูตารางระยะเอื้อมข้อ 5.2 · วันจริงเช็คความสูงโต๊ะ |
+| `[DETECT_OBJECT] no cube in the camera image` | หน้าต่าง 3 หรือ 4 ไม่ได้เปิด / ท้ายหุ่นไม่ได้หันเข้าลูกบาศก์ | เปิดกล้องปลอม + ตัวหา ดูช่อง Camera ใน RViz ว่ามีกรอบแดง |
+| `target ... cm out of reach` | ลูกบาศก์อยู่ใกล้/ไกลเกินแขน | แขนเอื้อมถึงพื้นที่ 0.20–0.32 ม. หลังกลางหุ่น (ข้อ 5.2) |
 | แขนไม่ขยับเลย | เปิดโมเดลโดยไม่ใส่ `arm:=sim` | ปิดหน้าต่าง 2 เปิดใหม่ด้วย `arm:=sim` |
 
 ---
 
 ## เช็คลิสต์ซ้อมผ่าน
 
-- [ ] ภาค 1: เห็นหุ่น CAD (Kobuki + X2 + แขนส้มด้านหน้า) + แกน `laser` หมุน -90°
-- [ ] ภาค 1: `tf2_echo base_link laser` ได้ z = 0.200
+- [ ] ภาค 1: เห็นหุ่นแบบที่ทีมประกอบ (แขนดำด้านหลัง, LiDAR ฝาน้ำเงินด้านหน้า, Xtion ใต้ชั้นกลาง) + แกน `laser` หมุน -90°
+- [ ] ภาค 1: `tf2_echo base_link laser` ได้ `[0.075, -0.035, 0.247]`
 - [ ] ภาค 2: `/scan` ~4 Hz, `/odom` ~50 Hz
 - [ ] ภาค 2: ตั้ง RViz เองครบ 8 อย่าง (Grid, RobotModel, LaserScan, Odometry, Map, TF, MarkerArray, View) และเซฟ `.rviz`
 - [ ] ภาค 2: ขับวนครบห้องกลับจุดเริ่ม แผนที่ไม่ซ้อน
@@ -835,8 +838,8 @@ Cube released at x=2.849 y=-3.119 z=0.240 - on the Station 2 marker
 - [ ] ภาค 4: RViz เห็น costmap + เส้นเขียว `/plan`
 - [ ] ภาค 4: กด 2D Goal Pose แล้วหุ่นวิ่งไป Station 1 เอง
 - [ ] ภาค 4: `mission_nav2.py --nav-only` จบด้วย `Mission finished: succeeded`
-- [ ] ภาค 5: ช่อง Camera ใน RViz เห็นกรอบแดงรอบลูกบาศก์ที่ Station 1
-- [ ] ภาค 5: `arm_control.py reach 0.30 0.0 0.30` แล้วแขนขยับไปจริง
+- [ ] ภาค 5: ช่อง Camera ใน RViz เห็นกรอบแดงรอบลูกบาศก์ตอนหุ่นจอดหน้า Station 1
+- [ ] ภาค 5: `arm_control.py reach -0.27 0.0 0.10` แล้วแขนเอื้อมออกท้ายไปจริง
 - [ ] ภาค 5: ภารกิจเต็มจบด้วย `Mission finished: succeeded` และหน้าต่าง 1 ขึ้น `on the Station 2 marker`
 
 ผ่านครบแล้ว วันได้หุ่นจริงแค่เปลี่ยนหน้าต่าง 1 จาก `fake_robot.py` เป็น LiDAR + Kobuki (ดู [RUN_GUIDE_TH.md](RUN_GUIDE_TH.md))

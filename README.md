@@ -1,10 +1,12 @@
 # Kobuki Pick & Place — Final Project 01208567
 
-หุ่นยนต์ Kobuki + YDLIDAR X2 + แขน SO-100 วิ่งจาก Initial ไป Station 1 หยิบวัตถุ ไปวางที่ Station 2 แล้วกลับบ้านเอง
+หุ่นยนต์ Kobuki + YDLIDAR X2 + แขน SO-100 + กล้อง ASUS Xtion วิ่งจาก Initial ไป Station 1 หยิบวัตถุบนพื้น ไปวางที่ Station 2 แล้วกลับบ้านเอง
+แขนกับกล้องติดด้านหลังหุ่น (ตามที่ทีมประกอบ) หุ่นจึงจอดหน้าวัตถุแล้วถอยเข้าไปหยิบ
 ทั้งหมดซ้อมได้บนคอมเครื่องเดียว **ไม่ต้องมีหุ่นจริง** เพราะมีหุ่นปลอมที่จำลองห้องสอบตามผังในโจทย์
 
 - **คู่มือรันคำสั่งทีละขั้น:** [`docs/RUN_GUIDE_TH.md`](docs/RUN_GUIDE_TH.md)
 - **คู่มือซ้อมแบบไม่มีหุ่น + ตั้งค่า RViz ทุกช่อง:** [`docs/PRACTICE_NO_ROBOT_TH.md`](docs/PRACTICE_NO_ROBOT_TH.md)
+- **วันเดโม: ประกอบ วัด คาลิเบรตแขน ตั้งกล้อง วิ่งภารกิจ (มีรูปเทียบทุกขั้น):** [`docs/DEMO_DAY_TH.md`](docs/DEMO_DAY_TH.md)
 
 ## ตอนนี้ทำอะไรได้แล้วบ้าง
 
@@ -13,9 +15,11 @@
 | หุ่นปลอม (`/scan`, `/odom`, TF) ในห้องจำลอง | ✅ ใช้ได้ |
 | ทำแผนที่ด้วย SLAM | ✅ ใช้ได้ (แผนที่ห้องจำลองอยู่ใน `robot/maps/`) |
 | Nav2: วิ่งไป Station 1 → Station 2 → กลับบ้านเอง | ✅ ผ่าน 3/3 รอบบน Windows |
-| โมเดลหุ่นใน RViz จากไฟล์ CAD จริง | ✅ ใช้ได้ |
-| ตรวจจับลูกบาศก์ + จุดวางด้วยกล้อง (Xtion ปลอมในซิม) | ✅ ใช้ได้ในซิม · วันจริงต้องตั้งสี/ความสูงโต๊ะ |
-| แขน SO-100 หยิบ/วาง (IK จากไฟล์ CAD) | ✅ ใช้ได้ในซิม · ไดรเวอร์เซอร์โวจริงยังไม่ทำ |
+| โมเดลหุ่นใน RViz ตามที่ทีมประกอบ (CAD จริง + ขนาดจากรูปถ่าย) | ✅ ใช้ได้ · วันจริงวัดตำแหน่งแล้วแก้ URDF |
+| ตรวจจับลูกบาศก์ + จุดวางบนพื้นด้วยกล้อง (Xtion ปลอมในซิม) | ✅ ใช้ได้ในซิม · วันจริงหาสีด้วย `hsv_tuner.py` |
+| ไดรเวอร์กล้องจริง `camera_node.py` (Xtion / เว็บแคมสำรอง) + `camera_check.py` | ✅ เว็บแคม/ไฟล์ภาพทดสอบแล้ว · Xtion ยังไม่ได้ลองกับของจริง |
+| แขน SO-100 หยิบ/วาง (IK จากไฟล์ CAD) | ✅ ใช้ได้ในซิม (ภารกิจเต็มผ่าน 28 ต.ค.) |
+| ไดรเวอร์เซอร์โวจริง `so100_driver.py` + `so100_calibrate.py` | ✅ ทดสอบกับเซอร์โวจำลองแล้ว · ยังไม่ได้ลองกับแขนจริง |
 | ไดรเวอร์หุ่นจริง (Kobuki, LiDAR) | ✅ ทดสอบกับหุ่นจริงแล้ว 11 และ 18 ต.ค. |
 
 ---
@@ -98,8 +102,11 @@ echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 |---|---|
 | `robot/fake_robot.py` | หุ่นปลอม: ห้องสอบจำลอง ส่ง `/scan` `/odom` TF เหมือนหุ่นจริง |
 | `robot/lidar_ros2.py`, `robot/kobuki_ros2.py` | ไดรเวอร์หุ่นจริง (ใช้วันจริงแทน `fake_robot.py`) |
-| `robot/kobuki_x2.urdf`, `robot/robot_model.launch.py`, `robot/meshes/` | โมเดลหุ่นจากไฟล์ CAD + ตำแหน่ง LiDAR (สูง 0.20 ม. หมุน −90°) |
-| `robot/arm_rest_publisher.py` | ส่งท่าพับของแขน SO-100 จนกว่าจะมีไดรเวอร์แขนจริง |
+| `robot/kobuki_x2.urdf`, `robot/robot_model.launch.py`, `robot/meshes/` | โมเดลหุ่นตามที่ประกอบ + ตำแหน่ง LiDAR / แขน / กล้อง (โค้ดทุกตัวอ่านจากไฟล์นี้) |
+| `robot/arm_rest_publisher.py` | ส่งท่าพับของแขน SO-100 ตอนไม่ได้เปิดไดรเวอร์แขน |
+| `robot/so100_driver.py`, `robot/so100_calibrate.py`, `robot/feetech.py` | ไดรเวอร์แขนจริง (เซอร์โว Feetech STS3215) + คาลิเบรต 3 ท่า |
+| `robot/camera_node.py`, `robot/hsv_tuner.py`, `robot/camera_check.py` | กล้องจริง, หาสีวัตถุ, เช็คมุมกล้องด้วยตลับเมตร |
+| `robot/fake_camera.py`, `robot/fake_arm.py`, `robot/cube_detector.py`, `robot/arm_control.py` | กล้อง/แขนปลอมในซิม, ตัวหาวัตถุ, IK + ท่าหยิบวาง |
 | `robot/slam_params.yaml`, `robot/mapping.rviz` | ค่าตั้งทำแผนที่และ RViz |
 | `robot/nav2_params.yaml`, `robot/nav2.launch.py`, `robot/lifecycle_up.py` | Nav2 |
 | `robot/mission_nav2.py` | state machine ภารกิจเต็ม |
@@ -113,5 +120,5 @@ echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 
 - Kobuki: ไฟล์ CAD ของ Yujin Robot จาก [kobuki_description](https://github.com/kobuki-base/kobuki_ros/tree/devel/kobuki_description) (BSD)
 - SO-100: ไฟล์ของ TheRobotStudio ผ่าน [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie/tree/main/trs_so_arm100) (Apache-2.0)
-- YDLIDAR X2: ขึ้นรูปเองตามแบบในดาต้าชีท
+- YDLIDAR X2, ASUS Xtion, แผ่นอะคริลิก: ขึ้นรูปเองตามดาต้าชีทและรูปถ่าย (`tools/make_meshes.py`)
 - รายละเอียดอยู่ใน `robot/meshes/NOTICE.txt`

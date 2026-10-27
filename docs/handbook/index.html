@@ -337,9 +337,9 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
   <p>โจทย์: สร้างระบบ <strong>Autonomous Pick &amp; Place</strong> บนหุ่นยนต์เคลื่อนที่อัตโนมัติ หุ่นต้องทำ 5 อย่างต่อกันเองโดยไม่มีคนช่วย</p>
   <ol>
     <li>ออกจาก <strong>Initial Location</strong> ไป <strong>Station 1</strong></li>
-    <li>แขนกลหยิบวัตถุบนโต๊ะ</li>
+    <li>แขนกลหยิบวัตถุ (วันเดโมวางบนพื้น)</li>
     <li>ไป <strong>Station 2</strong></li>
-    <li>แขนกลวางวัตถุบนโต๊ะ</li>
+    <li>แขนกลวางวัตถุที่จุดวาง (บนพื้น)</li>
     <li>กลับจุดเริ่มต้น</li>
   </ol>
   <figure class="fig"><svg id="plan" viewBox="262 520 430 540" role="img" aria-label="ผังห้องสอบ มีห้องบน ห้องล่าง และทางเดินขวา"></svg></figure>
@@ -383,8 +383,8 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
 <!-- 03 HARDWARE -->
 <section class="chapter" id="hardware">
   <h2>รู้จักหุ่นยนต์ของเรา</h2>
-  <p class="sub">หุ่น 1 คันมี 3 ชิ้นหลัก กดปุ่มด้านบนภาพเพื่อเลือกดูทีละชิ้น ลากเพื่อหมุนดูรอบตัว</p>
-  <p class="sub">โมเดลเป็นไฟล์ CAD ของผู้ผลิต: Kobuki จาก <a href="https://github.com/kobuki-base/kobuki_ros/tree/devel/kobuki_description/meshes">Yujin Robot (kobuki_description)</a> และ SO-100 จาก <a href="https://github.com/google-deepmind/mujoco_menagerie/tree/main/trs_so_arm100">TheRobotStudio ผ่าน MuJoCo Menagerie</a> (<a href="cad/SO100_LICENSE.txt">Apache-2.0</a>, ที่มาและสิ่งที่แก้ไขดูใน <a href="cad/NOTICE.txt">NOTICE</a>) ข้อต่อแขนตรงกับไฟล์ <code>so_arm100.xml</code> ส่วน YDLIDAR X2 ผู้ผลิตไม่แจกไฟล์ CAD จึงขึ้นรูปตามแบบในดาต้าชีท (96.0 × 60.5 × 50.3 มม.) <strong>ตำแหน่งติดแขนและแผ่นรอง LiDAR เป็นค่าประมาณ</strong> เพราะยังไม่มีรูปหุ่นจริง ความสูง LiDAR 0.20 ม. มาจาก URDF ที่ calibrate แล้ว</p>
+  <p class="sub">หุ่น 1 คันมี 4 ชิ้นหลัก: ฐานล้อ, LiDAR, แขน, กล้อง กดปุ่มด้านบนภาพเพื่อเลือกดูทีละชิ้น ลากเพื่อหมุนดูรอบตัว <strong>แขนกับกล้องอยู่ด้านหลัง</strong> (ด้านแผงพอร์ต) หุ่นจึงถอยเข้าหาวัตถุ</p>
+  <p class="sub">โมเดลเป็นไฟล์ CAD ของผู้ผลิต: Kobuki จาก <a href="https://github.com/kobuki-base/kobuki_ros/tree/devel/kobuki_description/meshes">Yujin Robot (kobuki_description)</a> และ SO-100 จาก <a href="https://github.com/google-deepmind/mujoco_menagerie/tree/main/trs_so_arm100">TheRobotStudio ผ่าน MuJoCo Menagerie</a> (<a href="cad/SO100_LICENSE.txt">Apache-2.0</a>, ที่มาและสิ่งที่แก้ไขดูใน <a href="cad/NOTICE.txt">NOTICE</a>) ข้อต่อแขนตรงกับไฟล์ <code>so_arm100.xml</code> ส่วน YDLIDAR X2 ผู้ผลิตไม่แจกไฟล์ CAD จึงขึ้นรูปตามแบบในดาต้าชีท (96.0 × 60.5 × 50.3 มม.) กล้อง Xtion กับแผ่นอะคริลิกขึ้นรูปตามขนาดจริง <strong>ตำแหน่งทุกชิ้นประมาณจากรูปหุ่นที่ทีมประกอบ</strong> วันเดโมวัดของจริงแล้วแก้ใน <code>kobuki_x2.urdf</code> (โค้ดทุกตัวอ่านค่าจากไฟล์นี้)</p>
   <div class="hw">
     <div>
       <div class="hw-tabs" role="group" aria-label="เลือกชิ้นส่วน">
@@ -421,7 +421,7 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
       <tr><td><code>map</code></td><td>พิกัดของแผนที่ ไม่ขยับตามหุ่น</td><td>slam_toolbox (ภายหลังคือ Nav2/AMCL)</td></tr>
       <tr><td><code>odom</code></td><td>จุดที่หุ่นเปิดเครื่อง นับจากการหมุนของล้อ ยิ่งวิ่งไกลยิ่งเพี้ยน</td><td><code>kobuki_ros2.py</code> หรือ <code>fake_robot.py</code></td></tr>
       <tr><td><code>base_link</code></td><td>กลางตัวหุ่นบนพื้น แกนแดง (X) ชี้ไปหน้าหุ่น</td><td>–</td></tr>
-      <tr><td><code>laser</code></td><td>ตัว LiDAR สูง 0.20 ม. หมุน −90° (calibrate จากหุ่นจริง 18 ต.ค.)</td><td>robot_state_publisher อ่านจาก URDF</td></tr>
+      <tr><td><code>laser</code></td><td>ตัว LiDAR หน้ากลางหุ่น 7.5 ซม. สูง 0.247 ม. หมุน −90° (มุม calibrate จากหุ่นจริง 18 ต.ค.)</td><td>robot_state_publisher อ่านจาก URDF</td></tr>
     </tbody></table></div>
 </section>
 
@@ -533,8 +533,8 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
 
   <div class="step"><span class="n">1</span><div>
     <h3>หน้าต่าง A: เปิดโมเดลหุ่น <span class="need free">ไม่ต้องมีหุ่น</span></h3>
-    <div class="cmd" data-title="หน้าต่าง A · Robot model" data-win="pixi run ros2 launch robot\robot_model.launch.py" data-ubu="ros2 launch ./robot_model.launch.py" data-out="[INFO] [launch]: Default logging verbosity is set to INFO&#10;[INFO] [robot_state_publisher.EXE-1]: process started with pid [24244]&#10;[INFO] [python.exe-2]: process started with pid [26884]&#10;[robot_state_publisher] got segment base_link&#10;[robot_state_publisher] got segment gripper_tip&#10;[robot_state_publisher] got segment laser&#10;[robot_state_publisher] got segment lidar_deck&#10;[robot_state_publisher] got segment so100_base&#10;[robot_state_publisher] got segment so100_gripper&#10;[robot_state_publisher] got segment so100_jaw&#10;[robot_state_publisher] got segment so100_lower_arm&#10;[robot_state_publisher] got segment so100_shoulder&#10;[robot_state_publisher] got segment so100_upper_arm&#10;[robot_state_publisher] got segment so100_wrist&#10;[robot_state_publisher] got segment wheel_left_link&#10;[robot_state_publisher] got segment wheel_right_link"></div>
-    <div class="expect">ครบ 13 บรรทัด <code>got segment</code> (ผลจริงจากเครื่องทีม 27 ต.ค.) = ROS รู้จักชิ้นส่วนของหุ่นแล้ว · <code>python.exe-2</code> คือ <code>arm_rest_publisher.py</code> ที่ส่งท่าพับของแขนทาง <code>/joint_states</code> ไม่มีตัวนี้แขนจะไม่ขึ้นใน RViz</div>
+    <div class="cmd" data-title="หน้าต่าง A · Robot model" data-win="pixi run ros2 launch robot\robot_model.launch.py" data-ubu="ros2 launch ./robot_model.launch.py" data-out="[INFO] [launch]: Default logging verbosity is set to INFO&#10;[INFO] [robot_state_publisher.EXE-1]: process started with pid [24244]&#10;[INFO] [python.exe-2]: process started with pid [26884]&#10;[robot_state_publisher] got segment base_link&#10;[robot_state_publisher] got segment battery&#10;[robot_state_publisher] got segment battery_button&#10;[robot_state_publisher] got segment camera_color_optical_frame&#10;[robot_state_publisher] got segment camera_link&#10;[robot_state_publisher] got segment decks&#10;[robot_state_publisher] got segment gripper_tip&#10;[robot_state_publisher] got segment laser&#10;[robot_state_publisher] got segment laser_cap&#10;[robot_state_publisher] got segment servo_terminal&#10;[robot_state_publisher] got segment so100_base&#10;[robot_state_publisher] got segment so100_gripper&#10;[robot_state_publisher] got segment so100_jaw&#10;[robot_state_publisher] got segment so100_lower_arm&#10;[robot_state_publisher] got segment so100_shoulder&#10;[robot_state_publisher] got segment so100_upper_arm&#10;[robot_state_publisher] got segment so100_wrist&#10;[robot_state_publisher] got segment standoffs&#10;[robot_state_publisher] got segment wheel_left_link&#10;[robot_state_publisher] got segment wheel_right_link&#10;[robot_state_publisher] got segment white_plates"></div>
+    <div class="expect">ครบ 21 บรรทัด <code>got segment</code> (ผลจริงจากเครื่องทีม 28 ต.ค.) = ROS รู้จักชิ้นส่วนของหุ่นแล้ว · <code>python.exe-2</code> คือ <code>arm_rest_publisher.py</code> ที่ส่งท่าพับของแขนทาง <code>/joint_states</code> ไม่มีตัวนี้แขนจะไม่ขึ้นใน RViz</div>
     <p>รูปหุ่นใน RViz มาจากไฟล์ CAD ในโฟลเดอร์ <code>meshes/</code> ข้างไฟล์ launch ย้ายเครื่องต้องย้ายโฟลเดอร์นี้ไปด้วย วันที่มีไดรเวอร์แขนจริงให้เติม <code>arm:=none</code> ท้ายคำสั่ง</p>
   </div></div>
 
@@ -579,8 +579,8 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
     </ol>
     <div class="rv" data-rows='[[0,"RobotModel","☑","d"],[1,"✓ Status: Ok","","ok"],[1,"Visual Enabled","☑",""],[1,"Alpha","1",""],[1,"Description Source","Topic","1"],[1,"Description Topic","/robot_description","2"],[2,"Depth","5",""],[2,"History Policy","Keep Last",""],[2,"Reliability Policy","Reliable",""],[2,"Durability Policy","Transient Local","3"]]'></div>
     <div class="note bad"><b>จุดที่พลาดบ่อยที่สุด:</b> Durability ต้องเป็น <strong>Transient Local</strong> เพราะ robot_state_publisher ส่งโมเดลแค่ครั้งเดียวตอนเปิด ถ้าเป็น Volatile, RViz ที่เปิดทีหลังจะไม่ได้รับ หุ่นจะไม่ขึ้น</div>
-    <div class="expect">หุ่นจากไฟล์ CAD แบบในภาพ: Kobuki สีดำมี<strong>จุดเหลืองบนหลัง</strong> · LiDAR X2 บนแผ่นรองสีเทา · <strong>แขน SO-100 สีส้มพับอยู่ด้านหน้า</strong> (ฝั่งที่แขนยื่นไป = หน้าหุ่น) ถ้า RobotModel ขึ้น <code>Could not load resource</code> แปลว่าหาโฟลเดอร์ <code>meshes/</code> ไม่เจอ</div>
-    <figure class="fig"><img src="img/rviz_cad.png" alt="RViz แสดงหุ่น Kobuki แขน SO-100 และ LiDAR X2 จากไฟล์ CAD" width="840" height="560" style="image-rendering:auto"></figure>
+    <div class="expect">หุ่นแบบในภาพ: Kobuki สีดำมี<strong>จุดเหลืองบนหลัง</strong> · แผ่นอะคริลิกใส 2 ชั้น · LiDAR <strong>ฝาน้ำเงิน</strong>ด้านหน้า · แบตสีดำปุ่มแดง · <strong>แขน SO-100 สีดำ ฐานหันออกท้ายหุ่น</strong> · กล้อง Xtion ใต้ชั้นกลาง (ด้านหน้า = กันชน) ถ้า RobotModel ขึ้น <code>Could not load resource</code> แปลว่าหาโฟลเดอร์ <code>meshes/</code> ไม่เจอ</div>
+    <figure class="fig"><img src="img/rviz_asbuilt.png" alt="RViz แสดงหุ่นที่ทีมประกอบ มองจากหลังเฉียงซ้าย: แบตปุ่มแดง แขนสีดำด้านหลัง LiDAR ฝาน้ำเงินด้านหน้า" width="638" height="457" style="image-rendering:auto;max-width:640px"></figure>
     <figcaption>ภาพหน้าจอ RViz จริงจากเครื่องทีม (Windows, 27 ต.ค.) หลังเปิด <code>robot_model.launch.py</code> ปิด TF ไว้ให้เห็นตัวหุ่นชัด</figcaption>
   </div></div>
 
@@ -736,16 +736,16 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
     <h3>หาพิกัด Station (ต้องใช้กับ Nav2)</h3>
     <ol>
       <li>หน้าต่าง 7 รันคำสั่งข้างล่าง</li>
-      <li>ใน RViz กดปุ่ม <strong>Publish Point</strong> บนแถบเครื่องมือ แล้วคลิกบนวง Station 1</li>
-      <li>หน้าต่าง 7 จะขึ้นพิกัด จดไว้ ทำซ้ำกับ Station 2 และ Initial</li>
+      <li>ใน RViz กดปุ่ม <strong>Publish Point</strong> บนแถบเครื่องมือ แล้วคลิกตรง<strong>ลูกบาศก์</strong>ที่ Station 1</li>
+      <li>หน้าต่าง 7 จะขึ้นพิกัด จดไว้ ทำซ้ำกับ<strong>แผ่นจุดวาง</strong>ที่ Station 2</li>
     </ol>
-    <div class="cmd" data-title="หน้าต่าง 7 · สำรอง" data-win="pixi run ros2 topic echo /clicked_point" data-ubu="ros2 topic echo /clicked_point" data-out="header:&#10;  frame_id: map&#10;point:&#10;  x: 5.04&#10;  y: 1.32&#10;  z: 0.0"></div>
-    <div class="tbl"><table><thead><tr><th>จุด</th><th style="text-align:right">x (ม.)</th><th style="text-align:right">y (ม.)</th><th>หันหน้า</th></tr></thead><tbody>
-      <tr><td>Initial</td><td class="num">0.00</td><td class="num">0.00</td><td>ไป Station 1 (0°)</td></tr>
-      <tr><td>Station 1</td><td class="num">5.04</td><td class="num">1.32</td><td>เข้าหาโต๊ะ (0°)</td></tr>
-      <tr><td>Station 2</td><td class="num">2.85</td><td class="num">−2.58</td><td>เข้าหาโต๊ะ (−90°)</td></tr>
+    <div class="cmd" data-title="หน้าต่าง 7 · สำรอง" data-win="pixi run ros2 topic echo /clicked_point" data-ubu="ros2 topic echo /clicked_point" data-out="header:&#10;  frame_id: map&#10;point:&#10;  x: 5.30&#10;  y: 1.32&#10;  z: 0.0"></div>
+    <div class="tbl"><table><thead><tr><th>จุด</th><th style="text-align:right">x (ม.)</th><th style="text-align:right">y (ม.)</th><th>ทิศที่หุ่นเข้าหา</th></tr></thead><tbody>
+      <tr><td>Initial</td><td class="num">0.00</td><td class="num">0.00</td><td>หันไป Station 1 (0°)</td></tr>
+      <tr><td>Station 1 (ลูกบาศก์)</td><td class="num">5.30</td><td class="num">1.32</td><td>เข้าทาง +x (0°)</td></tr>
+      <tr><td>Station 2 (จุดวาง)</td><td class="num">2.85</td><td class="num">−2.90</td><td>เข้าทาง −y (−90°)</td></tr>
     </tbody></table></div>
-    <p>ค่านี้เป็นของห้องจำลอง วันจริงทำแบบเดียวกันบนแผนที่ห้องจริง แล้วเอาไปใส่ใน state machine</p>
+    <p>ค่านี้เป็นของห้องจำลอง วันจริงทำแบบเดียวกันบนแผนที่ห้องจริง แล้วใส่ใน <code>STATIONS</code> ของ <code>mission_nav2.py</code> เป็น (x, y, ทิศ) ของ<strong>วัตถุ</strong> หุ่นคำนวณจุดจอดเอง: ห่างวัตถุ 0.65 ม. ท้ายหันเข้าหา แล้วถอยเข้าไป ทิศ = ทางที่หุ่นวิ่งเข้าหาวัตถุ เลือกทางที่พื้นโล่งอย่างน้อย 0.9 ม.</p>
     <div class="tbl"><table><thead><tr><th>ปุ่มอื่นบนแถบเครื่องมือ</th><th>ส่งไป</th><th>ใช้ตอนไหน</th></tr></thead><tbody>
       <tr><td>2D Pose Estimate</td><td><code>/initialpose</code></td><td>บอก Nav2 ว่าหุ่นอยู่ตรงไหนบนแผนที่ (ยังไม่มีผลจนกว่าจะมี Nav2)</td></tr>
       <tr><td>2D Goal Pose</td><td><code>/goal_pose</code></td><td>สั่ง Nav2 ให้หุ่นไปจุดนั้น</td></tr>
@@ -811,39 +811,69 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
     <g font-family="IBM Plex Mono, monospace" font-size="12" text-anchor="middle" id="sm-svg"></g></svg></figure>
   <div class="tbl"><table><thead><tr><th>State</th><th>ทำอะไร</th><th>ไฟล์</th><th>สถานะงาน</th></tr></thead><tbody>
     <tr><td><code>INIT</code></td><td>บอก AMCL ว่าอยู่ Initial รอ Nav2 พร้อม พับแขน</td><td><code>mission_nav2.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
-    <tr><td><code>NAV_STATION1</code></td><td>ส่งพิกัด Station 1 ให้ Nav2</td><td>Nav2</td><td><span class="st done">ผ่านในซิม</span></td></tr>
-    <tr><td><code>DETECT_OBJECT</code></td><td>กล้องหาลูกบาศก์จากสี + ความสูงโต๊ะ ได้ตำแหน่ง x, y</td><td><code>cube_detector.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
-    <tr><td><code>PICK</code></td><td>หันเข้าหา ขับจนห่าง 0.30 ม. แขนหยิบ ถอย พับแขน</td><td><code>arm_control.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
-    <tr><td><code>NAV_STATION2</code></td><td>ไป Station 2</td><td>Nav2</td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>NAV_STATION1</code></td><td>Nav2 ไปจอดห่างลูกบาศก์ 0.65 ม. ท้ายหุ่นหันเข้าหา</td><td>Nav2</td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>DETECT_OBJECT</code></td><td>กล้อง (มองออกท้าย) หาลูกบาศก์บนพื้นจากสี ได้ตำแหน่ง x, y</td><td><code>cube_detector.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>PICK</code></td><td>ถอยเข้าจนลูกบาศก์อยู่หลังกลางหุ่น 0.27 ม. แขนเอื้อมออกท้ายหยิบ ขับออก 0.2 ม. พับแขน</td><td><code>arm_control.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>NAV_STATION2</code></td><td>ไปจอดห่างจุดวาง 0.65 ม. ท้ายหันเข้าหา</td><td>Nav2</td><td><span class="st done">ผ่านในซิม</span></td></tr>
     <tr><td><code>DETECT_STATION</code></td><td>กล้องหาแผ่นจุดวาง</td><td><code>cube_detector.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
-    <tr><td><code>PLACE</code></td><td>เข้าใกล้ แขนวาง อ้าปาก ถอย พับแขน</td><td><code>arm_control.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>PLACE</code></td><td>ถอยเข้าแบบเดียวกัน แขนวาง อ้าปาก ขับออก พับแขน</td><td><code>arm_control.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
     <tr><td><code>RETURN_HOME</code></td><td>กลับพิกัดบ้าน</td><td>Nav2</td><td><span class="st done">ผ่านในซิม</span></td></tr>
-    <tr><td>ของจริง</td><td>ไดรเวอร์แขน SO-100 (เซอร์โว STS3215), ไดรเวอร์กล้อง Xtion</td><td>–</td><td><span class="st next">ทำต่อ</span></td></tr>
+    <tr><td>ของจริง</td><td>ไดรเวอร์แขน + คาลิเบรต 3 ท่า, ไดรเวอร์กล้อง (Xtion / เว็บแคมสำรอง), หาสี, เช็คมุมกล้อง</td><td><code>so100_driver.py</code>, <code>camera_node.py</code></td><td><span class="st next">พร้อมลองวันเดโม</span></td></tr>
   </tbody></table></div>
   <h3>รันภารกิจเต็มในซิม (7 หน้าต่าง)</h3>
-  <p>ห้องจำลองมี<strong>ลูกบาศก์สีเขียว 4 ซม.</strong>บนโต๊ะ Station 1 (เยื้องแบบสุ่ม ±3 ซม. ทุกรอบ) และ<strong>แผ่นสีฟ้า</strong>บนโต๊ะ Station 2 = จุดวาง กล้องปลอมถ่ายภาพจากตำแหน่งกล้องบนหุ่นตาม TF ตัวหาวัตถุตัวเดียวกันนี้ใช้กับกล้อง Xtion จริงได้เลย</p>
+  <p>ห้องจำลองมี<strong>ลูกบาศก์สีเขียว 4 ซม.</strong>บนพื้นที่ Station 1 (เยื้องแบบสุ่ม ±3 ซม. ทุกรอบ) และ<strong>แผ่นสีฟ้า</strong>บนพื้นที่ Station 2 = จุดวาง กล้องปลอมถ่ายภาพจากตำแหน่งกล้องบนหุ่นตาม TF ตัวหาวัตถุตัวเดียวกันนี้ใช้กับกล้อง Xtion จริงได้เลย</p>
   <div class="cmd" data-title="หน้าต่าง 1 · หุ่นปลอม" data-win="pixi run python robot\fake_robot.py" data-ubu="python3 fake_robot.py"></div>
   <div class="cmd" data-title="หน้าต่าง 2 · โมเดล + แขนปลอม" data-win="pixi run ros2 launch robot\robot_model.launch.py arm:=sim" data-ubu="ros2 launch ./robot_model.launch.py arm:=sim"></div>
   <div class="cmd" data-title="หน้าต่าง 3 · กล้องปลอม" data-win="pixi run python robot\fake_camera.py" data-ubu="python3 fake_camera.py"></div>
   <div class="cmd" data-title="หน้าต่าง 4 · ตัวหาวัตถุ" data-win="pixi run python robot\cube_detector.py" data-ubu="python3 cube_detector.py"></div>
   <div class="cmd" data-title="หน้าต่าง 5 · Nav2" data-win="pixi run ros2 launch robot\nav2.launch.py" data-ubu="ros2 launch ./nav2.launch.py"></div>
   <div class="cmd" data-title="หน้าต่าง 6 · RViz" data-win="pixi run rviz2 -d robot\mission.rviz" data-ubu="rviz2 -d mission.rviz"></div>
-  <div class="cmd" data-title="หน้าต่าง 7 · ภารกิจ" data-win="pixi run python robot\mission_nav2.py" data-ubu="python3 mission_nav2.py" data-out="[INIT] Nav2 is active - folding the arm&#10;[NAV_STATION1] arrived in 55 s&#10;[DETECT_OBJECT] cube at x=5.476 y=1.325 (odom) = 0.47 m ahead, -0.09 m left of the robot&#10;  approach: cube is 0.47 m ahead, driving +0.17 m&#10;[PICK] cube at 0.303 -0.004 0.240 (base_link) - moving the arm&#10;[PICK] done&#10;[NAV_STATION2] arrived in 56 s&#10;[DETECT_STATION] station at x=2.849 y=-3.118 (odom) = 0.55 m ahead, -0.07 m left of the robot&#10;[PLACE] done&#10;[RETURN_HOME] arrived in 60 s&#10;Mission finished: succeeded in 207 s"></div>
-  <div class="expect">ผลจริงจากเครื่องทีม 27 ต.ค.: <code>Mission finished: succeeded in 207 s</code> และหน้าต่าง 1 ขึ้น <code>Cube released at x=2.849 y=-3.119 ... on the Station 2 marker</code> กล้องหาตำแหน่งคลาดจากจริง 1 มม. วางห่างกลางแผ่น 1.4 มม.</div>
+  <div class="cmd" data-title="หน้าต่าง 7 · ภารกิจ" data-win="pixi run python robot\mission_nav2.py" data-ubu="python3 mission_nav2.py" data-out="[INIT] Nav2 is active - folding the arm&#10;[NAV_STATION1] go to STATION1 x=4.65 y=1.32 yaw=180 deg&#10;[NAV_STATION1] arrived in 57 s&#10;[DETECT_OBJECT] cube at x=5.301 y=1.322 (odom) = -0.64 m ahead, +0.15 m left of the robot&#10;  approach: cube is 0.65 m behind, driving -0.38 m&#10;  cube is now too close for the camera - using where it was seen before&#10;[PICK] cube at -0.273 +0.006 0.020 (base_link) - moving the arm&#10;[PICK] done&#10;[NAV_STATION2] arrived in 59 s&#10;[DETECT_STATION] station at x=2.858 y=-2.908 (odom) = -0.61 m ahead, +0.17 m left of the robot&#10;[PLACE] done&#10;[RETURN_HOME] arrived in 64 s&#10;Mission finished: succeeded in 229 s"></div>
+  <div class="expect">ผลจริงจากเครื่องทีม 28 ต.ค. (หุ่นแบบที่ประกอบจริง): <code>Mission finished: succeeded in 229 s</code> และหน้าต่าง 1 ขึ้น <code>Cube released at x=2.858 y=-2.909 ... on the Station 2 marker</code> กล้องหาตำแหน่งคลาดจากจริง 4 มม. วางห่างกลางแผ่น 1 ซม. ("ahead" ติดลบ = อยู่หลังหุ่น)</div>
   <div class="grid2">
-    <figure class="fig"><img src="img/camera_station1_sim.png" alt="ภาพจากกล้องปลอมที่ Station 1 ตัวหาวัตถุตีกรอบลูกบาศก์สีเขียว" width="640" height="480" style="image-rendering:auto"></figure>
+    <figure class="fig"><img src="img/camera_station1_sim.png" alt="ภาพจากกล้องปลอมตอนจอดหน้า Station 1 ตัวหาวัตถุตีกรอบลูกบาศก์สีเขียวบนพื้น" width="640" height="480" style="image-rendering:auto"></figure>
     <figure class="fig"><img src="img/mission_path_sim.png" alt="เส้นทางจริงของหุ่นทั้งภารกิจบนแผนที่" width="918" height="726" style="image-rendering:auto"></figure>
   </div>
-  <figcaption>ซ้าย: สิ่งที่กล้องเห็นที่ Station 1 (กรอบแดง = ตัวหาวัตถุเจอ) · ขวา: เส้นทางจริงของหุ่นทั้งรอบ</figcaption>
-  <div class="note"><b>ทำไมไม่ใช้ระยะลึกของ Xtion:</b> กล้องวัดระยะได้ตั้งแต่ ~0.8 ม. แต่ตอนหยิบลูกบาศก์อยู่ห่างกล้องแค่ ~0.4 ม. ตัวหาจึงใช้ภาพสีอย่างเดียว ลากเส้นจากกล้องผ่านจุดสีไปชนระนาบโต๊ะ (รู้ความสูงโต๊ะ) <strong>วันจริงต้องวัดความสูงโต๊ะ</strong> และแขนเอื้อมได้ถึงจุดกลางลูกบาศก์ไม่เกิน ~0.28 ม. จากพื้น</div>
-  <p>ซ้อมแค่การวิ่ง (ไม่ต้องเปิดหน้าต่าง 3–4): <code>mission_nav2.py --nav-only</code> · ลองสั่งแขนเอง: <code>arm_control.py open</code>, <code>reach 0.30 0.0 0.30</code>, <code>rest</code> · รายละเอียดทั้งหมดอยู่ใน <code>docs/PRACTICE_NO_ROBOT_TH.md</code> ภาค 5</p>
+  <figcaption>ซ้าย: สิ่งที่กล้องเห็นตอนจอดหน้า Station 1 (ลูกบาศก์อยู่ล่างภาพ กรอบแดง = ตัวหาเจอ) · ขวา: เส้นทางจริงทั้งรอบ จอดหน้าแต่ละ Station แล้วถอยเข้า</figcaption>
+  <div class="note"><b>ทำไมไม่ใช้ระยะลึกของ Xtion:</b> กล้องวัดระยะได้ตั้งแต่ ~0.8 ม. แต่ตอนหยิบลูกบาศก์อยู่ห่างกล้องแค่ ~0.4 ม. ตัวหาจึงใช้ภาพสีอย่างเดียว ลากเส้นจากกล้องผ่านจุดสีไปชนพื้น (วัตถุอยู่บนพื้น) แขนเอื้อมถึงพื้นได้ 0.20–0.32 ม. หลังกลางหุ่น ภารกิจใช้ 0.27 ม.</div>
+  <p>ซ้อมแค่การวิ่ง (ไม่ต้องเปิดหน้าต่าง 3–4): <code>mission_nav2.py --nav-only</code> · ลองสั่งแขนเอง: <code>arm_control.py open</code>, <code>reach -0.27 0.0 0.10</code> (x ติดลบ = หลังหุ่น), <code>rest</code> · รายละเอียดทั้งหมดอยู่ใน <code>docs/PRACTICE_NO_ROBOT_TH.md</code> ภาค 5</p>
+  <h3>วันเดโม: ทำตามลำดับ มีรูปเทียบทุกขั้น</h3>
+  <p>ฉบับเต็ม (ของที่ต้องเอาไป ตารางพอร์ต ทางสำรองเมื่อมีปัญหา) อยู่ใน <a href="https://github.com/SSRobotic/kobuki-pick-place/blob/main/docs/DEMO_DAY_TH.md"><code>docs/DEMO_DAY_TH.md</code></a> ข้างล่างคือขั้นที่ต้องเทียบภาพ</p>
+  <ol class="steps">
+    <li><strong>ประกอบให้ตรงโมเดล</strong> หน้า = กันชน · หลัง = แผงพอร์ต · แขนบนแผ่นขาวหันออกท้าย · Xtion ใต้ชั้นกลางมองออกท้าย · สายห้ามผ่านระนาบเลเซอร์ (สูง ~0.25 ม.) · Kobuki ไม่มีกันชนหลัง ด้านหลังวัตถุต้องโล่ง</li>
+    <li><strong>วัดตำแหน่งจริง</strong> แล้วแก้ <code>laser_joint</code>, <code>so100_mount_joint</code>, <code>camera_joint</code> ใน <code>kobuki_x2.urdf</code> วัดจากกลางระหว่างล้อ x ไปหน้า y ไปซ้าย</li>
+  </ol>
+  <figure class="fig"><img src="img/measure_points.png" alt="จุดที่ต้องวัด มองจากบนและจากด้านขวา พร้อมค่าตอนนี้ใน URDF" width="1740" height="860" style="image-rendering:auto"></figure>
+  <figcaption>จุดที่ต้องวัดและค่าประมาณที่อยู่ในไฟล์ตอนนี้ (เมตร)</figcaption>
+  <ol class="steps" start="3">
+    <li><strong>คาลิเบรตแขน</strong> โปรแกรมปล่อยแรงบิด (ประคองแขนไว้) ให้จัดท่าด้วยมือ 3 ท่าตามรูป แล้วคำนวณศูนย์กับทิศของทุกข้อเอง</li>
+  </ol>
+  <div class="cmd" data-title="คาลิเบรตแขน (ครั้งเดียว)" data-win="pixi run python robot\so100_calibrate.py" data-ubu="python3 so100_calibrate.py" data-out="1/3 ท่า REST: ฐานแขนหันตรงออกท้ายหุ่น พับแขนสุด ... เหมือนรูป calib_1_rest&#10;   จัดท่าแล้วกด Enter&#10;2/3 ท่า HOME: ... เหมือนรูป calib_2_home&#10;3/3 หมุนฐานแขน 90 องศาให้แขนชี้ไปทางขวาของหุ่น ... เหมือนรูป calib_3_pan_90&#10;saved ...\robot\so100_calibration.yaml"></div>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+    <figure class="fig"><img src="img/calib_1_rest.png" alt="ท่า 1 REST มองจากด้านขวาของหุ่น" width="800" height="648" style="image-rendering:auto"></figure>
+    <figure class="fig"><img src="img/calib_2_home.png" alt="ท่า 2 HOME มองจากด้านขวาของหุ่น" width="942" height="750" style="image-rendering:auto"></figure>
+    <figure class="fig"><img src="img/calib_3_pan_90.png" alt="ท่า 3 หมุนฐานแขน 90 องศาไปทางขวาของหุ่น มองจากบน" width="634" height="530" style="image-rendering:auto"></figure>
+  </div>
+  <ol class="steps" start="4">
+    <li><strong>ลองแขนทีละคำสั่ง</strong> เปิด <code>robot_model.launch.py arm:=none</code> กับ <code>so100_driver.py</code> แล้ว <code>arm_control.py carry</code> → <code>open</code> → <code>close</code> → <code>reach -0.27 0.0 0.03</code> (เอาไม้บรรทัดวัด คลาดไม่เกิน 1 ซม.) → <code>rest</code></li>
+    <li><strong>หาสีวัตถุ</strong> <code>hsv_tuner.py</code> คลิกที่ลูกบาศก์ (ปุ่ม 1) และแผ่นจุดวาง (ปุ่ม 2) ภาพขวาต้องเป็นก้อนขาวเฉพาะวัตถุ ได้บรรทัด <code>-p ...</code> ไปใส่ตัวหา</li>
+  </ol>
+  <figure class="fig"><img src="img/hsv_tuner_sim.png" alt="hsv_tuner ซ้ายภาพกล้อง ขวาหน้ากากสีที่ตัวหาจะเห็น" width="1280" height="480" style="image-rendering:auto"></figure>
+  <ol class="steps" start="6">
+    <li><strong>เช็คมุมกล้องด้วยตลับเมตร</strong> วางลูกบาศก์หลังกลางหุ่น 0.65 ม. ตรงแนวกลาง แล้วรันคำสั่งข้างล่าง ปิดเปิด <code>robot_model.launch.py</code> ใหม่ รันซ้ำ (ไม่ต้อง <code>--write</code>) ต้องคลาดไม่เกิน 1 ซม.</li>
+  </ol>
+  <div class="cmd" data-title="เช็คมุมกล้อง" data-win="pixi run python robot\camera_check.py -0.65 0.0 --write" data-ubu="python3 camera_check.py -0.65 0.0 --write" data-out="camera sees the cube at x=-0.817 y=+0.040, you measured x=-0.634 y=-0.002 -> off by 18.8 cm&#10;camera is tilted +4.8 deg more down and turned +2.2 deg more left than kobuki_x2.urdf says&#10;camera_joint rpy: "0 0 3.14159"  ->  "0 0.084 3.180"&#10;saved kobuki_x2.urdf (old one: kobuki_x2.urdf.bak) - restart robot_model.launch.py and check again"></div>
+  <div class="expect">ผลจากซิม (แกล้งให้กล้องก้ม 5° เอียง 2°): รอบแรกคลาด 18.8 ซม. หาได้ว่าก้ม 4.8° เอียง 2.2° · รอบสองหลัง <code>--write</code> คลาด 0.1 ซม.</div>
+  <ol class="steps" start="7">
+    <li><strong>แผนที่ + พิกัดวัตถุ</strong> เริ่มทำแผนที่ที่ Initial Location แล้ว Publish Point ที่ลูกบาศก์กับจุดวาง ใส่ <code>STATIONS</code> แล้วลอง <code>--nav-only</code> ก่อนภารกิจเต็ม</li>
+  </ol>
   <h3>แผนงานถึงวันเดโม (แนะนำ)</h3>
   <ul class="road">
     <li><span class="d">27 ต.ค.</span><span>คู่มือ + หุ่นปลอม + แผนที่ + Nav2 + โมเดล CAD + GitHub + กล้อง/แขนจำลอง: ภารกิจเต็มผ่านในซิม</span><span class="st done">เสร็จ</span></li>
-    <li><span class="d">28 ต.ค.</span><span>โค้ดวันจริง: ไดรเวอร์แขน SO-100 (เซอร์โว STS3215) + ไดรเวอร์กล้อง Xtion + เช็คลิสต์ประกอบและวัดหน้างาน</span><span class="st next">ถัดไป</span></li>
+    <li><span class="d">28 ต.ค.</span><span>โมเดลตามหุ่นที่ประกอบจริง (แขน/กล้องด้านหลัง วัตถุบนพื้น) + ไดรเวอร์แขน SO-100 + คาลิเบรต + ไดรเวอร์กล้อง + เช็คลิสต์วันเดโม</span><span class="st done">เสร็จ</span></li>
     <li><span class="d">28–30 ต.ค.</span><span>ทุกคนโหลดจาก GitHub แล้วซ้อมภารกิจเต็มในซิมบนเครื่องตัวเอง</span><span class="st next">ทำคู่ขนาน</span></li>
     <li><span class="d">30–31 ต.ค.</span><span>สไลด์นำเสนอ (20) เตรียมตอบ Q&amp;A (20) วิดีโอ (10)</span><span class="st todo">รอ</span></li>
-    <li><span class="d">1 พ.ย. เช้า</span><span>ประกอบหุ่น วัดความสูงโต๊ะ ตำแหน่งกล้อง/แขน ทำแผนที่ห้องจริง จดพิกัด Station ตั้งสีวัตถุ</span><span class="st todo">วันจริง</span></li>
+    <li><span class="d">1 พ.ย. เช้า</span><span>ประกอบตามรูป วัดตำแหน่ง LiDAR/แขน/กล้อง คาลิเบรตแขน ตั้งสีกล้อง ทำแผนที่ห้องจริง จดพิกัดวัตถุ</span><span class="st todo">วันจริง</span></li>
     <li><span class="d">1 พ.ย.</span><span>Live demo</span><span class="st todo">วันจริง</span></li>
   </ul>
 </section>
@@ -1006,7 +1036,8 @@ const BOXES = [[298,540,386,578,"desk"],[626,729,670,769,"desk"],[366,666,464,71
 const STATIONS = {"Station 1":[337,604],"Station 2":[597,750],"Initial":[425,940]};
 const toM = (px, py) => [(START[1] - py) * PX, (START[0] - px) * PX];
 const toPx = (x, y) => [START[0] - y / PX, START[1] - x / PX];
-const ROUTE = [[0,0],[2.9,-0.3],[3.1,1.4],[4.6,1.4],[5.2,1.32],[4.7,0.0],[4.7,-1.5],[4.7,-2.8],[3.6,-2.6],[2.85,-2.6],[2.85,-2.8],[2.85,-2.6],[2.3,-2.55],[2.3,-3.3],[0,-3.3],[0,-1.2],[0,0]];
+const ROUTE = [[0,0],[2.9,-0.3],[3.1,1.4],[4.65,1.32],[5.03,1.32],[4.83,1.32],[4.7,0.0],[4.7,-1.5],[4.7,-2.25],[3.6,-2.25],[2.85,-2.25],[2.85,-2.63],[2.85,-2.43],[2.3,-2.43],[2.3,-3.3],[0,-3.3],[0,-1.2],[0,0]];
+const CUBE_XY = [5.30, 1.32], MARK_XY = [2.85, -2.90];   // on the floor (same as fake_robot.py)
 (function drawPlan(){
   const svg = document.getElementById("plan"), ns = "http://www.w3.org/2000/svg";
   const add = (tag, attrs, text) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text) e.textContent = text; svg.appendChild(e); return e; };
@@ -1018,6 +1049,9 @@ const ROUTE = [[0,0],[2.9,-0.3],[3.1,1.4],[4.6,1.4],[5.2,1.32],[4.7,0.0],[4.7,-1
   Object.entries(STATIONS).forEach(([n, p]) => { add("circle", {cx:p[0],cy:p[1],r:13,fill:n==="Initial"?"var(--info)":"#c0182f"});
     const m = toM(p[0], p[1]); add("text", {x:p[0],y:p[1]-19,"text-anchor":"middle","font-size":12,"font-weight":600,fill:"var(--fg)","font-family":"Sarabun, sans-serif"}, n);
     add("text", {x:p[0],y:p[1]+28,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)","font-family":"IBM Plex Mono, monospace"}, "(" + m[0].toFixed(2) + ", " + m[1].toFixed(2) + ")"); });
+  [[CUBE_XY, "#2bb673", "cube"], [MARK_XY, "#1f5bd8", "place"]].forEach(([p, c, t]) => { const q = toPx(p[0], p[1]);
+    add("rect", {x:q[0] - 5, y:q[1] - 5, width:10, height:10, fill:c});
+    add("text", {x:q[0] + 9, y:q[1] + 4, "font-size":10.5, fill:"var(--fg)", "font-family":"Sarabun, sans-serif"}, t); });
   add("path", {d:"M425 1004 l0 -26",stroke:"var(--neon)","stroke-width":3,"marker-end":"url(#par)"});
   const defs = document.createElementNS(ns, "defs"); defs.innerHTML = '<marker id="par" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--neon)"/></marker>'; svg.prepend(defs);
 })();
@@ -1053,16 +1087,22 @@ function loadCAD(){
     const m = {}; g.scene.traverse(o => { if (o.isMesh){ if (o.material.map) o.material.map.encoding = THREE.LinearEncoding; m[o.name] = o; } }); ok(m);
   }, undefined, fail));
 }
-function cad(name){ const s = CAD[name], o = new THREE.Mesh(s.geometry, s.material); o.castShadow = true; o.receiveShadow = true; return o; }
+function cad(name){ const s = CAD[name], o = new THREE.Mesh(s.geometry, name.startsWith("so100_") ? (name.endsWith("_Motor") ? ARM_SERVO : ARM_PRINT) : s.material);
+  o.castShadow = true; o.receiveShadow = true; return o; }
 function zcyl(rt, rb, h, seg, m, x, y, z){ const o = mesh(new THREE.CylinderGeometry(rt, rb, h, seg), m, x, y, z); o.rotation.x = Math.PI/2; return o; }
 
-const KOBUKI_TOP = .1244;                 // top of main_body.dae in base_footprint frame
-const ARM_MOUNT = [.06, 0, KOBUKI_TOP];   // estimate: no photo of the real build yet
-const LASER_Z = .20;                      // kobuki_x2.urdf laser_joint (calibrated 18 Oct)
+/* As built (team photos, Oct 2026) - same numbers as robot/kobuki_x2.urdf. +x = Kobuki front (bumper); the port panel
+   is the rear, and the arm + Xtion work out of the rear. Positions marked "estimate" come from the photos. */
+const DECK_LOW = .135, DECK_MID = .200;                 // tops of the two acrylic decks (estimate)
+const ARM_MOUNT = [-.055, -.03, .208, -Math.PI / 2];     // SO-100 base on its white plate, reaching out of the rear
+const LASER = [.075, -.035, .247];                       // laser centre (yaw -90 deg + mirror: calibrated 18 Oct)
+const XTION = [-.135, 0, .1775];                         // Xtion body centre, looking backwards
+let ARM_PRINT = null, ARM_SERVO = null;
 
 function buildX2(parts){
   const mm = .001, L = new THREE.Group(), bottom = -42.4 * mm;   // laser centre is 7.9 mm under the 50.3 mm top
-  const black = mat(0x1b1c1f, { roughness:.6 }), plate = mat(0x232428, { roughness:.5 }), metal = mat(0xb9bec6, { metalness:.6, roughness:.35 });
+  const black = mat(0x16171a, { roughness:.6 }), plate = mat(0x1d1e22, { roughness:.5 }), metal = mat(0xb9bec6, { metalness:.6, roughness:.35 });
+  const navy = mat(0x1b2a6b, { roughness:.35, metalness:.25 });
   // bracket outline: hull of the rotor circle, the rear ear hole and the two motor-side holes (datasheet top view)
   const circ = [[0, 0, 31], [-35.3, 0, 4.5], [36, 18, 4.5], [36, -18, 4.5], [43.7, 0, 12.5]], pts = [];
   circ.forEach(([cx, cy, r]) => { for (let k = 0; k < 48; k++){ const a = k / 48 * Math.PI * 2; pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } });
@@ -1071,35 +1111,73 @@ function buildX2(parts){
   pts.forEach(p => { while (lo.length > 1 && cr(lo[lo.length-2], lo[lo.length-1], p) <= 0) lo.pop(); lo.push(p); });
   pts.slice().reverse().forEach(p => { while (up.length > 1 && cr(up[up.length-2], up[up.length-1], p) <= 0) up.pop(); up.push(p); });
   const hull = lo.slice(0, -1).concat(up.slice(0, -1)), shape = new THREE.Shape(hull.map(p => new THREE.Vector2(p[0] * mm, p[1] * mm)));
-  [[15.1, 2.1], [27.4, 2.4]].forEach(([z, t]) => { const g = mesh(new THREE.ExtrudeGeometry(shape, { depth:t * mm, bevelEnabled:false }), plate); g.position.z = bottom + z * mm; L.add(g); });
-  [[-35.3, 0], [36, 18], [36, -18]].forEach(([x, y]) => L.add(zcyl(2.6 * mm, 2.6 * mm, 29.8 * mm, 12, black, x * mm, y * mm, bottom + 14.9 * mm)));
-  L.add(zcyl(8 * mm, 8 * mm, 24 * mm, 24, metal, 43.7 * mm, 0, bottom + 14.5 * mm));          // motor under the bracket
-  L.add(zcyl(5 * mm, 5 * mm, 3 * mm, 20, black, 43.7 * mm, 0, bottom + 31.3 * mm));            // motor pulley
-  L.add(zcyl(6 * mm, 6 * mm, 3.7 * mm, 20, metal, 0, 0, bottom + 31.6 * mm));                  // rotor spindle
-  const head = new THREE.Group();                                                              // spinning turret
-  head.add(zcyl(29.6 * mm, 30.25 * mm, 16.8 * mm, 48, black, 0, 0, bottom + 41.9 * mm));
-  const glass = mat(0x0a0a0c, { roughness:.1, metalness:.4 }), lens = mat(0x31405a, { roughness:.05, metalness:.5 });
-  [[-18.8, 3.4], [13, 5.2]].forEach(([dy, r]) => { const x = Math.sqrt(30.3 * 30.3 - dy * dy) * mm;
-    const w = mesh(new THREE.CylinderGeometry(r * mm, r * mm, 2 * mm, 24), r > 4 ? lens : glass, x, dy * mm, 0); w.rotation.z = Math.PI/2; head.add(w); });
-  L.add(head); parts.lidarHead = head;
+  const body = new THREE.Group(); body.rotation.z = Math.PI / 2;     // motor side toward the robot front, as in the photos
+  [[15.1, 2.1], [27.4, 2.4]].forEach(([z, t]) => { const g = mesh(new THREE.ExtrudeGeometry(shape, { depth:t * mm, bevelEnabled:false }), plate); g.position.z = bottom + z * mm; body.add(g); });
+  [[-35.3, 0], [36, 18], [36, -18]].forEach(([x, y]) => body.add(zcyl(2.6 * mm, 2.6 * mm, 29.8 * mm, 12, black, x * mm, y * mm, bottom + 14.9 * mm)));
+  body.add(zcyl(8 * mm, 8 * mm, 24 * mm, 24, metal, 43.7 * mm, 0, bottom + 14.5 * mm));          // motor under the bracket
+  body.add(zcyl(5 * mm, 5 * mm, 3 * mm, 20, black, 43.7 * mm, 0, bottom + 31.3 * mm));            // motor pulley
+  body.add(zcyl(6 * mm, 6 * mm, 3.7 * mm, 20, metal, 0, 0, bottom + 31.6 * mm));                  // rotor spindle
+  const head = new THREE.Group();                                                                 // spinning navy cap
+  head.add(zcyl(29.6 * mm, 30.25 * mm, 16.8 * mm, 48, navy, 0, 0, bottom + 41.9 * mm));
+  [[-12, 3.2], [12, 3.2]].forEach(([dy, r]) => { const y = Math.sqrt(30.3 * 30.3 - dy * dy) * mm;
+    const w = mesh(new THREE.CylinderGeometry(r * mm, r * mm, 2 * mm, 20), black, dy * mm, y, 0); head.add(w); });
+  body.add(head); L.add(body); parts.lidarHead = head;
   return L;
 }
 
+function roundedRect(w, h, r){
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r); s.lineTo(x + w, y + h - r);
+  s.quadraticCurveTo(x + w, y + h, x + w - r, y + h); s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+
+function buildXtion(){
+  /* ASUS Xtion PRO LIVE: 180 x 35 x 38 mm body with round ends, hinge neck and an oval foot. Built looking along +x. */
+  const g = new THREE.Group(), blackM = mat(0x111214, { roughness:.35 });
+  const side = new THREE.Shape();                                                      // stadium: 180 mm long, 38 mm high
+  side.absarc(-.0711, 0, .019, Math.PI / 2, Math.PI * 1.5, false); side.absarc(.0711, 0, .019, -Math.PI / 2, Math.PI / 2, false);
+  const bodyGeo = new THREE.ExtrudeGeometry(side, { depth:.035, bevelEnabled:false }); bodyGeo.translate(0, 0, -.0175);
+  const bodyM = mesh(bodyGeo, blackM); bodyM.rotation.set(Math.PI / 2, 0, Math.PI / 2, "ZYX"); g.add(bodyM);   // (u, v, depth) -> (y, z, x)
+  // from the front: emitter on the left, then the two lenses (green-tinted emitter like the photo)
+  [[-.045, .016, 0x0f4a2a], [.03, .012, 0x15171c], [.055, .006, 0x2b3a20]].forEach(([y, r, c]) => {
+    const l = mesh(new THREE.CylinderGeometry(r, r, .003, 24), mat(c, { roughness:.05, metalness:.5 }), .0185, y, 0); l.rotation.z = Math.PI / 2; g.add(l); });
+  g.add(mesh(new THREE.BoxGeometry(.018, .024, .021), blackM, 0, 0, -.0295));                    // hinge neck
+  const foot = mesh(new THREE.CylinderGeometry(.025, .025, .0045, 32), blackM, 0, 0, -.0402); foot.rotation.x = Math.PI / 2; foot.scale.set(1, 1, 2);
+  g.add(foot);                                                                                   // 50 x 100 mm oval foot
+  return g;
+}
+
 function buildRobot(){
+  if (!ARM_PRINT){ ARM_PRINT = mat(0x18181b, { roughness:.75 }); ARM_SERVO = mat(0x2a2b2f, { roughness:.45, metalness:.1 }); }
   const robot = new THREE.Group(), ros = new THREE.Group(); ros.rotation.x = -Math.PI/2; robot.add(ros);
   const parts = { base:new THREE.Group(), lidar:new THREE.Group(), arm:new THREE.Group() };
   ros.add(parts.base, parts.lidar, parts.arm);
   // Kobuki (Yujin CAD) + wheels at the URDF joints
   const B = parts.base; B.add(cad("kobuki_body"));
   [.115, -.115].forEach(y => { const w = cad("kobuki_wheel"); w.position.set(0, y, .0352); w.rotation.x = -Math.PI/2; B.add(w); });
-  // LiDAR deck: 30 mm hex standoffs + 3 mm plate so the laser centre lands at z = 0.20 like the URDF (layout is an estimate)
-  const alu = mat(0xaab0b8, { metalness:.55, roughness:.4 }), deck = LASER_Z - .0424;
-  [[-.05, .05], [-.05, -.05], [.025, .05], [.025, -.05]].forEach(([x, y]) => B.add(zcyl(.0032, .0032, deck - .003 - KOBUKI_TOP, 6, alu, x, y, (KOBUKI_TOP + deck - .003) / 2)));
-  B.add(mesh(new THREE.BoxGeometry(.095, .125, .003), mat(0xd9dde3, { roughness:.7 }), -.0125, 0, deck - .0015));
-  // YDLIDAR X2 in the laser frame (z 0.20, yaw -90 deg)
-  const L = parts.lidar; L.position.set(0, 0, LASER_Z); L.rotation.z = -Math.PI/2; L.add(buildX2(parts));
-  // SO-100: MuJoCo body chain; the arm reaches along the Base's -y, so turn it +90 deg to face the robot front
-  const A = parts.arm; A.position.set(...ARM_MOUNT); A.rotation.z = Math.PI/2;
+  // two clear acrylic decks on aluminium standoffs (estimate from the photos)
+  const acrylic = new THREE.MeshStandardMaterial({ color:0xd6e6f2, roughness:.08, metalness:0, transparent:true, opacity:.35, depthWrite:false });
+  const alu = mat(0xb4b9c1, { metalness:.55, roughness:.35 }), white = mat(0xeeeeea, { roughness:.6 });
+  [DECK_LOW, DECK_MID].forEach(top => { const geo = new THREE.ExtrudeGeometry(roundedRect(.30, .28, .05), { depth:.005, bevelEnabled:false });
+    const d = new THREE.Mesh(geo, acrylic); d.position.set(-.005, 0, top - .005); d.renderOrder = 2; B.add(d); });
+  [[.10, .12], [.10, -.12], [-.115, .12], [-.115, -.12]].forEach(([x, y]) => B.add(zcyl(.007, .007, DECK_MID - DECK_LOW - .005, 16, alu, x, y, (DECK_LOW + DECK_MID - .005) / 2)));
+  B.add(mesh(new THREE.BoxGeometry(.12, .13, .008), white, -.075, -.03, DECK_MID + .004));      // white plate under the arm
+  B.add(mesh(new THREE.BoxGeometry(.09, .075, .005), white, .075, -.035, DECK_MID + .0025));    // white LiDAR bracket
+  // PINSEN 40000 mAh battery for the arm (red power button at the rear), servo bus board, USB adapter box, heatsink
+  B.add(mesh(new THREE.BoxGeometry(.12, .085, .10), mat(0x141416, { roughness:.5 }), -.07, .085, DECK_MID + .05));
+  B.add(mesh(new THREE.BoxGeometry(.004, .03, .03), mat(0xd42a1e, { roughness:.4 }), -.131, .085, DECK_MID + .035));
+  B.add(mesh(new THREE.BoxGeometry(.045, .003, .045), mat(0x1a1a1a), -.075, .026, DECK_MID + .045));
+  B.add(mesh(new THREE.BoxGeometry(.012, .008, .01), mat(0x2e9a52), -.075, .031, DECK_MID + .032));
+  B.add(mesh(new THREE.BoxGeometry(.05, .055, .025), mat(0x141416), .06, .075, DECK_MID + .0125));
+  B.add(mesh(new THREE.BoxGeometry(.10, .06, .02), alu, .06, .09, DECK_LOW + .01));
+  // ASUS Xtion on the bottom deck, under the middle deck, looking out of the rear
+  const X = buildXtion(); X.position.set(...XTION); X.rotation.z = Math.PI; B.add(X);
+  // YDLIDAR X2 in the laser frame (yaw -90 deg)
+  const L = parts.lidar; L.position.set(...LASER); L.rotation.z = -Math.PI/2; L.add(buildX2(parts));
+  // SO-100 (black prints): MuJoCo body chain; the arm reaches along its Base's -y, turned -90 deg = out of the rear
+  const A = parts.arm; A.position.set(ARM_MOUNT[0], ARM_MOUNT[1], ARM_MOUNT[2]); A.rotation.z = ARM_MOUNT[3];
   ["Base", "Base_Motor"].forEach(n => A.add(cad("so100_" + n)));
   const body = (parent, pos, quat, names) => { const g = new THREE.Group(); g.position.set(...pos); g.quaternion.set(quat[1], quat[2], quat[3], quat[0]);
     parent.add(g); const j = new THREE.Group(); g.add(j); names.forEach(n => j.add(cad("so100_" + n))); return j; };
@@ -1153,11 +1231,11 @@ function lights(scene){
   const rim = new THREE.PointLight(0xffffff, .25, 12); rim.position.set(-2, 2, -2); scene.add(rim);
 }
 const SPECS = {
-  all:{t:"หุ่นทั้งคัน",p:"ฐานล้อ Kobuki + YDLIDAR X2 บนแผ่นรอง + แขน SO-100 ด้านหน้า โมเดลจากไฟล์ CAD ของผู้ผลิต ตำแหน่งติดแขนและแผ่นรอง LiDAR เป็นค่าประมาณ วัดหุ่นจริงแล้วต้องแก้ใน URDF",d:[["ความสูงรวม","~0.30 ม. (แขนท่า rest)"],["LiDAR (กลางเลเซอร์)","สูง 0.20 ม."],["ส่งข้อมูล","/scan, /odom, /tf"],["รับคำสั่ง","/cmd_vel"],["สถานะ","ขับ + ทำแผนที่ได้แล้ว"]]},
-  base:{t:"Kobuki (ฐานล้อ)",p:"หุ่นสองล้อขับต่าง (differential drive) ต่อคอมด้วย USB (ชิป FTDI) node <code>kobuki_ros2.py</code> แปลง encoder เป็น odometry",d:[["เส้นผ่านศูนย์กลาง","~0.35 ม."],["รัศมีล้อ / ระยะห่างล้อ","0.035 ม. / 0.23 ม."],["/odom","50.5 Hz (วัดจริง)"],["แบตเตอรี่","16.0 V (วัด 11 ต.ค.)"],["เซ็นเซอร์กันชน","bumper, cliff, wheel drop"],["ความเร็วที่จำกัดไว้","0.12 m/s, 0.6 rad/s"]]},
-  lidar:{t:"YDLIDAR X2",p:"เลเซอร์หมุน 360° วัดระยะกำแพงรอบตัว ต่อด้วย USB (CP210x) 115200 baud หมุนตามเข็มนาฬิกา จึงต้องใส่ <code>--mirror</code>",d:[["ขนาด","96.0 × 60.5 × 50.3 มม. (ดาต้าชีท)"],["ระยะวัด","0.12 – 8 ม. (เชื่อได้ถึง ~6 ม.)"],["ความถี่","~4 Hz (วัดจริง 3.8)"],["จุดต่อรอบ","720 ช่องมุม"],["ติดตั้ง","สูง 0.20 ม., หมุน −90°"],["frame","laser"]]},
-  arm:{t:"SO-100 Arm",p:"แขนกล open-source จาก TheRobotStudio ร่วมกับ Hugging Face ชิ้นส่วนพิมพ์ 3 มิติ ใช้เซอร์โว Feetech STS3215 สั่งงานด้วยไลบรารี LeRobot (Python)",d:[["ข้อต่อ","5 แกน + gripper"],["เซอร์โว","Feetech STS3215 ×6"],["ต่อคอม","USB บอร์ดคุมเซอร์โวบัส"],["ความยาวแขน","ไหล่–ศอก 0.116 ม., ศอก–ข้อมือ 0.135 ม. (CAD)"],["สถานะ","ยังไม่เริ่มต่อ ROS"]]},
-  tf:{t:"แกน TF บนตัวหุ่น",p:"แดง = X (หน้า) · เขียว = Y (ซ้าย) · น้ำเงิน = Z (บน) แกน laser หมุน −90° แกนแดงจึงชี้ไปขวามือของหุ่น ตรงกับที่เห็นใน RViz",d:[["base_link","กลางหุ่น บนพื้น"],["laser","(0, 0, 0.20) หมุน −90°"],["wheel_left","(0, 0.115, 0.035)"],["wheel_right","(0, −0.115, 0.035)"]]}
+  all:{t:"หุ่นทั้งคัน (ตามที่ทีมประกอบจริง)",p:"Kobuki + แผ่นอะคริลิก 2 ชั้น · YDLIDAR X2 ฝาน้ำเงินด้านหน้า · แขน SO-100 สีดำด้านหลัง · กล้อง ASUS Xtion ใต้ชั้นกลาง มองออกด้านหลัง · แบต PINSEN จ่ายไฟแขน <strong>แขนและกล้องทำงานด้านหลัง (ด้านแผงพอร์ต)</strong> หุ่นจึงถอยเข้าหาวัตถุ ตำแหน่ง/ความสูงประมาณจากรูป วันจริงวัดแล้วแก้ใน URDF",d:[["ความสูงรวม","~0.36 ม. (แขนท่า rest)"],["ชั้นล่าง / ชั้นกลาง","0.135 / 0.200 ม. (ประมาณ)"],["LiDAR (กลางเลเซอร์)","สูง ~0.25 ม."],["ส่งข้อมูล","/scan, /odom, /tf, ภาพกล้อง"],["รับคำสั่ง","/cmd_vel, /arm/joint_command"]]},
+  base:{t:"Kobuki (ฐานล้อ)",p:"หุ่นสองล้อขับต่าง (differential drive) ต่อคอมด้วย USB (ชิป FTDI) node <code>kobuki_ros2.py</code> แปลง encoder เป็น odometry ด้านหน้า = ด้านกันชน ด้านหลัง = แผงพอร์ต (USB, B0–B2)",d:[["เส้นผ่านศูนย์กลาง","~0.35 ม."],["รัศมีล้อ / ระยะห่างล้อ","0.035 ม. / 0.23 ม."],["/odom","50.5 Hz (วัดจริง)"],["แบตเตอรี่","16.0 V (วัด 11 ต.ค.)"],["เซ็นเซอร์กันชน","bumper, cliff, wheel drop"],["ความเร็วที่จำกัดไว้","0.12 m/s, 0.6 rad/s"]]},
+  lidar:{t:"YDLIDAR X2",p:"เลเซอร์หมุน 360° (ฝาสีน้ำเงิน) บนขายึดสีขาว ชั้นกลาง ค่อนไปด้านหน้า ต่อ USB ผ่านกล่องแปลงสีดำ (CP210x) 115200 baud หมุนตามเข็มนาฬิกา จึงต้องใส่ <code>--mirror</code>",d:[["ขนาด","96.0 × 60.5 × 50.3 มม. (ดาต้าชีท)"],["ระยะวัด","0.12 – 8 ม. (เชื่อได้ถึง ~6 ม.)"],["ความถี่","~4 Hz (วัดจริง 3.8)"],["ติดตั้ง","(0.075, −0.035, ~0.25) หมุน −90°"],["frame","laser"]]},
+  arm:{t:"SO-100 Arm",p:"แขนกล open-source จาก TheRobotStudio (พิมพ์สีดำ) บนแผ่นขาว ชั้นกลาง ด้านหลัง เอื้อมออกด้านหลังหุ่น เซอร์โว Feetech STS3215 ×6 ไฟจากแบต PINSEN ผ่านบอร์ดคุมเซอร์โว (แจ็ค DC + ขั้วเขียว) สั่งด้วย <code>so100_driver.py</code>",d:[["ข้อต่อ","5 แกน + gripper"],["เซอร์โว","Feetech STS3215 ×6 (ID 1–6)"],["ความยาวแขน","ไหล่–ศอก 0.116 ม., ศอก–ข้อมือ 0.135 ม. (CAD)"],["เอื้อมถึงพื้น","0.20–0.32 ม. หลังกลางหุ่น"],["สถานะ","ผ่านในซิม ไดรเวอร์จริงพร้อมลอง"]]},
+  tf:{t:"แกน TF บนตัวหุ่น",p:"แดง = X (หน้า) · เขียว = Y (ซ้าย) · น้ำเงิน = Z (บน) แกน laser หมุน −90° แกนแดงจึงชี้ไปขวามือของหุ่น ตรงกับที่เห็นใน RViz",d:[["base_link","กลางหุ่น บนพื้น"],["laser","(0.075, −0.035, 0.247) หมุน −90°"],["camera_link","(−0.135, 0, 0.178) หันหลัง"],["wheel_left / right","(0, ±0.115, 0.035)"]]}
 };
 function hardware(){
   const host = document.getElementById("hw-view"), spec = document.getElementById("hw-spec");
@@ -1168,9 +1246,9 @@ function hardware(){
   const axes = new THREE.Group(); scene.add(axes); axes.visible = false;
   function axis(pos, yaw, s){ const g = new THREE.Group(); g.position.copy(pos); g.rotation.y = yaw;
     [[0xe5484d,[1,0,0]],[0x30a46c,[0,0,-1]],[0x3e63dd,[0,1,0]]].forEach(([c, d]) => { const v = new THREE.Vector3(...d); g.add(new THREE.ArrowHelper(v, new THREE.Vector3(), s, c, s*.25, s*.14)); }); return g; }
-  axes.add(axis(new THREE.Vector3(0,.002,0), 0, .25), axis(new THREE.Vector3(0,.2,0), -Math.PI/2, .14), axis(new THREE.Vector3(0,.035,-.115), 0, .07), axis(new THREE.Vector3(0,.035,.115), 0, .07));
-  cam.position.set(.75, .55, .7);
-  const ctl = new THREE.OrbitControls(cam, rnd.domElement); ctl.target.set(0, .17, 0); ctl.enableDamping = true; ctl.autoRotate = !reduce; ctl.autoRotateSpeed = 1.2; ctl.minDistance = .35; ctl.maxDistance = 2.2;
+  axes.add(axis(new THREE.Vector3(0,.002,0), 0, .25), axis(new THREE.Vector3(.075,.247,.035), -Math.PI/2, .14), axis(new THREE.Vector3(-.135,.178,0), Math.PI, .1), axis(new THREE.Vector3(0,.035,-.115), 0, .07), axis(new THREE.Vector3(0,.035,.115), 0, .07));
+  cam.position.set(-.8, .6, .72);
+  const ctl = new THREE.OrbitControls(cam, rnd.domElement); ctl.target.set(-.02, .2, 0); ctl.enableDamping = true; ctl.autoRotate = !reduce; ctl.autoRotateSpeed = 1.2; ctl.minDistance = .35; ctl.maxDistance = 2.2;
   const all = []; robot.traverse(o => { if (o.isMesh) all.push(o); });
   function select(p){
     document.querySelectorAll("[data-part]").forEach(b => b.setAttribute("aria-pressed", b.dataset.part === p));
@@ -1204,7 +1282,7 @@ function sim(){
   WALLS.forEach(w => { const a = toM(w[0], w[1]), b = toM(w[2], w[3]); segs.push([a[0], a[1], b[0], b[1]]);
     const len = Math.hypot(b[0]-a[0], b[1]-a[1]); const m = mesh(new THREE.BoxGeometry(len + .05, .5, .05), wallM);
     const mid = W((a[0]+b[0])/2, (a[1]+b[1])/2, .25); m.position.copy(mid); m.rotation.y = Math.atan2(b[1]-a[1], b[0]-a[0]); scene.add(m); });
-  const deskTop = .22, desks = [];
+  const deskTop = .75, desks = [];   // ordinary desks; the stations are on the floor
   BOXES.forEach(bx => { const a = toM(bx[0], bx[1]), b = toM(bx[2], bx[3]);
     const x0 = Math.min(a[0], b[0]), x1 = Math.max(a[0], b[0]), y0 = Math.min(a[1], b[1]), y1 = Math.max(a[1], b[1]);
     segs.push([x0,y0,x1,y0],[x1,y0,x1,y1],[x1,y1,x0,y1],[x0,y1,x0,y0]);
@@ -1216,10 +1294,11 @@ function sim(){
     const d = mesh(new THREE.CircleGeometry(.2, 40), new THREE.MeshBasicMaterial({ color:n === "Initial" ? 0x3fa9ff : 0xd21f3c, transparent:true, opacity:.75 }));
     d.rotation.x = -Math.PI/2; d.position.copy(W(m[0], m[1], .004)); scene.add(d); });
   // object
-  const obj = mesh(new THREE.BoxGeometry(.04, .04, .04), mat(0x2bd17e, { emissive:0x0a3a20 })); obj.position.copy(W(5.50, 1.32, deskTop + .02)); scene.add(obj);
+  const obj = mesh(new THREE.BoxGeometry(.04, .04, .04), mat(0x2bd17e, { emissive:0x0a3a20 })); obj.position.copy(W(CUBE_XY[0], CUBE_XY[1], .02)); scene.add(obj);
+  const marker = mesh(new THREE.PlaneGeometry(.10, .10), mat(0x1f5bd8, { roughness:.6 })); marker.rotation.x = -Math.PI/2; marker.position.copy(W(MARK_XY[0], MARK_XY[1], .003)); scene.add(marker);
   const detBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.09, .09, .09)), new THREE.LineBasicMaterial({ color:0x2bd17e })); detBox.visible = false; scene.add(detBox);
-  const deskBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(desks[1].x1 - desks[1].x0 + .06, deskTop + .04, desks[1].y1 - desks[1].y0 + .06)), new THREE.LineBasicMaterial({ color:0xffc233 }));
-  deskBox.position.copy(W((desks[1].x0 + desks[1].x1)/2, (desks[1].y0 + desks[1].y1)/2, deskTop/2)); deskBox.visible = false; scene.add(deskBox);
+  const deskBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.16, .04, .16)), new THREE.LineBasicMaterial({ color:0xffc233 }));
+  deskBox.position.copy(W(MARK_XY[0], MARK_XY[1], .02)); deskBox.visible = false; scene.add(deskBox);
   // robot
   const { robot, parts } = buildRobot(); scene.add(robot); const J = parts.joints;
   // lidar points
@@ -1247,24 +1326,28 @@ function sim(){
   const arm = (fn, t) => PLAN.push({ k:"arm", fn, t:t || 1.2 });
   function reach(tx, ty, tz, lift){ robot.position.copy(W(st.x, st.y, 0)); robot.rotation.y = st.yaw; robot.updateMatrixWorld(true);
     const q = solveArm(J, W(tx, ty, tz + (lift||0)), st.q); q[4] = st.q[4]; return q; }
+  const REACH = .27;   // m between the robot centre and the object while the arm works (mission_nav2.py)
+  const back = xy => PLAN.push({ k:"back", x:xy[0], y:xy[1] });   // straight line without turning (reverse or forward)
   state("INIT"); wait(.8);
-  state("NAV_STATION1"); go(ROUTE.slice(1, 5)); face(0); state("@15");
+  state("NAV_STATION1"); go(ROUTE.slice(1, 4)); face(Math.PI); state("@15");
   state("DETECT_OBJECT"); wait(1.6, on => { detBox.visible = on; detBox.position.copy(obj.position); }); state("@10");
-  state("PICK");
-  arm(() => { const q = reach(5.50, 1.32, deskTop + .02, .07); q[4] = OPEN; return q; });
-  arm(() => { const q = reach(5.50, 1.32, deskTop + .02, 0); q[4] = OPEN; return q; }, 1);
+  state("PICK"); back([CUBE_XY[0] - REACH, CUBE_XY[1]]);
+  arm(() => { const q = reach(CUBE_XY[0], CUBE_XY[1], .02, .07); q[4] = OPEN; return q; });
+  arm(() => { const q = reach(CUBE_XY[0], CUBE_XY[1], .02, 0); q[4] = OPEN; return q; }, 1);
   arm(() => { const q = st.q.slice(); q[4] = GRIP; return q; }, .6); wait(.1, () => st.carrying = true);
-  arm(() => { const q = reach(5.50, 1.32, deskTop + .02, .08); q[4] = GRIP; return q; }, .9);
+  arm(() => { const q = reach(CUBE_XY[0], CUBE_XY[1], .02, .08); q[4] = GRIP; return q; }, .9);
+  back([CUBE_XY[0] - REACH - .2, CUBE_XY[1]]);
   arm(() => { const q = CARRY.slice(); q[4] = GRIP; return q; }, 1); state("@40");
-  state("NAV_STATION2"); go(ROUTE.slice(5, 10)); face(-Math.PI/2); go([ROUTE[10]]); state("@15");
+  state("NAV_STATION2"); go(ROUTE.slice(6, 11)); face(Math.PI / 2); state("@15");
   state("DETECT_STATION"); wait(1.6, on => deskBox.visible = on); state("@10");
-  state("PLACE");
-  arm(() => { const q = reach(2.85, -3.12, deskTop + .02, .08); q[4] = GRIP; return q; });
-  arm(() => { const q = reach(2.85, -3.12, deskTop + .02, .002); q[4] = GRIP; return q; }, 1);
+  state("PLACE"); back([MARK_XY[0], MARK_XY[1] + REACH]);
+  arm(() => { const q = reach(MARK_XY[0], MARK_XY[1], .025, .08); q[4] = GRIP; return q; });
+  arm(() => { const q = reach(MARK_XY[0], MARK_XY[1], .025, .002); q[4] = GRIP; return q; }, 1);
   wait(.05, () => st.carrying = false); arm(() => { const q = st.q.slice(); q[4] = OPEN; return q; }, .6);
-  arm(() => { const q = reach(2.85, -3.12, deskTop + .02, .09); q[4] = OPEN; return q; }, .8);
+  arm(() => { const q = reach(MARK_XY[0], MARK_XY[1], .025, .09); q[4] = OPEN; return q; }, .8);
+  back([MARK_XY[0], MARK_XY[1] + REACH + .2]);
   arm(() => REST.slice(), 1); state("@40");
-  state("RETURN_HOME"); go(ROUTE.slice(11)); face(0); state("@10");
+  state("RETURN_HOME"); go(ROUTE.slice(13)); face(0); state("@10");
   state("DONE");
 
   const stEl = document.getElementById("sim-states");
@@ -1272,14 +1355,14 @@ function sim(){
   stEl.addEventListener("click", e => { const li = e.target.closest("li"); if (li) jumpTo(li.dataset.s); });
   stEl.addEventListener("keydown", e => { const li = e.target.closest("li"); if (li && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); jumpTo(li.dataset.s); } });
   const logEl = document.getElementById("sim-log"), scoreEl = document.getElementById("sim-score"), stateEl = document.getElementById("sim-state"), poseEl = document.getElementById("sim-pose"), toast = document.getElementById("sim-toast");
-  const MSG = { INIT:"save home pose, check nav & arm ready", NAV_STATION1:"navigate to station 1 ...", DETECT_OBJECT:"detect object on desk ...", PICK:"arm picks object ...", NAV_STATION2:"navigate to station 2 ...", DETECT_STATION:"detect place location ...", PLACE:"arm places object ...", RETURN_HOME:"navigate back to initial location ..." };
+  const MSG = { INIT:"save home pose, check nav & arm ready", NAV_STATION1:"navigate to station 1 ...", DETECT_OBJECT:"detect object on the floor ...", PICK:"arm picks object ...", NAV_STATION2:"navigate to station 2 ...", DETECT_STATION:"detect place location ...", PLACE:"arm places object ...", RETURN_HOME:"navigate back to initial location ..." };
   let simT = 0;
   function log(t, cls){ const d = document.createElement("div"); if (cls) d.className = cls; d.textContent = "[" + simT.toFixed(1).padStart(6) + "] [pick_place_sm]: " + t; logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight; }
   let i, cur, curState, score, playing = false, fast = true, follow = false, tAct, from;
   function reset(){
     i = 0; cur = null; curState = null; score = 0; simT = 0; tAct = 0;
     Object.assign(st, { x:0, y:0, yaw:0, q:REST.slice(), carrying:false });
-    obj.position.copy(W(5.50, 1.32, deskTop + .02)); obj.rotation.set(0, 0, 0);
+    obj.position.copy(W(CUBE_XY[0], CUBE_XY[1], .02)); obj.rotation.set(0, 0, 0);
     detBox.visible = deskBox.visible = false; trailPts.length = 0; trailGeo.setFromPoints([W(0,0,.012)]);
     logEl.innerHTML = ""; scoreEl.textContent = "0"; toast.hidden = true; stateEl.textContent = "INIT";
     stEl.querySelectorAll("li").forEach(li => { li.className = ""; li.querySelector("em").textContent = ""; });
@@ -1292,7 +1375,7 @@ function sim(){
   }
   function scan(){
     for (let k = 0; k < N; k++){ const a = st.yaw + k * 2 * Math.PI / N, r = raycast(st.x, st.y, a);
-      const ok = r < 8; const p = ok ? W(st.x + r*Math.cos(a), st.y + r*Math.sin(a), .2) : W(st.x, st.y, -1);
+      const ok = r < 8; const p = ok ? W(st.x + r*Math.cos(a), st.y + r*Math.sin(a), .247) : W(st.x, st.y, -1);
       lpos[k*3] = p.x; lpos[k*3+1] = p.y; lpos[k*3+2] = p.z; }
     lgeo.attributes.position.needsUpdate = true;
   }
@@ -1321,6 +1404,10 @@ function sim(){
           if (!trailPts.length || Math.hypot(trailPts[trailPts.length-1][0] - st.x, trailPts[trailPts.length-1][1] - st.y) > .05){ trailPts.push([st.x, st.y]); trailGeo.setFromPoints(trailPts.map(p => W(p[0], p[1], .012))); } }
         return;
       }
+      if (a.k === "back"){ const dx = a.x - st.x, dy = a.y - st.y, dist = Math.hypot(dx, dy);
+        if (dist < .005){ st.x = a.x; st.y = a.y; cur = null; i++; continue; }
+        const m = Math.min(dist, .08 * dt); st.x += dx / dist * m; st.y += dy / dist * m;
+        trailPts.push([st.x, st.y]); trailGeo.setFromPoints(trailPts.map(p => W(p[0], p[1], .012))); return; }
       if (a.k === "turn"){ let err = Math.atan2(Math.sin(a.yaw - st.yaw), Math.cos(a.yaw - st.yaw));
         if (Math.abs(err) < .005){ st.yaw = a.yaw; cur = null; i++; continue; } st.yaw += Math.sign(err) * Math.min(Math.abs(err), .6 * dt); return; }
       if (a.k === "arm"){ const u = Math.min(tAct / a.t, 1), e = u < .5 ? 2*u*u : 1 - Math.pow(-2*u + 2, 2) / 2;
