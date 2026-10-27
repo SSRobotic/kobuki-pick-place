@@ -6,6 +6,10 @@ drives around the final-project room (floor plan from the project PDF) using
   /scan (frame "laser", Best Effort), /odom, TF odom -> base_link,
   plus /stations (MarkerArray) showing Station 1, Station 2 and Initial.
 Run robot_model.launch.py, SLAM, RViz and teleop exactly as with the real robot.
+For the full mission there is also a green 4 cm cube on the Station 1 desk and a blue place marker on the
+Station 2 desk (/sim/cube, drawn in /stations). The cube sticks to the SO-100 jaws when they close around it
+(needs robot_model.launch.py arm:=sim) and drops onto the desk when they open. fake_camera.py films all this.
+Start somewhere else with: --ros-args -p start_pose:=[5.04,1.32,0.0]
 
     python3 fake_robot.py                      (Ubuntu)
     pixi run python robot\\fake_robot.py        (Windows, from the project folder)
@@ -15,12 +19,13 @@ import random
 
 import numpy as np
 import rclpy
-from geometry_msgs.msg import TransformStamped, Twist
+from geometry_msgs.msg import PoseStamped, TransformStamped, Twist
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
-from sensor_msgs.msg import LaserScan
-from tf2_ros import TransformBroadcaster
+from rclpy.time import Time
+from sensor_msgs.msg import JointState, LaserScan
+from tf2_ros import Buffer, TransformBroadcaster, TransformException, TransformListener
 from visualization_msgs.msg import Marker, MarkerArray
 
 PX = 0.015               # metres per pixel of the floor plan picture in the PDF
@@ -42,6 +47,17 @@ BOXES_PX = [  # (left, top, right, bottom) desks and furniture
     (557, 847, 616, 891), (288, 891, 332, 989), (366, 994, 484, 1038),
 ]
 STATIONS_PX = {"Station 1": (337, 604), "Station 2": (597, 750), "Initial": (425, 940)}
+
+# Objects for the pick & place practice. Heights are guesses: measure the real desks on demo day.
+DESK_TOP = 0.22                 # m, top of both station desks (BOXES_PX[0] and BOXES_PX[1])
+FURNITURE_TOP = 0.45            # m, the other boxes (only the camera cares)
+CUBE_SIZE = 0.04                # m, the coloured cube to pick
+CUBE_START = (5.50, 1.32)       # on the Station 1 desk, 7 cm from its edge
+MARKER_XY = (2.85, -3.12)       # blue square on the Station 2 desk = where to place the cube
+MARKER_SIZE = 0.10
+GRIP_CLOSED = 0.35              # gripper joint below this = closed (rad, so_arm100.xml "Jaw")
+GRIP_OPEN = 0.5                 # above this = open
+GRAB_DISTANCE = 0.03            # jaw centre must be this close to the cube centre to catch it
 
 
 def to_m(px, py):
@@ -86,11 +102,27 @@ def yaw_quaternion(yaw):
     return 0.0, 0.0, math.sin(yaw / 2), math.cos(yaw / 2)
 
 
+def box_m(box_px):
+    """(left, top, right, bottom) plan pixels -> (x0, y0, x1, y1) metres in odom."""
+    (xa, ya), (xb, yb) = to_m(box_px[0], box_px[1]), to_m(box_px[2], box_px[3])
+    return min(xa, xb), min(ya, yb), max(xa, xb), max(ya, yb)
+
+
+def surface_height(x, y):
+    """Height of whatever the cube would land on at (x, y)."""
+    for i, b in enumerate(BOXES_PX):
+        x0, y0, x1, y1 = box_m(b)
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            return DESK_TOP if i < 2 else FURNITURE_TOP
+    return 0.0
+
+
 class FakeRobot(Node):
     def __init__(self):
         super().__init__("fake_robot")
         self.segs = build_segments()
-        self.x = self.y = self.yaw = 0.0
+        # start somewhere else to practise one step, e.g. at Station 1: --ros-args -p start_pose:=[5.04,1.32,0.0]
+        self.x, self.y, self.yaw = self.declare_parameter("start_pose", [0.0, 0.0, 0.0]).value
         self.v = self.w = 0.0
         self.last_cmd = self.get_clock().now()
         self.blocked = False
@@ -98,17 +130,61 @@ class FakeRobot(Node):
         self.scan_pub = self.create_publisher(LaserScan, "/scan", qos_profile_sensor_data)
         self.odom_pub = self.create_publisher(Odometry, "/odom", 10)
         self.marker_pub = self.create_publisher(MarkerArray, "/stations", 1)
+        self.cube_pub = self.create_publisher(PoseStamped, "/sim/cube", 10)
         self.tf = TransformBroadcaster(self)
         self.create_subscription(Twist, "/cmd_vel", self.on_cmd, 1)
+
+        # the cube starts a little off the nominal spot each run, so the camera really has to find it
+        jitter = self.declare_parameter("cube_jitter", 0.03).value
+        self.cube = [CUBE_START[0] + random.uniform(-jitter, jitter), CUBE_START[1] + random.uniform(-jitter, jitter),
+                     DESK_TOP + CUBE_SIZE / 2]
+        self.held = False
+        self.gripper = None
+        self.tf_buffer = Buffer()
+        TransformListener(self.tf_buffer, self)
+        self.create_subscription(JointState, "/joint_states", self.on_joints, 10)
 
         self.dt = 0.02
         self.create_timer(self.dt, self.step)            # odom 50 Hz like the Kobuki
         self.create_timer(0.25, self.publish_scan)       # 4 Hz like the X2
-        self.create_timer(1.0, self.publish_stations)
-        self.get_logger().info("Fake robot ready at Initial Location. Publishing /scan, /odom, TF odom -> base_link, /stations")
+        self.create_timer(0.05, self.update_cube)
+        self.create_timer(0.2, self.publish_stations)
+        self.get_logger().info("Fake robot ready at Initial Location. Publishing /scan, /odom, TF odom -> base_link, /stations, /sim/cube")
         for name, (px, py) in STATIONS_PX.items():
             x, y = to_m(px, py)
             self.get_logger().info(f"  {name}: x={x:.2f} y={y:.2f} (odom)")
+        self.get_logger().info(f"  Cube on Station 1 desk: x={self.cube[0]:.3f} y={self.cube[1]:.3f} | "
+                               f"place marker on Station 2 desk: x={MARKER_XY[0]:.2f} y={MARKER_XY[1]:.2f}")
+
+    def on_joints(self, msg):
+        if "gripper" in msg.name:
+            self.gripper = msg.position[msg.name.index("gripper")]
+
+    def update_cube(self):
+        """The cube sticks to the jaws when they close around it and drops onto whatever is below when they open."""
+        if self.gripper is not None:
+            try:
+                t = self.tf_buffer.lookup_transform("odom", "gripper_tip", Time()).transform.translation
+                tip = (t.x, t.y, t.z)
+            except TransformException:
+                tip = None
+            if tip and not self.held and self.gripper < GRIP_CLOSED and math.dist(tip, self.cube) < GRAB_DISTANCE:
+                self.held = True
+                self.get_logger().info(f"Cube grabbed (jaw centre {100 * math.dist(tip, self.cube):.1f} cm from cube centre)")
+            elif self.held and self.gripper > GRIP_OPEN:
+                self.held = False
+                self.cube[2] = surface_height(self.cube[0], self.cube[1]) + CUBE_SIZE / 2
+                err = math.hypot(self.cube[0] - MARKER_XY[0], self.cube[1] - MARKER_XY[1])
+                where = "on the Station 2 marker" if err < MARKER_SIZE / 2 else f"{100 * err:.0f} cm from the marker"
+                self.get_logger().info(f"Cube released at x={self.cube[0]:.3f} y={self.cube[1]:.3f} z={self.cube[2]:.3f} - {where}")
+            if self.held and tip:
+                self.cube = list(tip)
+        msg = PoseStamped()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = "odom"
+        msg.pose.position.x, msg.pose.position.y, msg.pose.position.z = self.cube
+        msg.pose.orientation.w = 1.0
+        self.cube_pub.publish(msg)
 
     def on_cmd(self, msg):
         self.v = max(-MAX_V, min(MAX_V, msg.linear.x))
@@ -187,6 +263,18 @@ class FakeRobot(Node):
                 m.color.r, m.color.g, m.color.b = colors[name]
                 m.color.a = 0.8
                 markers.markers.append(m)
+        for i, (pos, size, rgb) in enumerate((
+                (self.cube, (CUBE_SIZE,) * 3, (0.2, 0.75, 0.25)),
+                ((*MARKER_XY, DESK_TOP + 0.001), (MARKER_SIZE, MARKER_SIZE, 0.002), (0.1, 0.35, 0.85)))):
+            m = Marker()
+            m.header.frame_id = "odom"
+            m.ns, m.id, m.type = "objects", i, Marker.CUBE
+            m.pose.position.x, m.pose.position.y, m.pose.position.z = pos
+            m.pose.orientation.w = 1.0
+            m.scale.x, m.scale.y, m.scale.z = size
+            m.color.r, m.color.g, m.color.b = rgb
+            m.color.a = 1.0
+            markers.markers.append(m)
         self.marker_pub.publish(markers)
 
 

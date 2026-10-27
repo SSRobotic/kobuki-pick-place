@@ -328,7 +328,7 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
     </div>
     <div class="simlog" id="sim-log" aria-live="polite"></div>
   </div>
-  <div class="note warn"><b>อ่านก่อน:</b> ฉากนี้คือ<strong>แอนิเมชันของสิ่งที่ระบบต้องทำได้</strong>ในวันเดโม ขั้นตอนเดียวกับ state machine ใน <code>final_project_state_machine.py</code> ตอนนี้ส่วนที่ทำงานกับ ROS ได้จริงแล้วคือบทที่ 5–09 (ขับ ทำแผนที่ หาพิกัด) ส่วน Nav2, ตรวจจับวัตถุ และสั่งแขน SO-100 ยังต้องทำต่อ ดูแผนในบทที่ 10</div>
+  <div class="note warn"><b>อ่านก่อน:</b> ฉากนี้คือ<strong>แอนิเมชันของสิ่งที่ระบบต้องทำได้</strong>ในวันเดโม ขั้นตอนเดียวกับ <code>mission_nav2.py</code> ตอนนี้ทุกขั้นผ่านแล้วใน<strong>ซิมของ ROS จริง</strong> (หุ่นปลอม + Nav2 + กล้องปลอม + แขนปลอม ดูบทที่ 10) ส่วนที่ยังไม่ได้ลองคือกับหุ่น แขน และกล้องตัวจริง</div>
 </section>
 
 <!-- 02 MISSION -->
@@ -805,31 +805,45 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
 <!-- 10 FULL MISSION -->
 <section class="chapter" id="fullmission">
   <h2>ต่อเป็นภารกิจเต็ม</h2>
-  <p class="sub">State machine คือ "สมอง" ที่สั่งงานทีละขั้นตามลำดับ ถ้าขั้นไหนพลาดจะลองใหม่ได้สูงสุด 3 ครั้ง ไฟล์ <code>final_project_state_machine.py</code> ของเรามีโครงครบแล้ว แต่ละ state ยังเป็นตัวปลอมอยู่</p>
+  <p class="sub">State machine คือ "สมอง" ที่สั่งงานทีละขั้นตามลำดับ ถ้าขั้นไหนพลาดจะลองใหม่ได้สูงสุด 3 ครั้ง ไฟล์ <code>mission_nav2.py</code> ทำครบทุก state แล้วในซิม (state ชื่อเดียวกับ <code>final_project_state_machine.py</code> ในคาบ C13)</p>
   <figure class="fig"><svg viewBox="0 0 760 250" role="img" aria-label="state machine 8 สถานะ">
     <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
     <g font-family="IBM Plex Mono, monospace" font-size="12" text-anchor="middle" id="sm-svg"></g></svg></figure>
-  <div class="tbl"><table><thead><tr><th>State</th><th>ทำอะไร</th><th>เครื่องมือ</th><th>สถานะงาน</th></tr></thead><tbody>
-    <tr><td><code>INIT</code></td><td>จำตำแหน่งบ้าน เช็คว่า Nav2 และแขนพร้อม</td><td>rclpy</td><td><span class="st done">โครงเสร็จ</span></td></tr>
-    <tr><td><code>NAV_STATION1</code></td><td>ส่งพิกัด Station 1 ให้ Nav2</td><td>Nav2 <code>NavigateToPose</code></td><td><span class="st next">ทำต่อ</span></td></tr>
-    <tr><td><code>DETECT_OBJECT</code></td><td>หาวัตถุบนโต๊ะ ได้ตำแหน่ง x, y</td><td>กล้อง + OpenCV (เช่นหาสี)</td><td><span class="st todo">ยังไม่เริ่ม</span></td></tr>
-    <tr><td><code>PICK</code></td><td>แขนเอื้อม หนีบ ยก</td><td>SO-100 + LeRobot</td><td><span class="st todo">ยังไม่เริ่ม</span></td></tr>
-    <tr><td><code>NAV_STATION2</code></td><td>ไป Station 2</td><td>Nav2</td><td><span class="st next">ทำต่อ</span></td></tr>
-    <tr><td><code>DETECT_STATION</code></td><td>หาจุดวางบนโต๊ะ</td><td>กล้อง / LiDAR</td><td><span class="st todo">ยังไม่เริ่ม</span></td></tr>
-    <tr><td><code>PLACE</code></td><td>แขนวางและปล่อย</td><td>SO-100</td><td><span class="st todo">ยังไม่เริ่ม</span></td></tr>
-    <tr><td><code>RETURN_HOME</code></td><td>กลับพิกัดบ้าน</td><td>Nav2</td><td><span class="st next">ทำต่อ</span></td></tr>
+  <div class="tbl"><table><thead><tr><th>State</th><th>ทำอะไร</th><th>ไฟล์</th><th>สถานะงาน</th></tr></thead><tbody>
+    <tr><td><code>INIT</code></td><td>บอก AMCL ว่าอยู่ Initial รอ Nav2 พร้อม พับแขน</td><td><code>mission_nav2.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>NAV_STATION1</code></td><td>ส่งพิกัด Station 1 ให้ Nav2</td><td>Nav2</td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>DETECT_OBJECT</code></td><td>กล้องหาลูกบาศก์จากสี + ความสูงโต๊ะ ได้ตำแหน่ง x, y</td><td><code>cube_detector.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>PICK</code></td><td>หันเข้าหา ขับจนห่าง 0.30 ม. แขนหยิบ ถอย พับแขน</td><td><code>arm_control.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>NAV_STATION2</code></td><td>ไป Station 2</td><td>Nav2</td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>DETECT_STATION</code></td><td>กล้องหาแผ่นจุดวาง</td><td><code>cube_detector.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>PLACE</code></td><td>เข้าใกล้ แขนวาง อ้าปาก ถอย พับแขน</td><td><code>arm_control.py</code></td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td><code>RETURN_HOME</code></td><td>กลับพิกัดบ้าน</td><td>Nav2</td><td><span class="st done">ผ่านในซิม</span></td></tr>
+    <tr><td>ของจริง</td><td>ไดรเวอร์แขน SO-100 (เซอร์โว STS3215), ไดรเวอร์กล้อง Xtion</td><td>–</td><td><span class="st next">ทำต่อ</span></td></tr>
   </tbody></table></div>
-  <h3>ลองรัน state machine ตัวปลอม</h3>
-  <p>ต้องมีแพ็กเกจ <code>smach</code> (ใช้ในคาบเรียน C13) แต่ละ state สุ่มพลาด 20% เพื่อทดสอบการลองใหม่</p>
-  <div class="cmd" data-title="state machine" data-win="pixi run python final_project_state_machine.py" data-ubu="python3 final_project_state_machine.py" data-out="[pick_place_sm]: [INIT] save home pose, check nav &amp; arm ready&#10;[pick_place_sm]: [NAV_STATION1] navigate to station 1 ...&#10;[pick_place_sm]: [NAV_STATION1] done&#10;[pick_place_sm]: [DETECT_OBJECT] detect object on desk ...&#10;[pick_place_sm]: [DETECT_OBJECT] failed (1/3)&#10;[pick_place_sm]: [DETECT_OBJECT] detect object on desk ...&#10;[pick_place_sm]: [DETECT_OBJECT] done&#10;...&#10;[pick_place_sm]: State machine finished: succeeded"></div>
+  <h3>รันภารกิจเต็มในซิม (7 หน้าต่าง)</h3>
+  <p>ห้องจำลองมี<strong>ลูกบาศก์สีเขียว 4 ซม.</strong>บนโต๊ะ Station 1 (เยื้องแบบสุ่ม ±3 ซม. ทุกรอบ) และ<strong>แผ่นสีฟ้า</strong>บนโต๊ะ Station 2 = จุดวาง กล้องปลอมถ่ายภาพจากตำแหน่งกล้องบนหุ่นตาม TF ตัวหาวัตถุตัวเดียวกันนี้ใช้กับกล้อง Xtion จริงได้เลย</p>
+  <div class="cmd" data-title="หน้าต่าง 1 · หุ่นปลอม" data-win="pixi run python robot\fake_robot.py" data-ubu="python3 fake_robot.py"></div>
+  <div class="cmd" data-title="หน้าต่าง 2 · โมเดล + แขนปลอม" data-win="pixi run ros2 launch robot\robot_model.launch.py arm:=sim" data-ubu="ros2 launch ./robot_model.launch.py arm:=sim"></div>
+  <div class="cmd" data-title="หน้าต่าง 3 · กล้องปลอม" data-win="pixi run python robot\fake_camera.py" data-ubu="python3 fake_camera.py"></div>
+  <div class="cmd" data-title="หน้าต่าง 4 · ตัวหาวัตถุ" data-win="pixi run python robot\cube_detector.py" data-ubu="python3 cube_detector.py"></div>
+  <div class="cmd" data-title="หน้าต่าง 5 · Nav2" data-win="pixi run ros2 launch robot\nav2.launch.py" data-ubu="ros2 launch ./nav2.launch.py"></div>
+  <div class="cmd" data-title="หน้าต่าง 6 · RViz" data-win="pixi run rviz2 -d robot\mission.rviz" data-ubu="rviz2 -d mission.rviz"></div>
+  <div class="cmd" data-title="หน้าต่าง 7 · ภารกิจ" data-win="pixi run python robot\mission_nav2.py" data-ubu="python3 mission_nav2.py" data-out="[INIT] Nav2 is active - folding the arm&#10;[NAV_STATION1] arrived in 55 s&#10;[DETECT_OBJECT] cube at x=5.476 y=1.325 (odom) = 0.47 m ahead, -0.09 m left of the robot&#10;  approach: cube is 0.47 m ahead, driving +0.17 m&#10;[PICK] cube at 0.303 -0.004 0.240 (base_link) - moving the arm&#10;[PICK] done&#10;[NAV_STATION2] arrived in 56 s&#10;[DETECT_STATION] station at x=2.849 y=-3.118 (odom) = 0.55 m ahead, -0.07 m left of the robot&#10;[PLACE] done&#10;[RETURN_HOME] arrived in 60 s&#10;Mission finished: succeeded in 207 s"></div>
+  <div class="expect">ผลจริงจากเครื่องทีม 27 ต.ค.: <code>Mission finished: succeeded in 207 s</code> และหน้าต่าง 1 ขึ้น <code>Cube released at x=2.849 y=-3.119 ... on the Station 2 marker</code> กล้องหาตำแหน่งคลาดจากจริง 1 มม. วางห่างกลางแผ่น 1.4 มม.</div>
+  <div class="grid2">
+    <figure class="fig"><img src="img/camera_station1_sim.png" alt="ภาพจากกล้องปลอมที่ Station 1 ตัวหาวัตถุตีกรอบลูกบาศก์สีเขียว" width="640" height="480" style="image-rendering:auto"></figure>
+    <figure class="fig"><img src="img/mission_path_sim.png" alt="เส้นทางจริงของหุ่นทั้งภารกิจบนแผนที่" width="918" height="726" style="image-rendering:auto"></figure>
+  </div>
+  <figcaption>ซ้าย: สิ่งที่กล้องเห็นที่ Station 1 (กรอบแดง = ตัวหาวัตถุเจอ) · ขวา: เส้นทางจริงของหุ่นทั้งรอบ</figcaption>
+  <div class="note"><b>ทำไมไม่ใช้ระยะลึกของ Xtion:</b> กล้องวัดระยะได้ตั้งแต่ ~0.8 ม. แต่ตอนหยิบลูกบาศก์อยู่ห่างกล้องแค่ ~0.4 ม. ตัวหาจึงใช้ภาพสีอย่างเดียว ลากเส้นจากกล้องผ่านจุดสีไปชนระนาบโต๊ะ (รู้ความสูงโต๊ะ) <strong>วันจริงต้องวัดความสูงโต๊ะ</strong> และแขนเอื้อมได้ถึงจุดกลางลูกบาศก์ไม่เกิน ~0.28 ม. จากพื้น</div>
+  <p>ซ้อมแค่การวิ่ง (ไม่ต้องเปิดหน้าต่าง 3–4): <code>mission_nav2.py --nav-only</code> · ลองสั่งแขนเอง: <code>arm_control.py open</code>, <code>reach 0.30 0.0 0.30</code>, <code>rest</code> · รายละเอียดทั้งหมดอยู่ใน <code>docs/PRACTICE_NO_ROBOT_TH.md</code> ภาค 5</p>
   <h3>แผนงานถึงวันเดโม (แนะนำ)</h3>
   <ul class="road">
-    <li><span class="d">27 ต.ค.</span><span>คู่มือซ้อม + หุ่นปลอม + แผนที่ห้องจำลอง</span><span class="st done">เสร็จ</span></li>
-    <li><span class="d">28 ต.ค.</span><span>Nav2 บนหุ่นปลอม: ส่งพิกัด Station แล้วหุ่นวิ่งไปเอง</span><span class="st next">ถัดไป</span></li>
-    <li><span class="d">28–29 ต.ค.</span><span>SO-100: ต่อ USB, calibrate ด้วย LeRobot, สั่งหยิบ-วางบนโต๊ะนิ่ง ๆ ให้ได้</span><span class="st next">ทำคู่ขนาน</span></li>
-    <li><span class="d">29–30 ต.ค.</span><span>ตรวจจับวัตถุด้วยกล้อง (เริ่มจากวัตถุสีสดก่อน)</span><span class="st todo">รอ</span></li>
-    <li><span class="d">30 ต.ค.</span><span>ได้หุ่นจริง: ทำแผนที่ห้องสอบ จดพิกัด Station จริง</span><span class="st todo">รอ</span></li>
-    <li><span class="d">31 ต.ค.</span><span>รวมทุกอย่างใน state machine ซ้อมเต็ม 3 รอบ ถ่ายวิดีโอ ทำสไลด์</span><span class="st todo">รอ</span></li>
+    <li><span class="d">27 ต.ค.</span><span>คู่มือ + หุ่นปลอม + แผนที่ + Nav2 + โมเดล CAD + GitHub + กล้อง/แขนจำลอง: ภารกิจเต็มผ่านในซิม</span><span class="st done">เสร็จ</span></li>
+    <li><span class="d">28 ต.ค.</span><span>โค้ดวันจริง: ไดรเวอร์แขน SO-100 (เซอร์โว STS3215) + ไดรเวอร์กล้อง Xtion + เช็คลิสต์ประกอบและวัดหน้างาน</span><span class="st next">ถัดไป</span></li>
+    <li><span class="d">28–30 ต.ค.</span><span>ทุกคนโหลดจาก GitHub แล้วซ้อมภารกิจเต็มในซิมบนเครื่องตัวเอง</span><span class="st next">ทำคู่ขนาน</span></li>
+    <li><span class="d">30–31 ต.ค.</span><span>สไลด์นำเสนอ (20) เตรียมตอบ Q&amp;A (20) วิดีโอ (10)</span><span class="st todo">รอ</span></li>
+    <li><span class="d">1 พ.ย. เช้า</span><span>ประกอบหุ่น วัดความสูงโต๊ะ ตำแหน่งกล้อง/แขน ทำแผนที่ห้องจริง จดพิกัด Station ตั้งสีวัตถุ</span><span class="st todo">วันจริง</span></li>
     <li><span class="d">1 พ.ย.</span><span>Live demo</span><span class="st todo">วันจริง</span></li>
   </ul>
 </section>

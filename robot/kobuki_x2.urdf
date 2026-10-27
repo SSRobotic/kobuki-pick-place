@@ -54,6 +54,38 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
+  <!-- ASUS Xtion PRO LIVE on a mast behind the LiDAR, looking down at the desk in front (estimate: measure on demo day).
+       Body 180 x 35 x 50 mm from the spec sheet. The mast stands behind the LiDAR turret and only hides a few degrees of the rear scan. -->
+  <link name="camera_mast">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.006" length="0.24"/></geometry>
+      <material name="metal"/>
+    </visual>
+  </link>
+  <joint name="camera_mast_joint" type="fixed">
+    <parent link="base_link"/><child link="camera_mast"/>
+    <origin xyz="-0.055 0 0.2776" rpy="0 0 0"/>
+  </joint>
+  <link name="camera_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.035 0.18 0.05"/></geometry>
+      <material name="lidar"/>
+    </visual>
+  </link>
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/><child link="camera_link"/>
+    <!-- 0.42 m up, tilted 35 deg (0.61 rad) down -->
+    <origin xyz="-0.04 0 0.42" rpy="0 0.61 0"/>
+  </joint>
+  <!-- optical frame: z forward, x right, y down (the frame camera images and the detector use) -->
+  <link name="camera_color_optical_frame"/>
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/><child link="camera_color_optical_frame"/>
+    <origin xyz="0.02 0 0" rpy="-1.5708 0 -1.5708"/>
+  </joint>
+
   <!-- wheels (fixed: only for looks; odometry comes from kobuki_ros2.py) -->
   <link name="wheel_left_link">
     <visual>

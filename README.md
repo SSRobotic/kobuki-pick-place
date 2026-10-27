@@ -14,8 +14,8 @@
 | ทำแผนที่ด้วย SLAM | ✅ ใช้ได้ (แผนที่ห้องจำลองอยู่ใน `robot/maps/`) |
 | Nav2: วิ่งไป Station 1 → Station 2 → กลับบ้านเอง | ✅ ผ่าน 3/3 รอบบน Windows |
 | โมเดลหุ่นใน RViz จากไฟล์ CAD จริง | ✅ ใช้ได้ |
-| ตรวจจับวัตถุด้วยกล้อง ASUS Xtion | ⏳ กำลังทำ |
-| สั่งแขน SO-100 หยิบ/วาง | ⏳ กำลังทำ |
+| ตรวจจับลูกบาศก์ + จุดวางด้วยกล้อง (Xtion ปลอมในซิม) | ✅ ใช้ได้ในซิม · วันจริงต้องตั้งสี/ความสูงโต๊ะ |
+| แขน SO-100 หยิบ/วาง (IK จากไฟล์ CAD) | ✅ ใช้ได้ในซิม · ไดรเวอร์เซอร์โวจริงยังไม่ทำ |
 | ไดรเวอร์หุ่นจริง (Kobuki, LiDAR) | ✅ ทดสอบกับหุ่นจริงแล้ว 11 และ 18 ต.ค. |
 
 ---
@@ -71,20 +71,22 @@ echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 
 ---
 
-## 3. ลองรันเลย: ภารกิจเต็มบนหุ่นปลอม (5 หน้าต่าง)
+## 3. ลองรันเลย: ภารกิจเต็มบนหุ่นปลอม (7 หน้าต่าง)
 
-เปิด terminal 5 หน้าต่าง ทุกหน้าต่างเริ่มด้วย `cd` เข้าโฟลเดอร์ (Windows: `cd ~\kobuki-pick-place` / Ubuntu: `cd ~/kobuki-pick-place/robot`) แล้วรันทีละหน้าต่างตามลำดับ:
+เปิด terminal 7 หน้าต่าง ทุกหน้าต่างเริ่มด้วย `cd` เข้าโฟลเดอร์ (Windows: `cd ~\kobuki-pick-place` / Ubuntu: `cd ~/kobuki-pick-place/robot`) แล้วรันทีละหน้าต่างตามลำดับ:
 
 | หน้าต่าง | Windows | Ubuntu |
 |---|---|---|
 | 1 หุ่นปลอม | `pixi run python robot\fake_robot.py` | `python3 fake_robot.py` |
-| 2 โมเดลหุ่น | `pixi run ros2 launch robot\robot_model.launch.py` | `ros2 launch ./robot_model.launch.py` |
-| 3 Nav2 | `pixi run ros2 launch robot\nav2.launch.py` | `ros2 launch ./nav2.launch.py` |
-| 4 RViz | `pixi run rviz2 -d robot\mapping.rviz` | `rviz2 -d mapping.rviz` |
-| 5 ภารกิจ | `pixi run python robot\mission_nav2.py` | `python3 mission_nav2.py` |
+| 2 โมเดล + แขนปลอม | `pixi run ros2 launch robot\robot_model.launch.py arm:=sim` | `ros2 launch ./robot_model.launch.py arm:=sim` |
+| 3 กล้องปลอม | `pixi run python robot\fake_camera.py` | `python3 fake_camera.py` |
+| 4 ตัวหาวัตถุ | `pixi run python robot\cube_detector.py` | `python3 cube_detector.py` |
+| 5 Nav2 | `pixi run ros2 launch robot\nav2.launch.py` | `ros2 launch ./nav2.launch.py` |
+| 6 RViz | `pixi run rviz2 -d robot\mission.rviz` | `rviz2 -d mission.rviz` |
+| 7 ภารกิจ | `pixi run python robot\mission_nav2.py` | `python3 mission_nav2.py` |
 
-หุ่นจะวิ่ง Initial → Station 1 → Station 2 → กลับบ้านเอง (ตอนนี้ตรวจจับ/หยิบ/วางยังเป็นตัวปลอม)
-`mapping.rviz` แสดงแผนที่ หุ่น และจุดเลเซอร์ ถ้าอยากเห็นเส้นทางและ costmap ของ Nav2 ให้เพิ่ม display ตาม `docs/PRACTICE_NO_ROBOT_TH.md` ข้อ 4.2
+หุ่นจะวิ่งไป Station 1 → กล้องหาลูกบาศก์สีเขียว → แขนหยิบ → วิ่งไป Station 2 → หาแผ่นสีฟ้า → วาง → กลับบ้าน เองทั้งหมด
+รายละเอียดทีละขั้นอยู่ใน `docs/PRACTICE_NO_ROBOT_TH.md` ภาค 5 · ซ้อมแค่การวิ่ง (ไม่ต้องเปิดหน้าต่าง 3–4): `mission_nav2.py --nav-only`
 
 **กติกา:** 1 คำสั่งที่รันค้าง = 1 หน้าต่าง หยุดด้วย `Ctrl+C` ในหน้าต่างนั้น
 
@@ -113,5 +115,3 @@ echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 - SO-100: ไฟล์ของ TheRobotStudio ผ่าน [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie/tree/main/trs_so_arm100) (Apache-2.0)
 - YDLIDAR X2: ขึ้นรูปเองตามแบบในดาต้าชีท
 - รายละเอียดอยู่ใน `robot/meshes/NOTICE.txt`
-#   k o b u k i - p i c k - p l a c e -  
- 

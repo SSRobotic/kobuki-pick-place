@@ -594,16 +594,18 @@ rviz2
    หน้าต่าง 4 ขึ้น `Reached the goal!`
 4. ลองสั่งไป Station 2 และกลับ Initial
 
-## 4.4 หน้าต่าง 6: ภารกิจเต็มแบบอัตโนมัติ
+## 4.4 หน้าต่าง 6: วิ่งครบรอบแบบอัตโนมัติ (ยังไม่ใช้กล้อง/แขน)
 
 ปิดหุ่นปลอม (หน้าต่าง 1) เปิดใหม่ให้หุ่นกลับไปที่ Initial ก่อน แล้ว (ถ้าหุ่นกระโดดในแผนที่ ให้กด 2D Pose Estimate ที่ Initial)
 
 ```bash
-python3 mission_nav2.py
+python3 mission_nav2.py --nav-only
 ```
-Windows: `pixi run python robot\mission_nav2.py`
+Windows: `pixi run python robot\mission_nav2.py --nav-only`
 
-✅ ผลที่ได้ตอนรันทดสอบจริง (หุ่นปลอม, Windows):
+`--nav-only` = วิ่ง Station 1 → Station 2 → กลับบ้าน อย่างเดียว ข้ามขั้นกล้องและแขน (ภารกิจเต็มอยู่ภาค 5)
+
+✅ ผลที่ได้ตอนรันทดสอบจริง (หุ่นปลอม, Windows, รุ่นก่อนมีกล้อง/แขน — ขั้น DETECT/PICK/PLACE เป็นตัวปลอมที่รอ 2 วิ):
 ```
 [basic_navigator]: [INIT] robot is at Initial Location - telling AMCL and waiting for Nav2
 [basic_navigator]: [INIT] Nav2 is active
@@ -620,27 +622,168 @@ Windows: `pixi run python robot\mission_nav2.py`
 [basic_navigator]: Mission finished: succeeded in 185 s
 ```
 หน้าต่าง 4 (Nav2) ขึ้น `Reached the goal!` ทุกครั้งที่ถึง และหน้าต่าง 1 ไม่มี `Bump!` เลย
-เส้นทางจริงที่หุ่นวิ่ง (ยาว 17 ม.) ดูได้ที่ [nav2_path_fake_robot.png](nav2_path_fake_robot.png) — หุ่นหยุดห่างจุดเป้าหมายจริง 1–11 ซม.
+เส้นทางจริงที่หุ่นวิ่ง (ยาว 17 ม.) ดูได้ที่ [img/nav2_path_fake_robot.png](img/nav2_path_fake_robot.png) — หุ่นหยุดห่างจุดเป้าหมายจริง 1–11 ซม.
 
 > ⏱️ ทั้งรอบประมาณ 3 นาที เพราะจำกัดความเร็ว 0.12 ม./วิ เท่าหุ่นจริง
 
 **state machine นี้ทำอะไร** (ชื่อ state เดียวกับ `final_project_state_machine.py`)
 
-| state | ตอนนี้ | วันเดโมต้องเปลี่ยนเป็น |
+| state | ทำอะไร | วันเดโมต้องเปลี่ยน |
 |---|---|---|
-| INIT | บอก AMCL ว่าอยู่ Initial แล้วรอ Nav2 พร้อม | เหมือนเดิม |
-| NAV_STATION1 | **Nav2 จริง** ไป (5.04, 1.32) หันเข้าโต๊ะ | แก้พิกัดตามแผนที่ห้องจริง |
-| DETECT_OBJECT | รอ 2 วิ (ปลอม) | กล้องหาวัตถุ |
-| PICK | รอ 2 วิ (ปลอม) | สั่งแขน SO-100 หยิบ |
-| NAV_STATION2 | **Nav2 จริง** ไป (2.85, −2.58) หันเข้าโต๊ะ | แก้พิกัด |
-| DETECT_STATION | รอ 2 วิ (ปลอม) | กล้องหาจุดวาง |
-| PLACE | รอ 2 วิ (ปลอม) | สั่งแขนวาง |
-| RETURN_HOME | **Nav2 จริง** กลับ (0, 0) | เหมือนเดิม |
+| INIT | บอก AMCL ว่าอยู่ Initial รอ Nav2 พร้อม พับแขน | เหมือนเดิม |
+| NAV_STATION1 | **Nav2** ไป (5.04, 1.32) หันเข้าโต๊ะ | แก้พิกัดตามแผนที่ห้องจริง |
+| DETECT_OBJECT | กล้องหาลูกบาศก์ (ภาค 5) | ตั้งสีและความสูงโต๊ะจริง |
+| PICK | เข้าใกล้ + แขนหยิบ (ภาค 5) | ไดรเวอร์แขนจริง |
+| NAV_STATION2 | **Nav2** ไป (2.85, −2.58) หันเข้าโต๊ะ | แก้พิกัด |
+| DETECT_STATION | กล้องหาจุดวาง (ภาค 5) | ตั้งสีจุดวางจริง |
+| PLACE | เข้าใกล้ + แขนวาง (ภาค 5) | ไดรเวอร์แขนจริง |
+| RETURN_HOME | **Nav2** กลับ (0, 0) | เหมือนเดิม |
 
 ถ้า Nav2 ไปไม่ถึง (ติด/หาเส้นทางไม่ได้) state นั้นจะลองใหม่เอง สูงสุด 3 ครั้ง แล้วจบด้วย `aborted`
 
 **แก้พิกัด Station:** เปิด `mission_nav2.py` แก้ตรง `GOALS = {...}` เป็น `(x, y, มุมหัน)`
 ค่า x, y ได้จาก Publish Point (ข้อ 3.3) มุมเป็นเรเดียน: หันขึ้น (แกน X) = `0`, หันซ้าย = `math.pi / 2`, หันขวา = `-math.pi / 2`, หันลง = `math.pi`
+
+# ภาค 5 — ภารกิจเต็ม: กล้อง + แขน (จำลองทั้งหมด)
+
+ภาคนี้หุ่นทำครบทุกขั้นเองเหมือนวันเดโม: วิ่งไป Station 1 → **กล้องหาลูกบาศก์** → **แขนหยิบ** → วิ่งไป Station 2 → **กล้องหาจุดวาง** → **แขนวาง** → กลับบ้าน
+
+ในห้องจำลองมี:
+- **ลูกบาศก์สีเขียว 4 ซม.** บนโต๊ะ Station 1 (วางเยื้องตำแหน่งเดิมแบบสุ่ม ±3 ซม. ทุกครั้ง กล้องจึงต้องหาเองจริง ๆ)
+- **แผ่นสีฟ้า 10 ซม.** บนโต๊ะ Station 2 = จุดที่ต้องวาง
+
+> โต๊ะสูง 0.22 ม. เป็นค่าสมมติ **วันจริงต้องวัดโต๊ะจริง** แล้วใส่ใน `cube_detector.py` (`desk_height`)
+
+```
+fake_camera ─/camera/color/image_raw─► cube_detector ─/detected/cube, /detected/station─┐
+     ▲ (ถ่ายจากตำแหน่งกล้องบนหุ่นตาม TF)                                                    ▼
+fake_robot (ห้อง + ลูกบาศก์)  ◄─/joint_states─ fake_arm ◄─/arm/joint_command─ mission_nav2.py ─► Nav2
+```
+
+ไฟล์ที่เพิ่มมา (อยู่ใน `robot/`):
+
+| ไฟล์ | ทำอะไร | วันจริงใช้ไหม |
+|---|---|---|
+| `fake_camera.py` | กล้อง Xtion ปลอม ถ่ายภาพห้องจำลองจากตำแหน่งกล้องบนหุ่น (640×480) | ไม่ใช้ ใช้ไดรเวอร์กล้องจริง |
+| `cube_detector.py` | หาลูกบาศก์ (สีเขียว) และจุดวาง (สีฟ้า) จากสีในภาพ แล้วคำนวณตำแหน่งจริงจากความสูงโต๊ะ | **ใช้** (ปรับสี + ความสูงโต๊ะ) |
+| `fake_arm.py` | แขน SO-100 ปลอม ขยับตามคำสั่ง (`robot_model.launch.py arm:=sim` เปิดให้เอง) | ไม่ใช้ ใช้ไดรเวอร์แขนจริง |
+| `arm_control.py` | คำนวณมุมข้อต่อแขน (IK) + ท่าหยิบ/วาง ลองสั่งเองได้ | **ใช้** |
+| `mission.rviz` | ค่า RViz สำเร็จรูปของภาคนี้ (แผนที่ costmap เส้นทาง ลูกบาศก์ ภาพจากกล้อง) | ใช้ |
+
+**ทำไมไม่ใช้ระยะลึก (depth) ของ Xtion:** กล้องวัดระยะได้ตั้งแต่ ~0.8 ม. แต่ตอนหยิบ ลูกบาศก์อยู่ห่างกล้องแค่ ~0.4 ม.
+ตัวหาจึงใช้แค่ภาพสี: รู้ว่าลูกบาศก์อยู่บนโต๊ะ (รู้ความสูง) ลากเส้นจากกล้องผ่านจุดสีในภาพไปชนระนาบโต๊ะ = ได้ตำแหน่ง x, y
+
+## ผังหน้าต่างภาค 5 (7 หน้าต่าง)
+
+| หน้าต่าง | Windows (ในโฟลเดอร์โปรเจกต์) | Ubuntu (ใน `robot/`) |
+|---|---|---|
+| 1 หุ่นปลอม | `pixi run python robot\fake_robot.py` | `python3 fake_robot.py` |
+| 2 โมเดล + **แขนปลอม** | `pixi run ros2 launch robot\robot_model.launch.py arm:=sim` | `ros2 launch ./robot_model.launch.py arm:=sim` |
+| 3 กล้องปลอม | `pixi run python robot\fake_camera.py` | `python3 fake_camera.py` |
+| 4 ตัวหาวัตถุ | `pixi run python robot\cube_detector.py` | `python3 cube_detector.py` |
+| 5 Nav2 | `pixi run ros2 launch robot\nav2.launch.py` | `ros2 launch ./nav2.launch.py` |
+| 6 RViz | `pixi run rviz2 -d robot\mission.rviz` | `rviz2 -d mission.rviz` |
+| 7 ภารกิจ | `pixi run python robot\mission_nav2.py` | `python3 mission_nav2.py` |
+
+เปิดตามลำดับ 1 → 7 รอให้หน้าต่าง 5 ขึ้น `Activating bt_navigator` ก่อนค่อยเปิดหน้าต่าง 7
+
+## 5.1 ดูว่ากล้องเห็นอะไร (ก่อนเปิดภารกิจ)
+
+ใน RViz (`mission.rviz`) มีช่อง **Camera (detector)** มุมล่างซ้าย = ภาพจากกล้องปลอมพร้อมกรอบแดงรอบสิ่งที่หาเจอ
+ตอนหุ่นอยู่ที่ Initial กล้องยังไม่เห็นลูกบาศก์ (อยู่ไกล 5 ม. คนละห้อง) เป็นเรื่องปกติ
+
+ลองให้หุ่นปลอมเริ่มหน้าโต๊ะ Station 1 เลย (ปิดหน้าต่าง 1 แล้วเปิดใหม่ด้วยคำสั่งนี้):
+```bash
+python3 fake_robot.py --ros-args -p start_pose:=[5.20,1.32,0.0]
+```
+Windows: `pixi run python robot\fake_robot.py --ros-args -p start_pose:=[5.20,1.32,0.0]`
+
+หน้าต่าง 4 จะขึ้น `seen: cube x=5.49 y=1.34` (ตำแหน่งในแผนที่) ทุก ~3 วินาที
+
+## 5.2 ลองสั่งแขนเอง (หน้าต่างสำรอง)
+
+```bash
+python3 arm_control.py open
+python3 arm_control.py reach 0.30 0.0 0.30
+python3 arm_control.py rest
+```
+Windows: `pixi run python robot\arm_control.py open` (เปลี่ยนคำท้ายเป็น `reach 0.30 0.0 0.30`, `carry`, `close`, `rest`)
+
+`reach x y z` = ให้จุดกลางปากคีบไปที่ x (หน้า) y (ซ้าย) z (สูงจากพื้น) หน่วยเมตร เทียบกับกลางหุ่น
+ระยะที่แขนเอื้อมถึง (คำนวณจาก IK ทุก 2–5 ซม.):
+
+| สูงจากพื้น \ ข้างหน้า | 0.20 | 0.22–0.25 | 0.28–0.35 | 0.38 |
+|---|---|---|---|---|
+| 0.16–0.20 ม. | ✅ | ✅ | ✅ | ✅ |
+| 0.24 ม. | ❌ | ✅ | ✅ | ✅ |
+| 0.28 ม. | ❌ | ❌ | ✅ | มือจับเอียง |
+| 0.32–0.36 ม. | ❌ | ❌ | มือจับเอียง | มือจับเอียง |
+
+✅ = มือจับชี้ลงตรง ๆ ได้ / ❌ = เอื้อมไม่ถึง (ขึ้น `out of reach`)
+**แปลว่าโต๊ะจริงต้องเตี้ย:** จุดกลางลูกบาศก์ไม่ควรสูงเกิน ~0.28 ม. จากพื้น (โต๊ะสูงไม่เกิน ~0.26 ม.) เพราะแขนติดบนหลัง Kobuki สูงแค่ 0.12 ม.
+
+## 5.3 หน้าต่าง 7: ภารกิจเต็ม
+
+ปิดหุ่นปลอมแล้วเปิดใหม่แบบปกติ (เริ่มที่ Initial) แล้วรัน `mission_nav2.py`
+
+✅ ผลจริงจากการรันทดสอบ (หุ่นปลอม, Windows, 27 ต.ค.):
+```
+[INIT] robot is at Initial Location - telling AMCL and waiting for Nav2
+[INIT] Nav2 is active - folding the arm
+[NAV_STATION1] go to STATION1 x=5.04 y=1.32 yaw=0 deg
+[NAV_STATION1] arrived in 55 s
+[DETECT_OBJECT] looking for the cube ...
+[DETECT_OBJECT] cube at x=5.476 y=1.325 (odom) = 0.47 m ahead, -0.09 m left of the robot
+  approach: cube is 0.47 m ahead, driving +0.17 m
+[PICK] cube at 0.303 -0.004 0.240 (base_link) - moving the arm
+[PICK] done
+[NAV_STATION2] go to STATION2 x=2.85 y=-2.58 yaw=-90 deg
+[NAV_STATION2] arrived in 56 s
+[DETECT_STATION] looking for the station ...
+[DETECT_STATION] station at x=2.849 y=-3.118 (odom) = 0.55 m ahead, -0.07 m left of the robot
+  approach: station is 0.55 m ahead, driving +0.25 m
+[PLACE] station at 0.303 -0.005 0.220 (base_link) - moving the arm
+[PLACE] done
+[RETURN_HOME] go to HOME x=0.00 y=0.00 yaw=0 deg
+[RETURN_HOME] arrived in 60 s
+Mission finished: succeeded in 207 s
+```
+(ในหน้าต่างจริงแต่ละบรรทัดขึ้นต้นด้วย `[INFO] [เวลา] [basic_navigator]:`)
+
+หน้าต่าง 1 (หุ่นปลอม) บอกผลจริงของลูกบาศก์:
+```
+Cube on Station 1 desk: x=5.477 y=1.326 | place marker on Station 2 desk: x=2.85 y=-3.12
+Cube grabbed (jaw centre 0.1 cm from cube centre)
+Cube released at x=2.849 y=-3.119 z=0.240 - on the Station 2 marker
+```
+กล้องหาตำแหน่งลูกบาศก์คลาดจากของจริง 1 มม. และวางห่างกลางแผ่นฟ้า 1.4 มม.
+
+![ภาพจากกล้องปลอมที่ Station 1 พร้อมกรอบที่ตัวหาเจอ](img/camera_station1_sim.png)
+
+![เส้นทางจริงของหุ่นทั้งภารกิจ](img/mission_path_sim.png)
+
+**แต่ละขั้นทำอะไร:**
+
+| state | ทำอะไร |
+|---|---|
+| DETECT_OBJECT | รอให้ตัวหาเห็นลูกบาศก์ 5 ภาพ เอาค่ากลาง (median) ถ้าไม่เห็นใน 8 วิ หันซ้ายขวานิดหนึ่งแล้วลองใหม่ (สูงสุด 3 ครั้ง) |
+| PICK | หันหน้าเข้าลูกบาศก์ → ขับตรงเข้าไปจนลูกบาศก์อยู่ข้างหน้า 0.30 ม. → ดูใหม่อีกครั้ง (ใกล้ขึ้น แม่นขึ้น) → แขน: อ้าปาก → อยู่เหนือลูกบาศก์ 7 ซม. → ลง → หนีบ → ยก 8 ซม. → ถอยหลัง 0.2 ม. → พับแขนท่าถือของ |
+| DETECT_STATION | เหมือน DETECT_OBJECT แต่หาแผ่นสีฟ้า |
+| PLACE | เข้าใกล้แบบเดียวกัน → แขนไปเหนือแผ่น 8 ซม. → ลง → อ้าปาก → ยกขึ้น → ถอยหลัง → พับแขน |
+
+ถ้า PICK ไม่สำเร็จ (แขนเอื้อมไม่ถึง) จะกลับไป DETECT_OBJECT ใหม่ ครบ 3 ครั้งจบด้วย `aborted`
+
+**อยากซ้อมแค่การวิ่ง (ไม่ต้องเปิดกล้อง/แขน):** `mission_nav2.py --nav-only` (เหมือนข้อ 4.4)
+
+## 5.4 วันจริงต้องเปลี่ยนอะไร
+
+| ส่วน | ซิม | วันจริง |
+|---|---|---|
+| ภาพ | `fake_camera.py` | ไดรเวอร์ Xtion (ต้องได้ topic ภาพสี + camera_info) แล้วบอกตัวหาด้วย `-p image_topic:=...` |
+| สีลูกบาศก์ / จุดวาง | เขียว / ฟ้า | วัดสีจริง แล้วตั้ง `cube_hsv_low/high`, `marker_hsv_low/high` |
+| ความสูงโต๊ะ | 0.22 ม. | วัดจริง `-p desk_height:=...` |
+| แขน | `arm:=sim` | ไดรเวอร์ SO-100 จริง + `robot_model.launch.py arm:=none` |
+| ตำแหน่งกล้อง/แขนบนหุ่น | ค่าประมาณใน `kobuki_x2.urdf` | วัดจริง แก้ joint `camera_joint`, `so100_mount_joint` (และ `MOUNT` ใน `arm_control.py`) |
 
 ---
 
@@ -672,6 +815,9 @@ Windows: `pixi run python robot\mission_nav2.py`
 | เลเซอร์ไม่ทับกำแพงบนแผนที่ | AMCL ไม่รู้ว่าหุ่นอยู่ไหน | กด **2D Pose Estimate** ที่ตำแหน่งหุ่นจริง |
 | หุ่นหมุนวนที่เดิม / `number_of_recoveries` เพิ่มเรื่อย ๆ | ติด ทางแคบ | ดู costmap ว่าปิดทางไหม ลด `inflation_radius` ใน `nav2_params.yaml` |
 | `mission_nav2.py` ค้างที่ `Waiting for amcl_pose` | Nav2 (หน้าต่าง 4) ยังไม่เปิดหรือยังไม่พร้อม | เปิด Nav2 ก่อน รอ `bt_navigator: Activating` |
+| `[DETECT_OBJECT] no cube in the camera image` | หน้าต่าง 3 หรือ 4 ไม่ได้เปิด / หุ่นหันไม่ตรงโต๊ะ | เปิดกล้องปลอม + ตัวหา ดูช่อง Camera ใน RViz ว่ามีกรอบแดง |
+| `target ... cm out of reach` | ลูกบาศก์อยู่ไกล/สูงเกินแขน | ดูตารางระยะเอื้อมข้อ 5.2 · วันจริงเช็คความสูงโต๊ะ |
+| แขนไม่ขยับเลย | เปิดโมเดลโดยไม่ใส่ `arm:=sim` | ปิดหน้าต่าง 2 เปิดใหม่ด้วย `arm:=sim` |
 
 ---
 
@@ -688,6 +834,9 @@ Windows: `pixi run python robot\mission_nav2.py`
 - [ ] ภาค 4: Nav2 เปิดครบถึง `bt_navigator: Activating`
 - [ ] ภาค 4: RViz เห็น costmap + เส้นเขียว `/plan`
 - [ ] ภาค 4: กด 2D Goal Pose แล้วหุ่นวิ่งไป Station 1 เอง
-- [ ] ภาค 4: `mission_nav2.py` จบด้วย `Mission finished: succeeded`
+- [ ] ภาค 4: `mission_nav2.py --nav-only` จบด้วย `Mission finished: succeeded`
+- [ ] ภาค 5: ช่อง Camera ใน RViz เห็นกรอบแดงรอบลูกบาศก์ที่ Station 1
+- [ ] ภาค 5: `arm_control.py reach 0.30 0.0 0.30` แล้วแขนขยับไปจริง
+- [ ] ภาค 5: ภารกิจเต็มจบด้วย `Mission finished: succeeded` และหน้าต่าง 1 ขึ้น `on the Station 2 marker`
 
 ผ่านครบแล้ว วันได้หุ่นจริงแค่เปลี่ยนหน้าต่าง 1 จาก `fake_robot.py` เป็น LiDAR + Kobuki (ดู [RUN_GUIDE_TH.md](RUN_GUIDE_TH.md))
