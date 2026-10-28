@@ -25,4 +25,4 @@ if (Test-Path "$root\robot\mapping.rviz") {
 Open-Node "6 TELEOP (click here, English keyboard)" "pixi run ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p speed:=0.08 -p turn:=0.35"
 
 Write-Host "Started. When the map looks complete run:"
-Write-Host "  pixi run ros2 run nav2_map_server map_saver_cli -f robot\maps\my_map"
+Write-Host "  pixi run ros2 run nav2_map_server map_saver_cli -f robot\maps\my_map --ros-args -p save_map_timeout:=10.0"

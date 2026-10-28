@@ -398,11 +398,11 @@ q / z = เพิ่ม/ลดความเร็วทั้งหมด 10% 
 
 Ubuntu:
 ```bash
-mkdir -p ~/maps && ros2 run nav2_map_server map_saver_cli -f ~/maps/practice_map
+mkdir -p ~/maps && ros2 run nav2_map_server map_saver_cli -f ~/maps/practice_map --ros-args -p save_map_timeout:=10.0
 ```
 Windows:
 ```powershell
-mkdir $HOME\maps -Force; pixi run ros2 run nav2_map_server map_saver_cli -f $HOME\maps\practice_map
+mkdir $HOME\maps -Force; pixi run ros2 run nav2_map_server map_saver_cli -f $HOME\maps\practice_map --ros-args -p save_map_timeout:=10.0
 ```
 ✅ ต้องเห็น `Map saved successfully` และได้ 2 ไฟล์:
 - `practice_map.pgm` = รูปแผนที่ (ขาว/ดำ/เทา)

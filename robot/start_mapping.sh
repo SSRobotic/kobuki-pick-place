@@ -21,4 +21,4 @@ open_node "5 RViz" "rviz2 -d mapping.rviz"
 open_node "6 TELEOP (click here)" "ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p speed:=0.08 -p turn:=0.35"
 
 echo "Started. When the map is complete:"
-echo "  mkdir -p ~/maps && ros2 run nav2_map_server map_saver_cli -f ~/maps/my_map"
+echo "  mkdir -p ~/maps && ros2 run nav2_map_server map_saver_cli -f ~/maps/my_map --ros-args -p save_map_timeout:=10.0"

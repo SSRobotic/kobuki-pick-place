@@ -3,6 +3,9 @@
 คู่มือนี้พาทำ **ตั้งแต่เปิดคอมจนหุ่นปลอมหยิบ-วางเสร็จแล้วกลับบ้าน** ในรวดเดียว ไม่ต้องมีหุ่นจริง ใช้คอมเครื่องเดียว
 ทำตามลำดับขั้น 0 → 12 ทุกขั้นมี **✅ ต้องเห็น** ไว้เทียบ ถ้าไม่เห็นตามนั้น อย่าเพิ่งไปขั้นต่อไป ดูตาราง "ถ้าติด" ท้ายไฟล์
 
+> **รูปทุกรูปในคู่มือนี้คือภาพจริงจากการรันตามคู่มือนี้บน Windows (28 ต.ค.)** หน้าต่างดำ = terminal (ชื่อหน้าต่างบนแท็บ = เลขหน้าต่าง),
+> หน้าต่างขาว = RViz · ตัวเลขเวลาใน `[INFO] [...]` ของคุณจะต่างไป ไม่เป็นไร · ตัวเลขใน RViz อาจเป็นเลขไทย (๑๒๓) ตามภาษาของ Windows
+
 ใช้เวลาประมาณ 1.5–2 ชั่วโมง (ครั้งแรก) · ทำซ้ำได้เรื่อย ๆ จนจำลำดับได้ วันเดโมคือลำดับเดียวกัน แค่เปลี่ยนหุ่นปลอมเป็นของจริง ([DEMO_DAY_TH.md](DEMO_DAY_TH.md))
 
 อยากรู้ลึกว่าแต่ละช่องใน RViz ตั้งยังไง ดู [PRACTICE_NO_ROBOT_TH.md](PRACTICE_NO_ROBOT_TH.md) (คู่มือนี้ใช้ไฟล์ตั้งค่าสำเร็จรูปเพื่อให้จบในวันเดียว)
@@ -69,6 +72,9 @@ pixi install
 หุ่นปลอม = ห้องสอบจำลองตามผังในโจทย์ ส่ง `/scan` (เลเซอร์) `/odom` (ล้อ) และ TF เหมือนหุ่นจริงทุกอย่าง
 มีลูกบาศก์เขียว 4 ซม. **บนพื้น** ที่ Station 1 (ตำแหน่งสุ่มเยื้อง ±3 ซม. ทุกครั้งที่เปิด) และแผ่นฟ้าบนพื้นที่ Station 2 = จุดวาง
 
+![หน้าต่าง 1 หุ่นปลอม](img/day/t01_fake_robot.png)
+*หน้าต่าง 1 หลังเปิด: 5 บรรทัด INFO (สองบรรทัดล่างขึ้นตอนจบภารกิจในขั้น 10) · ถ้ามีบรรทัดเหลือง `New subscription ... incompatible QoS` 1 บรรทัดตอนเปิด RViz = ปกติ*
+
 ```
  ┌──────────────────────┬────────┐
  │ [desk]               │        │
@@ -94,6 +100,9 @@ pixi install
 ✅ ต้องเห็น `got segment` 21 บรรทัด (base_link, battery, ..., laser, laser_cap, so100_base, ..., white_plates)
 หน้าต่างนี้บอก ROS ว่าแต่ละชิ้นบนหุ่นอยู่ตรงไหน (จาก `kobuki_x2.urdf`) และ `arm:=sim` เปิดแขนปลอมที่ขยับตามคำสั่งได้ **เปิดค้างไว้ทั้งวัน**
 
+![หน้าต่าง 2 โมเดลหุ่น](img/day/t02_robot_model.png)
+*หน้าต่าง 2: ท้ายสุดเป็นรายการ `got segment ...` (เลื่อนขึ้นดูได้ครบ 21 บรรทัด) ไม่มีบรรทัดแดง*
+
 ---
 
 ## ขั้น 3 — หน้าต่าง 8: เช็คว่าข้อมูลมาครบ
@@ -102,6 +111,9 @@ pixi install
 pixi run ros2 topic hz /scan
 ```
 ✅ `average rate: 4.0...` → `Ctrl+C`
+
+![ros2 topic hz /scan](img/day/t03_hz_scan.png)
+*บรรทัดแรก `WARNING: topic [/scan] does not appear to be published yet` = ปกติ (ยังไม่ทันได้ข้อมูล) แล้ว `average rate` ~4.0*
 
 ```powershell
 pixi run ros2 topic hz /odom
@@ -112,6 +124,9 @@ pixi run ros2 topic hz /odom
 pixi run ros2 run tf2_ros tf2_echo base_link laser
 ```
 ✅ `Translation: [0.075, -0.035, 0.247]` = LiDAR อยู่หน้ากลางหุ่น 7.5 ซม. สูง 24.7 ซม. → `Ctrl+C`
+
+![tf2_echo base_link laser](img/day/t03_tf_laser.png)
+*`Translation: [0.075, -0.035, 0.247]` และ `RPY (degree) [0.000, 0.000, -90.000]` ขึ้นซ้ำทุกวินาที*
 
 (Ubuntu: ตัด `pixi run` ออก)
 
@@ -127,6 +142,9 @@ pixi run ros2 run tf2_ros tf2_echo base_link laser
 
 ✅ `Registering sensor: [Custom Described Lidar]`
 
+![หน้าต่าง 4 SLAM](img/day/t04_slam.png)
+*หน้าต่าง 4: SLAM เริ่มทำงาน (Solver plugin + Registering sensor)*
+
 **หน้าต่าง 3: RViz** (เปิดหลัง SLAM เพราะไฟล์นี้ใช้ Fixed Frame = `map` ที่ SLAM สร้าง)
 
 | Windows | Ubuntu |
@@ -135,7 +153,8 @@ pixi run ros2 run tf2_ros tf2_echo base_link laser
 
 ✅ เห็นหุ่นแบบที่ทีมประกอบ: Kobuki ดำ แผ่นอะคริลิก 2 ชั้น แขนสีดำด้านหลัง LiDAR ฝาน้ำเงินด้านหน้า + จุดแดงเลเซอร์รอบห้อง + แผนที่สีเทาเริ่มขึ้นรอบตัวหุ่น
 
-![หุ่นใน RViz (มองจากหลังเฉียงซ้าย)](img/demo_robot_layout.png)
+![RViz ตอนเริ่มทำแผนที่](img/day/r04_slam_start.png)
+*RViz (`mapping.rviz`) ตอนเพิ่งเปิด SLAM: หุ่นอยู่กลาง จุดแดง = เลเซอร์ พื้นเทาอ่อน = ส่วนที่แผนที่รู้แล้ว ดำ = กำแพง · ซูม: scroll เมาส์ · หมุนมุมมอง: ลากซ้าย · เลื่อน: ลากกลาง/Shift+ลาก*
 
 **หน้าต่าง 5: ขับด้วยคีย์บอร์ด**
 
@@ -146,6 +165,9 @@ pixi run ros2 run tf2_ros tf2_echo base_link laser
 คลิกที่หน้าต่างนี้ + แป้นภาษาอังกฤษ แล้ว **กดค้าง**: `i` เดินหน้า · `,` ถอย · `j`/`l` หมุนซ้าย/ขวา · `k` หยุด
 ชนอะไร หน้าต่าง 1 ขึ้น `Bump!` → กด `,` ถอยออก
 
+![หน้าต่าง 5 teleop](img/day/t04_teleop.png)
+*หน้าต่าง 5: ผังปุ่ม + `currently: speed 0.08 turn 0.35` คลิกหน้าต่างนี้ก่อนกดปุ่ม*
+
 เส้นทาง (วนครบห้องแล้วกลับจุดเดิม = แผนที่แม่นสุด):
 1. ที่ Initial กด `j` หมุนช้า ๆ 1 รอบ
 2. `i` ตรงขึ้นไป ~2.5 ม. ลอดทางเข้าห้องบน
@@ -155,9 +177,22 @@ pixi run ros2 run tf2_ros tf2_echo base_link laser
 6. ลงต่อ เข้าประตูล่าง กลับห้องล่าง
 7. กลับ Initial ดูใน RViz ว่ากำแพงเดิมทับกันพอดี ไม่เบลอซ้อน
 
-✅ แผนที่ที่ได้ควรหน้าตาประมาณนี้ (ขาว = ว่าง, ดำ = กำแพง, เทา = ยังไม่เห็น/ใต้โต๊ะ):
+ระหว่างขับ แผนที่ใน RViz จะค่อย ๆ ขยายแบบนี้ (มุมมองตามหุ่นไปเรื่อย ๆ):
 
-![แผนที่ห้องจำลองจาก SLAM](handbook/img/map_final.png)
+![แผนที่ระหว่างทำ 1](img/day/r04_slam_mid1.png)
+*ลอดทางเข้าห้องบนแล้ว กำลังไป Station 1*
+
+![แผนที่ระหว่างทำ 2](img/day/r04_slam_mid2.png)
+*ออกประตูบน ลงทางเดินขวาไปหา Station 2*
+
+![แผนที่ตอนกลับถึง Initial](img/day/r04_slam_done.png)
+*กลับถึง Initial: กำแพงเส้นเดียวคม ไม่ซ้อนสองชั้น = แผนที่ใช้ได้*
+
+✅ แผนที่ที่เซฟได้จริงจากรอบนี้ (ขาว = ว่าง, ดำ = กำแพง, เทา = ยังไม่เห็น/ใต้โต๊ะ):
+
+![แผนที่ที่เซฟได้](img/day/map_saved.png)
+*`practice_map.pgm` จากรอบที่ถ่ายภาพ (153 × 121 ช่อง ช่องละ 5 ซม.)*
+
 
 ---
 
@@ -165,9 +200,14 @@ pixi run ros2 run tf2_ros tf2_echo base_link laser
 
 | Windows | Ubuntu |
 |---|---|
-| `mkdir $HOME\maps -Force; pixi run ros2 run nav2_map_server map_saver_cli -f $HOME\maps\practice_map` | `mkdir -p ~/maps && ros2 run nav2_map_server map_saver_cli -f ~/maps/practice_map` |
+| `mkdir $HOME\maps -Force; pixi run ros2 run nav2_map_server map_saver_cli -f $HOME\maps\practice_map --ros-args -p save_map_timeout:=10.0` | `mkdir -p ~/maps && ros2 run nav2_map_server map_saver_cli -f ~/maps/practice_map --ros-args -p save_map_timeout:=10.0` |
 
 ✅ `Map saved successfully` และได้ 2 ไฟล์ในโฟลเดอร์ `maps`: `practice_map.pgm` (รูป) + `practice_map.yaml` (ค่าตั้ง)
+
+![หน้าต่าง 6 เซฟแผนที่](img/day/t05_map_saver.png)
+*บรรทัดเหลือง `threshold unspecified` / `Image format unspecified` = ปกติ · ต้องจบด้วย `Map saved successfully`*
+
+❌ ถ้าขึ้นแดง `Failed to spin map subscription` = หา `/map` ไม่ทันเวลา: เช็คว่าหน้าต่าง 4 (SLAM) ยังเปิดอยู่ และพิมพ์ `--ros-args -p save_map_timeout:=10.0` ท้ายคำสั่งครบ แล้วรันใหม่
 
 แล้ว **ปิด** ด้วย `Ctrl+C`: หน้าต่าง 5 (คีย์บอร์ด) → หน้าต่าง 4 (SLAM) → ปิด RViz (หน้าต่าง 3)
 หน้าต่าง 1 กับ 2 ยังเปิดไว้
@@ -189,6 +229,9 @@ pixi run ros2 run tf2_ros tf2_echo base_link laser
 ✅ รอ ~10 วินาที บรรทัดท้าย ๆ ต้องมี `[bt_navigator]: Activating`
 ช่วงแรกมี `Timed out waiting for transform ...` ไม่กี่บรรทัด = ปกติ · ถ้าแผนที่ตัวเองเละ ลบ `map:=...` ออก (ใช้แผนที่สำเร็จรูปใน repo)
 
+![หน้าต่าง 4 Nav2](img/day/t06_nav2.png)
+*หน้าต่าง 4 (Nav2) หลังพร้อม: มี `[bt_navigator]: Activating` และ `Creating bond` ไม่มีบรรทัดแดงรัว ๆ*
+
 **หน้าต่าง 3: RViz สำหรับภารกิจ**
 
 | Windows | Ubuntu |
@@ -197,6 +240,9 @@ pixi run ros2 run tf2_ros tf2_echo base_link laser
 
 ✅ เห็นแผนที่ + ขอบสีรอบกำแพง (costmap) + วงแดง Station + ช่อง **Camera** มุมล่างซ้าย (ยังว่าง เพราะยังไม่เปิดกล้อง)
 ถ้าจุดแดงเลเซอร์ไม่ทับกำแพง: กด **2D Pose Estimate** แล้วคลิกที่ตำแหน่งหุ่น ลากไปทางที่หุ่นหัน
+
+![RViz mission.rviz พร้อม](img/day/r06_nav2_ready.png)
+*RViz (`mission.rviz`) ตอน Nav2 พร้อม: หุ่นที่ Initial · ขอบฟ้า/ชมพู/ม่วงรอบกำแพง = costmap (เขตที่ Nav2 ไม่ให้เข้าใกล้) · จุดแดงทับเส้นกำแพงพอดี = AMCL รู้ตำแหน่งถูก · ช่อง Camera ด้านบนยัง `No Image` เพราะยังไม่เปิดกล้อง*
 
 **ลองสั่งด้วยมือ:** กด **2D Goal Pose** คลิกกลางห้องบน ค้างแล้วลากเป็นทิศ
 ✅ เส้นเขียวขึ้น หุ่นวิ่งตามเส้นเอง หน้าต่าง 4 ขึ้น `Reached the goal!` · สั่งกลับไปแถว Initial ด้วยวิธีเดียวกัน
@@ -223,6 +269,9 @@ Mission finished: succeeded in ... s
 ```
 สังเกต: หุ่นไปจอด**ห่างลูกบาศก์ 0.65 ม. แล้วหันท้ายเข้าหา** (yaw=180) เพราะแขนกับกล้องอยู่ด้านหลังหุ่น
 
+![เส้นทางไป Station 1](img/day/r10_nav1.png)
+*ระหว่างวิ่งไป Station 1: เส้นสีส้ม = เส้นทางที่ Nav2 วางไว้ ไปจบที่วงแดง Station 1 (จุดเขียวเล็ก = ลูกบาศก์) (ภาพจากรอบภารกิจเต็ม เส้นทางเหมือน --nav-only)*
+
 ---
 
 ## ขั้น 8 — กล้องปลอม + ตัวหาวัตถุ
@@ -235,6 +284,9 @@ Mission finished: succeeded in ... s
 
 ✅ `Fake Xtion ready: /camera/color/image_raw (640x480) ...`
 
+![หน้าต่าง 6 กล้องปลอม](img/day/t08_camera.png)
+*หน้าต่าง 6: กล้องปลอมพร้อม*
+
 **หน้าต่าง 7: ตัวหาวัตถุ**
 
 | Windows | Ubuntu |
@@ -242,7 +294,13 @@ Mission finished: succeeded in ... s
 | `pixi run python robot\cube_detector.py` | `python3 cube_detector.py` |
 
 ✅ `Cube detector on /camera/color/image_raw, objects on a surface 0.00 m high`
+
+![หน้าต่าง 7 ตัวหาวัตถุ](img/day/t08_detector.png)
+*หน้าต่าง 7: ตัวหาพร้อม (`objects on a surface 0.00 m high` = วัตถุอยู่บนพื้น)*
 ตอนนี้หุ่นอยู่ Initial กล้องยังไม่เห็นลูกบาศก์ (ไกล 5 ม.) เป็นเรื่องปกติ ช่อง Camera ใน RViz เห็นห้องจากท้ายหุ่น
+
+![ช่อง Camera ตอนอยู่ Initial](img/day/r08_camera_initial.png)
+*ช่อง Camera (ซ้ายบนของ RViz) มีภาพแล้ว: เห็นห้องด้านหลังหุ่น · ภาพเล็ก ลากขอบช่องให้ใหญ่ขึ้นได้*
 
 ตอนหุ่นจอดหน้า Station 1 (ขั้น 10) ภาพจะเป็นแบบนี้: ลูกบาศก์อยู่ล่างภาพ กรอบแดง = ตัวหาเจอ
 
@@ -264,6 +322,12 @@ Mission finished: succeeded in ... s
 
 (Ubuntu: `python3 arm_control.py open` ฯลฯ)
 ✅ ทุกคำสั่งจบด้วย `done` · x ติดลบ = หลังหุ่น · แขนเอื้อมถึงพื้นได้ที่ x = −0.20 ถึง −0.32 ม. นอกช่วงนี้ขึ้น `out of reach`
+
+![หน้าต่าง 8 สั่งแขน](img/day/t09_arm.png)
+*หน้าต่าง 8: `open` แล้ว `reach -0.27 0.0 0.10` แต่ละคำสั่งจบด้วย `done`*
+
+![แขนเอื้อมออกท้าย](img/day/r09_arm_reach.png)
+*RViz ซูมเข้าไปที่หุ่น: แขนเอื้อมออก**ท้าย**หุ่น ปากคีบอ้า สูงจากพื้น 10 ซม.*
 
 ---
 
@@ -301,7 +365,45 @@ Cube grabbed (jaw centre 0.2 cm from cube centre)
 Cube released at x=2.858 y=-2.909 z=0.020 - on the Station 2 marker
 ```
 
+![หน้าต่าง 1 หลังจบภารกิจ](img/day/t10_fake_robot.png)
+*หน้าต่าง 1 หลังจบ: `Cube grabbed` และ `Cube released ... on the Station 2 marker`*
+
+![หน้าต่าง 5 จบภารกิจ](img/day/t10_mission.png)
+*หน้าต่าง 5 ท้ายสุด: `[RETURN_HOME] arrived` แล้ว `Mission finished: succeeded in 229 s`*
+
 ลำดับที่หุ่นทำ: จอดหน้า Station 1 ท้ายหันเข้า → กล้องหาลูกบาศก์ → **ถอย**เข้าไปจนลูกบาศก์ห่าง 0.27 ม. → แขนเอื้อมออกท้าย หยิบ → ขับออก 0.2 ม. พับแขนถือของ → ไป Station 2 ทำแบบเดียวกันแต่วาง → กลับบ้าน
+
+ดูทีละช่วงจากรอบจริง (ซูมเข้าไปที่หุ่นใน RViz เพื่อดูแขน):
+
+![จอดหน้า Station 1](img/day/r10_detect.png)
+*1) จอดหน้า Station 1 ท้ายหุ่นหันเข้าหาวงแดง (`[DETECT_OBJECT] cube at ...`)*
+
+![ก่อนถอยเข้า](img/day/r10_parked.png)
+*2) มุมใกล้: ลูกบาศก์เขียวอยู่หลังหุ่น ~0.65 ม. หุ่นกำลังจะถอยเข้าไป*
+
+![แขนลงไปที่ลูกบาศก์](img/day/r10_pick_reach.png)
+*3) ถอยจนลูกบาศก์ห่าง 0.27 ม. แล้วแขนเอื้อมออกท้ายลงไปที่ลูกบาศก์ (`[PICK] cube at -0.273 ...`)*
+
+![หนีบลูกบาศก์](img/day/r10_pick_grip.png)
+*4) หนีบแล้วยกขึ้น*
+
+![ท่าถือของ](img/day/r10_carry.png)
+*5) ขับออก 0.2 ม. พับแขนท่าถือของ (`[PICK] done`)*
+
+![วิ่งไป Station 2](img/day/r10_nav2.png)
+*6) ถือลูกบาศก์วิ่งไป Station 2 ตามเส้นสีส้ม*
+
+![วางที่ Station 2](img/day/r10_place.png)
+*7) ถอยเข้าหาแผ่นฟ้า แขนวางลูกบาศก์ (`[PLACE] station at ...`)*
+
+![วางเสร็จ](img/day/r10_placed.png)
+*8) วางเสร็จ ลูกบาศก์อยู่บนแผ่นฟ้า (`[PLACE] done`)*
+
+![กลับบ้าน](img/day/r10_done.png)
+*9) กลับถึง Initial (`Mission finished: succeeded`)*
+
+![หน้าต่าง 7 ระหว่างภารกิจ](img/day/t10_detector.png)
+*หน้าต่าง 7 ระหว่างภารกิจ: `seen: cube x=... y=...` / `seen: station ...` ทุก ~3 วินาทีเมื่อกล้องเห็น · บรรทัดเหลือง `no TF odom <- camera_color_optical_frame` ตอนเพิ่งเปิด (ก่อน Nav2 พร้อม) = ปกติ*
 
 ![เส้นทางจริงทั้งภารกิจ: จอดหน้าแต่ละ Station แล้วถอยเข้า](img/mission_path_sim.png)
 
@@ -362,6 +464,7 @@ pixi run python robot\hsv_tuner.py
 | RViz ไม่ขึ้นหุ่น / `No transform` | เช็คหน้าต่าง 1 และ 2 เปิดอยู่ · ขั้น 4 ต้องเปิด SLAM ก่อน RViz |
 | กดปุ่มแล้วหุ่นไม่เดิน | คลิกหน้าต่าง 5 ก่อน + เปลี่ยนแป้นเป็นภาษาอังกฤษ |
 | แผนที่ซ้อนเบลอ | ขับ/หมุนช้าลง เริ่มใหม่: ปิด-เปิดหน้าต่าง 1 และ 4 |
+| เซฟแผนที่แล้วขึ้น `Failed to spin map subscription` | หน้าต่าง 4 (SLAM) ต้องยังเปิด · ท้ายคำสั่งต้องมี `--ros-args -p save_map_timeout:=10.0` |
 | `ros2 node list` ว่าง/ค้าง | `ros2 daemon stop` แล้ว `ros2 daemon start` |
 | Nav2 ขึ้น `Timed out waiting for transform` ไม่หยุด | หน้าต่าง 1 หรือ 2 ไม่ได้เปิด · หรือ SLAM ยังเปิดค้าง (ต้องปิด) |
 | เลเซอร์ไม่ทับกำแพงใน RViz | กด 2D Pose Estimate ที่ตำแหน่งหุ่น |
