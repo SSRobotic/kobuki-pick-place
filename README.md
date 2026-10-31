@@ -110,6 +110,7 @@ echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 | `robot/arm_rest_publisher.py` | ส่งท่าพับของแขน SO-100 ตอนไม่ได้เปิดไดรเวอร์แขน |
 | `robot/so100_driver.py`, `robot/so100_calibrate.py`, `robot/so100_calibrate_app.py`, `robot/feetech.py` | ไดรเวอร์แขนจริง (เซอร์โว Feetech STS3215) + คาลิเบรต 3 ท่า (แอปมีหน้าต่าง ค่าสด เช็คท่า วัดจุดคีบ GRIP) |
 | `robot/camera_node.py`, `robot/hsv_tuner.py`, `robot/camera_check.py` | กล้องจริง, หาสีวัตถุ, เช็คมุมกล้องด้วยตลับเมตร |
+| `robot/nav_check.py` | เช็คว่าทำไม Nav2 เดินมั่ว (slam ค้าง, ตำแหน่งหุ่น, จุด LiDAR ทับกำแพง) |
 | `robot/fake_camera.py`, `robot/fake_arm.py`, `robot/cube_detector.py`, `robot/arm_control.py` | กล้อง/แขนปลอมในซิม, ตัวหาวัตถุ, IK + ท่าหยิบวาง |
 | `robot/slam_params.yaml`, `robot/mapping.rviz` | ค่าตั้งทำแผนที่และ RViz |
 | `robot/nav2_params.yaml`, `robot/nav2.launch.py`, `robot/lifecycle_up.py` | Nav2 |

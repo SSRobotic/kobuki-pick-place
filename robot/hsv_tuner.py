@@ -53,6 +53,7 @@ def main():
     node = None
     if not args.image:
         import rclpy
+        from rclpy.qos import qos_profile_sensor_data
         from sensor_msgs.msg import Image
         rclpy.init()
         node = rclpy.create_node("hsv_tuner")
@@ -60,7 +61,7 @@ def main():
         def on_image(m):
             img = np.frombuffer(m.data, dtype=np.uint8).reshape(m.height, m.width, 3)
             frame["img"] = cv2.cvtColor(img, cv2.COLOR_RGB2BGR) if m.encoding == "rgb8" else img.copy()
-        node.create_subscription(Image, args.topic, on_image, 2)
+        node.create_subscription(Image, args.topic, on_image, qos_profile_sensor_data)  # also gets best-effort cameras (openni2_camera)
 
     ranges, target = {}, ["cube"]
     if args.click:                      # headless mode (used to make the guide's pictures)
