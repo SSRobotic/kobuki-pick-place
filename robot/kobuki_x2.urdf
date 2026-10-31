@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
-<!-- The team's robot as built (photos of the real robot, Oct 2026): Kobuki + two acrylic decks + YDLIDAR X2 + SO-100 + ASUS Xtion.
+<!-- The team's robot as built (final build, photos 31 Oct 2026): Kobuki + two acrylic decks + YDLIDAR X2 + SO-100 + ASUS Xtion.
      base_link = floor under the robot centre, +X = Kobuki front (bumper side, the way it drives), +Y = left.
-     The Kobuki port panel (USB, B0/B1/B2) is the REAR: the SO-100 and the Xtion work out of the back, so the robot
-     reverses up to the object.
+     The Kobuki port panel (USB, B0/B1/B2) is the REAR, with the arm battery and the DC-DC converter. The SO-100 and the
+     Xtion work out of the FRONT (the yellow "middle" tape marks the centre line there), so the robot drives forward up
+     to the object; mission_nav2.py reads that from so100_mount_joint.
      Kobuki and SO-100 are the makers' CAD files; the other parts are sized from datasheets and the photos
      (meshes/NOTICE.txt). Every position marked MEASURE is a photo estimate: measure it on demo day and change it here.
      Mesh paths start with MESH_URI; robot_model.launch.py swaps it for this folder's meshes/ path. -->
@@ -38,41 +39,41 @@
     <parent link="base_link"/><child link="decks"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
-  <!-- four aluminium standoffs + the heatsink on the bottom deck -->
+  <!-- four aluminium standoffs + the finned DC-DC converter (arm power) on the middle deck, rear left. MEASURE -->
   <link name="standoffs">
     <visual><origin xyz="0.10 0.12 0.165" rpy="0 0 0"/><geometry><cylinder radius="0.007" length="0.06"/></geometry><material name="aluminium"/></visual>
     <visual><origin xyz="0.10 -0.12 0.165" rpy="0 0 0"/><geometry><cylinder radius="0.007" length="0.06"/></geometry><material name="aluminium"/></visual>
     <visual><origin xyz="-0.115 0.12 0.165" rpy="0 0 0"/><geometry><cylinder radius="0.007" length="0.06"/></geometry><material name="aluminium"/></visual>
     <visual><origin xyz="-0.115 -0.12 0.165" rpy="0 0 0"/><geometry><cylinder radius="0.007" length="0.06"/></geometry><material name="aluminium"/></visual>
-    <visual><origin xyz="0.06 0.09 0.145" rpy="0 0 0"/><geometry><box size="0.10 0.06 0.02"/></geometry><material name="aluminium"/></visual>
+    <visual><origin xyz="-0.075 0.105 0.2155" rpy="0 0 0"/><geometry><box size="0.09 0.07 0.03"/></geometry><material name="aluminium"/></visual>
   </link>
   <joint name="standoffs_joint" type="fixed">
     <parent link="base_link"/><child link="standoffs"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
-  <!-- white plate under the arm, white bracket under the LiDAR -->
+  <!-- white plate under the arm (deck centre), white bracket under the LiDAR (front left) -->
   <link name="white_plates">
-    <visual><origin xyz="-0.075 -0.03 0.204" rpy="0 0 0"/><geometry><box size="0.12 0.13 0.008"/></geometry><material name="white_plastic"/></visual>
-    <visual><origin xyz="0.075 -0.035 0.2025" rpy="0 0 0"/><geometry><box size="0.09 0.075 0.005"/></geometry><material name="white_plastic"/></visual>
+    <visual><origin xyz="-0.03 -0.02 0.204" rpy="0 0 0"/><geometry><box size="0.12 0.13 0.008"/></geometry><material name="white_plastic"/></visual>
+    <visual><origin xyz="0.085 0.085 0.2025" rpy="0 0 0"/><geometry><box size="0.09 0.075 0.005"/></geometry><material name="white_plastic"/></visual>
   </link>
   <joint name="white_plates_joint" type="fixed">
     <parent link="base_link"/><child link="white_plates"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
-  <!-- PINSEN 40000 mAh tool battery that powers the arm, servo bus board on the side of the arm base,
-       LiDAR USB adapter box (middle deck) -->
+  <!-- PINSEN 40000 mAh tool battery (with its adapter on top) standing right behind the arm at the rear, servo bus board
+       on the back of the arm base, LiDAR USB adapter box (UGREEN cable) on the left of the middle deck. MEASURE -->
   <link name="battery">
-    <visual><origin xyz="-0.07 0.085 0.25" rpy="0 0 0"/><geometry><box size="0.12 0.085 0.10"/></geometry><material name="black"/></visual>
-    <visual><origin xyz="-0.075 0.026 0.245" rpy="0 0 0"/><geometry><box size="0.045 0.003 0.045"/></geometry><material name="black"/></visual>
-    <visual><origin xyz="0.06 0.075 0.2125" rpy="0 0 0"/><geometry><box size="0.05 0.055 0.025"/></geometry><material name="black"/></visual>
+    <visual><origin xyz="-0.135 -0.015 0.249" rpy="0 0 0"/><geometry><box size="0.08 0.115 0.09"/></geometry><material name="black"/></visual>
+    <visual><origin xyz="-0.0735 -0.02 0.255" rpy="0 0 0"/><geometry><box size="0.003 0.045 0.045"/></geometry><material name="black"/></visual>
+    <visual><origin xyz="0.01 0.095 0.2125" rpy="0 0 0"/><geometry><box size="0.05 0.055 0.025"/></geometry><material name="black"/></visual>
   </link>
   <joint name="battery_joint" type="fixed">
     <parent link="base_link"/><child link="battery"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
-  <!-- the battery's red power button faces the rear -->
+  <!-- the battery's red power button, on its right side -->
   <link name="battery_button">
-    <visual><origin xyz="-0.131 0.085 0.235" rpy="0 0 0"/><geometry><box size="0.004 0.03 0.03"/></geometry><material name="battery_red"/></visual>
+    <visual><origin xyz="-0.115 -0.0745 0.29" rpy="0 0 0"/><geometry><box size="0.03 0.004 0.03"/></geometry><material name="battery_red"/></visual>
   </link>
   <joint name="battery_button_joint" type="fixed">
     <parent link="base_link"/><child link="battery_button"/>
@@ -80,7 +81,7 @@
   </joint>
   <!-- green power terminal on the servo bus board -->
   <link name="servo_terminal">
-    <visual><origin xyz="-0.075 0.031 0.232" rpy="0 0 0"/><geometry><box size="0.012 0.008 0.01"/></geometry><material name="terminal_green"/></visual>
+    <visual><origin xyz="-0.0715 -0.005 0.245" rpy="0 0 0"/><geometry><box size="0.008 0.012 0.01"/></geometry><material name="terminal_green"/></visual>
   </link>
   <joint name="servo_terminal_joint" type="fixed">
     <parent link="base_link"/><child link="servo_terminal"/>
@@ -109,7 +110,7 @@
     <origin xyz="0 -0.115 0.035" rpy="0 0 0"/>
   </joint>
 
-  <!-- YDLIDAR X2 on the middle deck, front half, a little right of centre; its motor side points to the front.
+  <!-- YDLIDAR X2 on the middle deck, front left, on its white bracket.
        Frame name must stay "laser" (= /scan frame_id). MEASURE x, y, z (laser centre = 7.9 mm under the top of the cap). -->
   <link name="laser">
     <visual>
@@ -120,8 +121,9 @@
   </link>
   <joint name="laser_joint" type="fixed">
     <parent link="base_link"/><child link="laser"/>
-    <!-- yaw -90 deg + the driver's mirror option: calibrated on the real robot (lidar_calib.py, 18 Oct) - keep it -->
-    <origin xyz="0.075 -0.035 0.247" rpy="0 0 -1.5708"/>
+    <!-- yaw -90 deg + the driver's mirror option: calibrated on the real robot (lidar_calib.py, 18 Oct). The LiDAR moved
+         to the front left in the final build: run lidar_calib.py again and put its yaw here if it was turned too -->
+    <origin xyz="0.085 0.085 0.247" rpy="0 0 -1.5708"/>
   </joint>
   <!-- the spinning navy cap (own link: its own colour) -->
   <link name="laser_cap">
@@ -136,7 +138,8 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
-  <!-- ASUS Xtion PRO LIVE standing on the bottom deck, under the middle deck, looking out of the rear (level in the photos).
+  <!-- ASUS Xtion PRO LIVE standing on the bottom deck at its front edge, under the yellow "middle" tape, looking forward
+       (level in the photos), under the arm's jaws.
        MEASURE the height and how much it is tilted down; camera_check.py fixes the tilt/turn from a tape measurement. -->
   <link name="camera_link">
     <visual>
@@ -147,8 +150,8 @@
   </link>
   <joint name="camera_joint" type="fixed">
     <parent link="base_link"/><child link="camera_link"/>
-    <!-- body centre 42.5 mm above the bottom deck; yaw 180 deg = looking backwards; pitch = tilt down (rad) -->
-    <origin xyz="-0.135 0 0.1775" rpy="0 0 3.14159"/>
+    <!-- body centre 42.5 mm above the bottom deck; yaw 0 = looking forward; pitch = tilt down (rad). MEASURE x, z -->
+    <origin xyz="0.14 0 0.1775" rpy="0 0 0"/>
   </joint>
   <!-- colour lens (right end of the face as seen from behind the robot - estimate) -> optical frame: z forward, x right, y down -->
   <link name="camera_color_optical_frame"/>
@@ -165,8 +168,9 @@
   </link>
   <joint name="so100_mount_joint" type="fixed">
     <parent link="base_link"/><child link="so100_base"/>
-    <!-- on the white plate, rear half, a little right of centre; yaw -90 deg = the arm reaches out of the rear. MEASURE x, y, z -->
-    <origin xyz="-0.055 -0.03 0.208" rpy="0 0 -1.5708"/>
+    <!-- on the white plate at the deck centre, a little right and back, battery behind it; yaw +90 deg = the arm reaches
+         out of the front (final build, 31 Oct). z 0.208 checked on the real arm (plate top 21 cm). MEASURE x, y -->
+    <origin xyz="-0.03 -0.02 0.208" rpy="0 0 1.5708"/>
   </joint>
 
   <link name="so100_shoulder">

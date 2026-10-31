@@ -20,8 +20,8 @@ from rclpy.time import Time
 from sensor_msgs.msg import CameraInfo, Image
 from tf2_ros import Buffer, TransformException, TransformListener
 
-from fake_robot import (BOXES_PX, CUBE_SIZE, DESK_TOP, FURNITURE_TOP, MARKER_SIZE, MARKER_XY, WALLS_PX,
-                        box_m, to_m)
+from fake_robot import (BOXES_PX, CUBE_SIZE, DESK_TOP, FURNITURE_TOP, MARKER_SIZE, MARKER_XY, STATION_BOX, WALLS_PX,
+                        box_m, station_boxes, to_m)
 
 W, H = 640, 480
 FX = FY = 570.0                    # Xtion PRO LIVE colour: 58 x 45 deg field of view at 640 x 480
@@ -90,8 +90,12 @@ class FakeCamera(Node):
             self.static.append(("h", (x0, y0, x1, y1, top), kind + "_top"))
             for seg in rect_sides(x0, y0, x1, y1):
                 self.static.append(("v", (*seg, 0.0, top), kind + "_side"))
+        for x0, y0, x1, y1 in station_boxes():   # the boxes under the cube and the marker
+            self.static.append(("h", (x0, y0, x1, y1, STATION_BOX), "furn_top"))
+            for seg in rect_sides(x0, y0, x1, y1):
+                self.static.append(("v", (*seg, 0.0, STATION_BOX), "furn_side"))
         mx, my, h = MARKER_XY[0], MARKER_XY[1], MARKER_SIZE / 2
-        self.static.append(("h", (mx - h, my - h, mx + h, my + h, 0.001), "marker"))   # on the floor
+        self.static.append(("h", (mx - h, my - h, mx + h, my + h, STATION_BOX + 0.001), "marker"))   # on its box
 
         self.create_timer(0.25, self.render)
         self.get_logger().info("Fake Xtion ready: /camera/color/image_raw (640x480) from TF frame camera_color_optical_frame")

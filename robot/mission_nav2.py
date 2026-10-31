@@ -9,8 +9,8 @@ Same states as final_project_state_machine.py:
   DETECT_*       wait for cube_detector.py to see the cube / the place marker (position in odom)
   PICK / PLACE   turn the arm side toward it, drive straight until it is 0.31 m from the robot centre (arm reach),
                  look again, move the arm with arm_control.py, drive 0.2 m away, fold the arm
-The arm and the camera work out of the robot's REAR (as built), so the robot parks 0.65 m from the object with its
-back toward it and reverses in. The working side is read from the arm mount in kobuki_x2.urdf.
+The arm and the camera work out of the robot's FRONT (final build, 31 Oct), so the robot parks 0.65 m from the object
+facing it and drives in. The working side is read from the arm mount in kobuki_x2.urdf (rear-facing works too).
 A failed PICK goes back to DETECT_OBJECT (and PLACE to DETECT_STATION); 3 failures in a row = aborted.
 
 Needs, each in its own window (simulation; on demo day the real drivers replace the fake_* nodes):
@@ -77,7 +77,7 @@ DETECT_TIMEOUT = 8.0   # seconds to wait for the camera to see the cube / marker
 REACH_X = 0.31         # m from the robot centre to the object when the arm works: cube on a 22 cm box, whose near face
                        # is then 0.20 m out, clear of the Kobuki rim (0.176 m); the arm still reaches it (31 Oct)
 BACK_OFF = 0.20        # m to drive away after picking / placing, so the arm can fold clear
-WORK = 1 if math.sin(MOUNT[3]) > 0 else -1   # +1 = arm reaches out of the front, -1 = out of the rear (as built)
+WORK = 1 if math.sin(MOUNT[3]) > 0 else -1   # +1 = arm reaches out of the front (final build), -1 = out of the rear
 
 # Objects on the map (x, y) and the direction the robot comes from (robot -> object, rad, map frame).
 # The map was made starting at Initial Location, so Initial = (0, 0). Demo day: Publish Point on the real map.
@@ -201,8 +201,14 @@ class Robot:
                       f"driving {move:+.2f} m")
         self.drive(move)
         again = self.look(name, timeout=4.0)       # closer view = better position (may be out of view: keep the old one)
-        if again is not None:
+        # this close the cube can be cut off at the bottom of the image (front camera, cube on a box): the detector then
+        # puts it too far away (4 cm in the 31 Oct sim) while the far view + odometry stays within ~1 cm
+        moved = None if again is None else float(np.hypot(*(np.asarray(again[:2]) - np.asarray(self.target[name][:2]))))
+        if moved is not None and moved < 0.03:
             self.target[name] = again
+        elif moved is not None:
+            self.nav.info(f"  close view of the {name} is {100 * moved:.0f} cm off the far view (cut off by the image "
+                          "edge?) - keeping the far view")
         else:
             self.nav.info(f"  {name} is now too close for the camera - using where it was seen before")
         return self.to_base(self.target[name])
@@ -285,7 +291,7 @@ class Detect(smach.State):
         b = r.to_base(p)
         r.nav.info(f"[{self.name}] {self.what} at x={p[0]:.3f} y={p[1]:.3f} (odom) = "
                    f"{b[0]:.2f} m ahead, {b[1]:+.2f} m left of the robot")
-        ud.retry = 0
+        # no retry reset here: seeing the cube again after a failed PICK is not a success (it looped forever, 31 Oct)
         return "succeeded"
 
 

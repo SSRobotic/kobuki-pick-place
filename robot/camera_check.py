@@ -1,10 +1,10 @@
 """Check the camera mount with a tape measure, and fix its tilt/turn in kobuki_x2.urdf.
 
 Put the cube where the camera sees it, measure from the robot centre to the cube centre:
-X = forward, Y = to the left (m) - the camera looks out of the rear, so X is negative (0.45 m behind = -0.45).
+X = forward, Y = to the left (m) - the camera looks out of the front (final build), so X is positive (0.65 m ahead = 0.65).
 With camera + detector + robot_model running:
-    pixi run python robot\\camera_check.py -0.45 0.0           (Windows)
-    python3 camera_check.py -0.45 0.0                          (Ubuntu, inside robot/)
+    pixi run python robot\\camera_check.py 0.65 0.0            (Windows)
+    python3 camera_check.py 0.65 0.0                           (Ubuntu, inside robot/)
     ... --write      also save the corrected camera_joint into kobuki_x2.urdf (a .bak copy is kept)
 It compares where the camera thinks the cube is with your measurement and works out how much the
 camera is really tilted / turned. After --write restart robot_model.launch.py and run it again: error < 1 cm = done.

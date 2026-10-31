@@ -1,10 +1,11 @@
 # Kobuki Pick & Place — Final Project 01208567
 
 หุ่นยนต์ Kobuki + YDLIDAR X2 + แขน SO-100 + กล้อง ASUS Xtion วิ่งจาก Initial ไป Station 1 หยิบวัตถุบนพื้น ไปวางที่ Station 2 แล้วกลับบ้านเอง
-แขนกับกล้องติดด้านหลังหุ่น (ตามที่ทีมประกอบ) หุ่นจึงจอดหน้าวัตถุแล้วถอยเข้าไปหยิบ
+แขนกับกล้องหันออกด้านหน้าหุ่น (ประกอบชุดสุดท้าย 31 ต.ค.) หุ่นจอดห่างวัตถุ 0.65 ม. แล้ววิ่งตรงเข้าไปหยิบ · ลูกบาศก์และจุดวางอยู่บนกล่องสูง 9 ซม.
 ทั้งหมดซ้อมได้บนคอมเครื่องเดียว **ไม่ต้องมีหุ่นจริง** เพราะมีหุ่นปลอมที่จำลองห้องสอบตามผังในโจทย์
 
 - **🔴 วันจริง 1 พ.ย. หุ่นจริง รวดเดียวจบ (git pull → ประกอบ → แขน → กล้อง → แผนที่ → ภารกิจ):** [`docs/REAL_DAY_TH.md`](docs/REAL_DAY_TH.md)
+- **ลำดับคำสั่งหน้าเดียว เปิดสวิตช์ → หุ่นกลับจุดเริ่ม:** Windows [`docs/RUN_ORDER_TH.md`](docs/RUN_ORDER_TH.md) · Ubuntu / VM [`docs/UBUNTU_TH.md`](docs/UBUNTU_TH.md) · WSL [`docs/WSL_TH.md`](docs/WSL_TH.md)
 - **เว็บคู่มือ (โมเดลหุ่น 3D + จำลองภารกิจ):** https://ssrobotic.github.io/kobuki-pick-place/handbook/
 - **วันซ้อม ฉบับเดียวจบ (เปิดเครื่อง → ทำแผนที่ → Nav2 → กล้อง → แขน → ภารกิจเต็ม):** [`docs/PRACTICE_DAY_TH.md`](docs/PRACTICE_DAY_TH.md)
 - **คู่มือรันคำสั่งทีละขั้น:** [`docs/RUN_GUIDE_TH.md`](docs/RUN_GUIDE_TH.md)

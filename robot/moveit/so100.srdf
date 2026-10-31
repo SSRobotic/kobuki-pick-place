@@ -22,29 +22,29 @@
     <joint name="shoulder_pan" value="0"/><joint name="shoulder_lift" value="-1.57"/><joint name="elbow_flex" value="1.57"/>
     <joint name="wrist_flex" value="1.57"/><joint name="wrist_roll" value="-1.5708"/>
   </group_state>
-  <!-- pick and place at the standard spot: 4 cm cube on a 9 cm box (22 cm wide), cube centre 31 cm behind the robot
+  <!-- pick and place at the standard spot: 4 cm cube on a 9 cm box (22 cm wide), cube centre 31 cm in front of the robot
        centre on its centre line = mission_nav2.py REACH_X (arm_control.py inverse() with GRASP_UP: the jaw centre 3 cm over the cube centre, 31 Oct). The place marker is on
        the same kind of box. In RViz: arm pick_above -> gripper open -> arm pick_grasp -> gripper grip -> arm pick_lift
        ... arm place_above -> place_release -> gripper open -> arm rest -->
   <group_state name="pick_above" group="arm">     <!-- jaw centre 21 cm up: fingertips 3.5 cm over the cube top -->
-    <joint name="shoulder_pan" value="-0.147"/><joint name="shoulder_lift" value="-1.211"/><joint name="elbow_flex" value="1.772"/>
-    <joint name="wrist_flex" value="1.020"/><joint name="wrist_roll" value="-1.5708"/>
+    <joint name="shoulder_pan" value="0.064"/><joint name="shoulder_lift" value="-0.635"/><joint name="elbow_flex" value="0.807"/>
+    <joint name="wrist_flex" value="1.233"/><joint name="wrist_roll" value="-1.5708"/>
   </group_state>
   <group_state name="pick_grasp" group="arm">     <!-- 14 cm up: fingertips 0.5 cm over the box, cube between the fingers -->
-    <joint name="shoulder_pan" value="-0.147"/><joint name="shoulder_lift" value="-0.816"/><joint name="elbow_flex" value="1.742"/>
-    <joint name="wrist_flex" value="0.655"/><joint name="wrist_roll" value="-1.5708"/>
+    <joint name="shoulder_pan" value="0.064"/><joint name="shoulder_lift" value="-0.315"/><joint name="elbow_flex" value="0.750"/>
+    <joint name="wrist_flex" value="0.964"/><joint name="wrist_roll" value="-1.5708"/>
   </group_state>
   <group_state name="pick_lift" group="arm">      <!-- 22 cm up: cube lifted 8 cm off the box -->
-    <joint name="shoulder_pan" value="-0.147"/><joint name="shoulder_lift" value="-1.253"/><joint name="elbow_flex" value="1.752"/>
-    <joint name="wrist_flex" value="1.081"/><joint name="wrist_roll" value="-1.5708"/>
+    <joint name="shoulder_pan" value="0.064"/><joint name="shoulder_lift" value="-0.669"/><joint name="elbow_flex" value="0.796"/>
+    <joint name="wrist_flex" value="1.273"/><joint name="wrist_roll" value="-1.5708"/>
   </group_state>
   <group_state name="place_above" group="arm">    <!-- 22.5 cm up: cube 8 cm over the marker on its box -->
-    <joint name="shoulder_pan" value="-0.147"/><joint name="shoulder_lift" value="-1.271"/><joint name="elbow_flex" value="1.740"/>
-    <joint name="wrist_flex" value="1.112"/><joint name="wrist_roll" value="-1.5708"/>
+    <joint name="shoulder_pan" value="0.064"/><joint name="shoulder_lift" value="-0.685"/><joint name="elbow_flex" value="0.788"/>
+    <joint name="wrist_flex" value="1.293"/><joint name="wrist_roll" value="-1.5708"/>
   </group_state>
   <group_state name="place_release" group="arm">  <!-- 14.5 cm up: cube just above the box top, then open -->
-    <joint name="shoulder_pan" value="-0.147"/><joint name="shoulder_lift" value="-0.848"/><joint name="elbow_flex" value="1.753"/>
-    <joint name="wrist_flex" value="0.677"/><joint name="wrist_roll" value="-1.5708"/>
+    <joint name="shoulder_pan" value="0.064"/><joint name="shoulder_lift" value="-0.343"/><joint name="elbow_flex" value="0.764"/>
+    <joint name="wrist_flex" value="0.982"/><joint name="wrist_roll" value="-1.5708"/>
   </group_state>
   <group_state name="open" group="gripper"><joint name="gripper" value="0.8"/></group_state>
   <group_state name="grip" group="gripper"><joint name="gripper" value="0.10"/></group_state>  <!-- touches the 4 cm cube at 0.20 -->

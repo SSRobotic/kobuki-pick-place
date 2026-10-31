@@ -60,10 +60,12 @@ pixi run ros2 topic list
 | ชิ้น | วางตรงไหน |
 |---|---|
 | หน้า / หลัง | **หน้า = กันชน** · **หลัง = แผงพอร์ต USB** |
-| แขน SO-100 | แผ่นขาวชั้นกลาง ค่อนไปหลัง **ฐานหันออกท้ายหุ่น** |
-| กล้อง Xtion | ชั้นล่าง ท้ายหุ่น **หันออกท้าย** ตั้งตรง |
-| LiDAR | ขายึดขาว ชั้นกลาง ค่อนไปหน้า เยื้องขวา ด้านมอเตอร์หันไปหน้า |
-| แบต PINSEN | ชั้นกลาง หลังซ้าย ปุ่มแดงหันหลัง |
+| แขน SO-100 | แผ่นขาวกลางชั้นกลาง (เยื้องขวา-หลังนิดหน่อย) **ฐานหันออกหน้าหุ่น** |
+| กล้อง Xtion | ชั้นล่าง ขอบหน้า ใต้เทปเหลือง "middle" **หันออกหน้า** ตั้งตรง (ใต้ปากคีบ) |
+| LiDAR | ขายึดขาว ชั้นกลาง หน้าซ้าย |
+| แบต PINSEN | ชั้นกลาง ท้ายหุ่น ตั้งอยู่หลังฐานแขน ปุ่มแดงด้านขวา |
+| DC-DC (ครีบอลูมิเนียม) | ชั้นกลาง หลังซ้าย |
+| กล่อง USB ของ LiDAR (UGREEN) | ชั้นกลาง ฝั่งซ้าย |
 
 - [ ] สายทุกเส้นไม่ผ่านระดับเลเซอร์ (~25 ซม. จากพื้น) และไม่บังกล้อง
 - [ ] ขยับแขนด้วยมือ (ยังไม่เสียบไฟ) ทุกท่า สายไม่ตึง
@@ -78,9 +80,9 @@ pixi run ros2 topic list
 
 | วัดอะไร | แก้ `xyz` ใน | ค่าเดิม (ประมาณจากรูป) |
 |---|---|---|
-| กลางฝาหมุน LiDAR (z = ใต้ขอบบนฝาน้ำเงิน 8 มม.) | `<joint name="laser_joint">` (**ห้ามแก้ rpy**) | `0.075 -0.035 0.247` |
-| กลางเซอร์โวตัวล่างของแขน (z = ผิวบนแผ่นขาว) | `<joint name="so100_mount_joint">` | `-0.055 -0.03 0.208` |
-| กลางตัวกล้อง | `<joint name="camera_joint">` (มุมกล้องปล่อยไว้ ขั้น 6 หาให้) | `-0.135 0 0.1775` |
+| กลางฝาหมุน LiDAR (z = ใต้ขอบบนฝาน้ำเงิน 8 มม.) | `<joint name="laser_joint">` (rpy ให้ `lidar_calib.py` หาในขั้น 4) | `0.085 0.085 0.247` |
+| กลางเซอร์โวตัวล่างของแขน (z = ผิวบนแผ่นขาว) | `<joint name="so100_mount_joint">` (**ห้ามแก้ rpy**: แขนหันหน้า) | `-0.03 -0.02 0.208` |
+| กลางตัวกล้อง | `<joint name="camera_joint">` (มุมกล้องปล่อยไว้ ขั้น 6 หาให้) | `0.14 0 0.1775` |
 
 ✅ ผ่านเมื่อ: เซฟไฟล์แล้ว (ขั้น 4 จะเช็คค่าให้)
 
@@ -110,6 +112,14 @@ pixi run ros2 run tf2_ros tf2_echo base_link laser
 ```
 ✅ `Translation:` = ค่าที่ใส่ในขั้น 2 → `Ctrl+C`
 
+**LiDAR ย้ายไปหน้าซ้ายแล้ว (ประกอบชุดสุดท้าย) → หามุมใหม่** หน้าต่าง 9 เปิดคีย์บอร์ด (`pixi run ros2 run teleop_twist_keyboard teleop_twist_keyboard`) แล้วหน้าต่าง 11:
+```powershell
+pixi run python robot\lidar_calib.py
+```
+ทำตามที่บอก (นิ่ง → ขับหน้า 30 ซม. + เลี้ยวซ้าย 45° → นิ่ง) → ดูบรรทัดแรกของ `robot\lidar_calib.txt` เช่น `yaw=272 mirrored=True`
+- yaw (องศา) → เรเดียน: เกิน 180 ให้ลบ 360 ก่อน แล้ว × 0.01745 · `272` → −88° → `-1.536` (≈ ค่าเดิม `-1.5708` ไม่ต้องแก้) · `90` → `1.5708` · `180` → `3.1416`
+- ใส่เป็นตัวสุดท้ายของ `rpy` ใน `laser_joint` → `Ctrl+C` หน้าต่าง 3 แล้วเปิดใหม่ · `mirrored=False` = ตัด `--mirror` ออกจากหน้าต่าง 1 · ปิดหน้าต่าง 9
+
 - `--mirror` ต้องใส่เสมอ · Kobuki หยุดล้อเองถ้าไม่มีคำสั่ง 0.4 วินาที / ชนกันชน / ล้อลอย
 - ❌ หาพอร์ตไม่เจอ: ใส่เอง `... lidar_ros2.py --mirror --port COM11` / `... kobuki_ros2.py --enable-motion --port COM10` (เลขจาก Device Manager)
 - ❌ แก้ URDF ทีหลัง: `Ctrl+C` หน้าต่าง 3 แล้วเปิดใหม่ทุกครั้ง
@@ -128,9 +138,11 @@ pixi run python robot\so100_calibrate_app.py
 
 | ท่า | จัดยังไง |
 |---|---|
-| 1 REST | ฐานหันออกท้าย พับสุด มือห้อยออกท้าย ปากหุบสนิท |
-| 2 HOME | แขนบนตั้งตรง แขนล่างยื่นออกท้ายขนานพื้น มือชี้ลง ปากอ้า ~60° |
-| 3 PAN_90 | หมุนฐาน 90° ให้แขนชี้ไปทาง **ขวา** ของหุ่น |
+| 1 REST | ฐานหันออก**หน้า** พับสุด (แขนบนนอนไปทางท้าย เหนือแบต) มือห้อยออกหน้า เหนือกล้อง ปากหุบสนิท |
+| 2 HOME | แขนบนตั้งตรง แขนล่างยื่นออก**หน้า**ขนานพื้น มือชี้ลง ปากอ้า ~60° |
+| 3 PAN_90 | หมุนฐาน 90° ให้แขนชี้ไปทาง **ซ้าย** ของหุ่น (มองจากบน = ทวนเข็มนาฬิกา) |
+
+(รูปท่าในแอปยังเป็นหุ่นรุ่นก่อนที่แขนหันท้าย: ท่าของตัวแขนเหมือนเดิม ทิศให้ยึดตามตารางนี้)
 
 ✅ `saved ...so100_calibration.yaml` ไม่มี `WARNING` · ❌ มี `WARNING ... moved .. deg ... expected 90 deg` = จัดท่าไม่ตรง → รันใหม่
 
@@ -145,16 +157,19 @@ pixi run python robot\so100_driver.py
 pixi run python robot\arm_control.py carry
 pixi run python robot\arm_control.py open
 pixi run python robot\arm_control.py close
-pixi run python robot\arm_control.py reach -0.31 0.0 0.19
-pixi run python robot\arm_control.py reach -0.31 0.0 0.12
+pixi run python robot\arm_control.py joints 0.5 -1.57 1.57 1.57 0.8
+pixi run python robot\arm_control.py reach 0.31 0.0 0.19
+pixi run python robot\arm_control.py reach 0.31 0.0 0.12
 pixi run python robot\arm_control.py rest
 ```
-✅ ทุกบรรทัดจบด้วย `done` · `reach ... 0.12` วัดด้วยไม้บรรทัด: กลางปากคีบอยู่หลังกลางหุ่น 31 ซม. (= หลังขอบท้าย Kobuki 13.4 ซม.) สูงจากพื้น 12 ซม. คลาดไม่เกิน 1 ซม.
+✅ ทุกบรรทัดจบด้วย `done`
+- `joints 0.5 ...` = **เช็คทิศฐานแขน**: แขนต้องหันไปทาง **ซ้าย** ของหุ่น (ประมาณ 30°) · ❌ หันไปขวา = ตอนคาลิเบรตหมุน PAN_90 ผิดทาง → คาลิเบรตใหม่ (5.1) หรือแก้ `sign` ของ `shoulder_pan` ใน `robot\so100_calibration.yaml` เป็นตรงข้าม (1 ↔ -1) แล้วเปิดหน้าต่าง 4 ใหม่
+- `reach ... 0.12` วัดด้วยไม้บรรทัด: กลางปากคีบอยู่**หน้า**กลางหุ่น 31 ซม. (= หน้าขอบกันชน Kobuki 13.4 ซม.) ตรงแนวกลาง สูงจากพื้น 12 ซม. คลาดไม่เกิน 1 ซม.
 
-**ลองหยิบ-วางด้วยโค้ดเดียวกับภารกิจ:** ลูกบาศก์ 4 ซม. บนกล่องสูง 9 ซม. (กล่องกว้าง 22 ซม. หน้ากล่องห่างขอบท้าย Kobuki 2–3 ซม.) กลางลูกบาศก์หลังกลางหุ่น 31 ซม.:
+**ลองหยิบ-วางด้วยโค้ดเดียวกับภารกิจ:** ลูกบาศก์ 4 ซม. บนกล่องสูง 9 ซม. (กล่องกว้าง 22 ซม. หน้ากล่องห่างกันชน Kobuki 2–3 ซม.) กลางลูกบาศก์**หน้า**กลางหุ่น 31 ซม.:
 ```powershell
-pixi run python robot\arm_control.py pick -0.31 0.0 0.11
-pixi run python robot\arm_control.py place -0.31 0.0 0.09
+pixi run python robot\arm_control.py pick 0.31 0.0 0.11
+pixi run python robot\arm_control.py place 0.31 0.0 0.09
 ```
 (`pick` = ความสูงกลางลูกบาศก์ · `place` = ความสูงผิวบนกล่อง · ปลายนิ้วคีบยื่นต่ำกว่ากลางปากคีบ 4.5 ซม. โปรแกรมเผื่อให้แล้ว: เล็งกลางปากคีบสูงกว่ากลางลูกบาศก์ 3 ซม. ปลายนิ้วจึงหยุดเหนือฝากล่อง 0.5 ซม.)
 ✅ ลูกบาศก์ลอยขึ้น → `rest`
@@ -174,8 +189,8 @@ pixi run ros2 launch robot\moveit.launch.py
 ```powershell
 pixi run python robot\arm_control.py --moveit carry
 pixi run python robot\arm_control.py --moveit open
-pixi run python robot\arm_control.py --moveit pick -0.31 0.0 0.11
-pixi run python robot\arm_control.py --moveit place -0.31 0.0 0.09
+pixi run python robot\arm_control.py --moveit pick 0.31 0.0 0.11
+pixi run python robot\arm_control.py --moveit place 0.31 0.0 0.09
 pixi run python robot\arm_control.py --moveit rest
 ```
 ✅ ทุกบรรทัดจบด้วย `done` · MoveIt วางเส้นทางไม่ให้แขนชน Kobuki ชั้นอะคริลิก LiDAR กล้อง แล้วส่งให้แขนเล่นตาม (`so100_trajectory_bridge.py` → `/arm/joint_command`)
@@ -214,13 +229,13 @@ pixi run python robot\cube_detector.py --ros-args -p surface_height:=0.09 -p cub
 ```
 ✅ `Cube detector on /camera/color/image_raw, objects on a surface 0.00 m high`
 
-**6.4 เช็คมุมกล้อง** — วางลูกบาศก์ **หลังกลางหุ่น 0.65 ม. ตรงแนวกลาง** (ตลับเมตร + เทปมาร์ค) แล้วหน้าต่าง 11:
+**6.4 เช็คมุมกล้อง** — วางลูกบาศก์ (บนกล่อง 9 ซม.) **หน้ากลางหุ่น 0.65 ม. ตรงแนวกลาง** (ตลับเมตร + เทปมาร์ค) แล้วหน้าต่าง 11:
 ```powershell
-pixi run python robot\camera_check.py -0.65 0.0 --write
+pixi run python robot\camera_check.py 0.65 0.0 --write
 ```
 → `Ctrl+C` หน้าต่าง 3 แล้วเปิดใหม่ → รันอีกรอบ **ไม่ใส่** `--write`:
 ```powershell
-pixi run python robot\camera_check.py -0.65 0.0
+pixi run python robot\camera_check.py 0.65 0.0
 ```
 ✅ รอบสอง `off by ...` ไม่เกิน 1 ซม. / `good enough (< 1 cm)`
 
@@ -270,13 +285,13 @@ pixi run ros2 topic echo /clicked_point
 แก้ `robot/mission_nav2.py` ตรงนี้ แล้วเซฟ:
 ```python
 STATIONS = {
-    "STATION1": (5.30, 1.32, 0.0),            # (x ลูกบาศก์, y ลูกบาศก์, ทิศที่หุ่นถอยเข้าหา)
+    "STATION1": (5.30, 1.32, 0.0),            # (x ลูกบาศก์, y ลูกบาศก์, ทิศที่หุ่นวิ่งเข้าหา)
     "STATION2": (2.85, -2.90, -math.pi / 2),  # (x แผ่นจุดวาง, y แผ่นจุดวาง, ทิศ)
 }
 ```
-- x, y = ตำแหน่ง **วัตถุ** ที่จดมา โปรแกรมหาจุดจอดเอง (ห่าง 0.65 ม. หันท้ายเข้าหา แล้วถอยเข้าไป)
+- x, y = ตำแหน่ง **วัตถุ** ที่จดมา โปรแกรมหาจุดจอดเอง (ห่าง 0.65 ม. หันหน้าเข้าหา แล้ววิ่งตรงเข้าไปจนห่าง 0.31 ม.)
 - ทิศ = จากจุดจอดมองไปหาวัตถุ: `0` = วัตถุอยู่ทาง +x · `math.pi / 2` = ทาง +y · `-math.pi / 2` = ทาง −y · `math.pi` = ทาง −x (ดูแกนแดง/เขียวของ `map` ใน RViz)
-- เลือกทิศที่ **พื้นหน้าวัตถุโล่งอย่างน้อย 0.9 ม.** (Kobuki ไม่มีกันชนด้านหลัง)
+- เลือกทิศที่ **พื้นหน้าวัตถุโล่งอย่างน้อย 0.9 ม.** (ที่จอดรอ 0.65 ม. + ที่ถอยออกหลังหยิบ)
 
 **ซ้อมวิ่งอย่างเดียว** (หุ่นอยู่ Initial) — หน้าต่าง 9:
 ```powershell
@@ -347,7 +362,7 @@ git push origin main
 | หุ่นหมุนวน / ไปไม่ถึง | 2D Pose Estimate ใหม่ · ดู costmap รอบตัวหุ่นมีจุดดำไหม (มี = เพิ่ม `--self-radius`) |
 | `[DETECT_OBJECT] no cube in the camera image` | หน้าต่าง 5, 6 เปิดไหม · ช่อง Camera ใน RViz เห็นลูกบาศก์ไหม → ไม่เห็น = แก้ `STATIONS` · เห็นแต่ไม่มีกรอบ = หาสีใหม่ (6.2) |
 | `target ... out of reach` | เช็คมุมกล้องใหม่ (6.4) |
-| หุ่นถอยแล้วชน | หลังวัตถุไม่โล่ง → เปลี่ยนทิศใน `STATIONS` |
+| หุ่นวิ่งเข้าหาแล้วกันชนโดนกล่อง | กล่องลึกเกิน (กลางลูกบาศก์ต้องห่างหน้ากล่อง ≤ 11 ซม.) → วางลูกบาศก์ชิดหน้ากล่องขึ้น · หลังถอยออกชน = หลังจุดจอดไม่โล่ง → เปลี่ยนทิศใน `STATIONS` |
 | `blocked while driving straight` | ล้อติด / ชนอยู่ / หน้าต่าง 2 ไม่มี `--enable-motion` |
 | MoveIt `error code -4` + หน้าต่าง 12 ขึ้น `couldn't receive full current joint state` | หน้าต่างไหนลืมบรรทัด `$env:FASTRTPS_DEFAULT_PROFILES_FILE` → ปิดหน้าต่าง 3, 4, 12 แล้วเปิดใหม่ทุกหน้าต่างพร้อมบรรทัดนั้น |
 | MoveIt `error code 99999` + หน้าต่าง 12 ขึ้น `Skipping invalid start state` | ท่าแขนตอนนี้ชนในโมเดล → `pixi run python tools\moveit_collision_pairs.py` ดูคู่ที่ชน (ถ้าชนแค่ชิ้นแขนกันเองตอนพับ REST ใส่คู่นั้นใน `robot\moveit\so100.srdf`) · หรือตัด `--moveit` ออก |

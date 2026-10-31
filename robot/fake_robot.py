@@ -55,6 +55,8 @@ CUBE_SIZE = 0.04                # m, the coloured cube to pick
 CUBE_START = (5.30, 1.32)       # on the floor at Station 1, in front of its desk
 MARKER_XY = (2.85, -2.90)       # blue square on the floor at Station 2 = where to place the cube
 MARKER_SIZE = 0.10
+STATION_BOX = 0.09              # m: on demo day the cube and the marker each stand on a box this high (31 Oct)
+STATION_BOX_SIZE = 0.22         # m, its width (below the LiDAR: only the camera sees it)
 GRIP_CLOSED = 0.35              # gripper joint below this = closed (rad, so_arm100.xml "Jaw")
 GRIP_OPEN = 0.5                 # above this = open
 GRAB_DISTANCE = 0.03            # jaw centre must be this close to the cube centre to catch it
@@ -125,8 +127,17 @@ def box_m(box_px):
     return min(xa, xb), min(ya, yb), max(xa, xb), max(ya, yb)
 
 
+def station_boxes():
+    """(x0, y0, x1, y1) of the box under the cube at Station 1 and under the marker at Station 2."""
+    h = STATION_BOX_SIZE / 2
+    return [(x - h, y - h, x + h, y + h) for x, y in (CUBE_START, MARKER_XY)]
+
+
 def surface_height(x, y):
     """Height of whatever the cube would land on at (x, y)."""
+    for x0, y0, x1, y1 in station_boxes():
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            return STATION_BOX
     for i, b in enumerate(BOXES_PX):
         x0, y0, x1, y1 = box_m(b)
         if x0 <= x <= x1 and y0 <= y <= y1:

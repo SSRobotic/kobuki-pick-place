@@ -9,8 +9,8 @@ Try it by hand while robot_model.launch.py arm:=sim (or the real driver) is runn
     ... arm_control.py carry | home | open | close
     ... arm_control.py reach 0.30 0.0 0.30                 (move the jaw centre to x y z in base_link)
     ... arm_control.py joints 0 -1.57 1.57 1.57 0.3        (pan lift elbow wrist gripper, rad: this one = HOME pose)
-    ... arm_control.py pick -0.31 0.0 0.11                 (the mission's pick: cube centre, here a 4 cm cube on a 9 cm box)
-    ... arm_control.py place -0.31 0.0 0.09                (the mission's place: marker on top of a 9 cm box)
+    ... arm_control.py pick 0.31 0.0 0.11                  (the mission's pick: cube centre, here a 4 cm cube on a 9 cm box)
+    ... arm_control.py place 0.31 0.0 0.09                 (the mission's place: marker on top of a 9 cm box)
 Add --moveit (with moveit.launch.py running) and every move is planned by MoveIt around the robot body and played by
 so100_trajectory_bridge.py, instead of sending the target angles straight to the servos:
     ... arm_control.py --moveit reach 0.30 0.0 0.30
@@ -261,7 +261,7 @@ def main():
         ok = arm.move(REST)
     elif cmd == "carry":
         ok = arm.move(CARRY)
-    elif cmd == "home":   # upper arm straight up, forearm out of the rear, gripper pointing down (calibration HOME)
+    elif cmd == "home":   # upper arm straight up, forearm out (front), gripper pointing down (calibration HOME)
         ok = arm.move(HOME)
     elif cmd in ("open", "close"):
         ok = arm.gripper(OPEN if cmd == "open" else GRIP)
