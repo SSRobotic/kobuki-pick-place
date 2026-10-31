@@ -106,6 +106,8 @@ pixi run ros2 topic list
 | 2 | `pixi run python robot\kobuki_ros2.py --enable-motion` | `First odometry` แล้ว `Motion ready` |
 | 3 | `pixi run ros2 launch robot\robot_model.launch.py arm:=none` | รายการ `got segment` ไม่มีบรรทัดแดง |
 
+(แขนใน RViz เป็นสีขาวกองที่พื้นจนกว่าหน้าต่าง 4 ไดรเวอร์แขนจะเปิดในขั้น 5 = ปกติ · ใครทำแผนที่โดยไม่ต่อแขน ใช้ `arm:=rest` แทน)
+
 หน้าต่าง 11 เช็คตำแหน่ง LiDAR ที่วัด:
 ```powershell
 pixi run ros2 run tf2_ros tf2_echo base_link laser

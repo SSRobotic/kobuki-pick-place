@@ -66,7 +66,11 @@ export FASTRTPS_DEFAULT_PROFILES_FILE=$PWD/fastdds_local.xml
 
 ## E. ทำครั้งเดียวต่อสนาม: แผนที่ + ค่าสี + ตำแหน่ง Station
 
-เปิดหน้าต่าง 1–3 ของ F ก่อน แล้วเปิดอีก 3 หน้าต่าง:
+เปิดหน้าต่าง 1, 2 ของ F และโมเดลหุ่นแบบ **ไม่มีไดรเวอร์แขน** (ไม่งั้นแขนใน RViz เป็นสีขาวกองอยู่ที่พื้น):
+```bash
+ros2 launch ./robot_model.launch.py arm:=rest
+```
+แล้วเปิดอีก 3 หน้าต่าง:
 ```bash
 ros2 run slam_toolbox async_slam_toolbox_node --ros-args --params-file slam_params.yaml
 ```
@@ -98,7 +102,7 @@ python3 lidar_ros2.py --mirror
 python3 kobuki_ros2.py --enable-motion
 ```
 
-**3 โมเดลหุ่น**
+**3 โมเดลหุ่น** (`arm:=none` = แขนจริงจากหน้าต่าง 4 เป็นคนส่งท่าแขน · ถ้าไม่ได้ต่อแขน ใช้ `arm:=rest`)
 ```bash
 ros2 launch ./robot_model.launch.py arm:=none
 ```
@@ -149,6 +153,7 @@ python3 mission_nav2.py --moveit
 
 | อาการ | แก้ |
 |---|---|
+| แขนใน RViz เป็นสีขาว กองอยู่ที่พื้น (`No transform`) | ไม่มีใครส่งท่าแขน: เปิดหน้าต่าง 4 (`so100_driver.py`) ให้ขึ้น `SO-100 ready` · ถ้าไม่ได้ใช้แขน ปิดหน้าต่าง 3 แล้วเปิดใหม่เป็น `arm:=rest` |
 | `ros2: command not found` | `source /opt/ros/humble/setup.bash` (หรือเปิด terminal ใหม่หลังทำ B) |
 | `No unique Kobuki adapter` / `servo board not found` | ตัวนั้นยังไม่ได้ Connect เข้า VM (C) · `ls /dev/ttyUSB* /dev/ttyACM*` ต้องเห็น |
 | `Permission denied: '/dev/ttyUSB0'` | ยังไม่ได้ `usermod -aG dialout` หรือยังไม่ได้ logout/login หลังจากนั้น |
