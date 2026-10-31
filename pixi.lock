@@ -294,6 +294,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/qt6-multimedia-6.11.2-pl5321h30c8fa7_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/qt6-positioning-6.11.2-he453025_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/qt6-serialport-6.11.2-he453025_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/rapidjson-1.1.0.post20250205-h5112557_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/rav1e-0.8.1-h007690e_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/sdl2-2.32.56-h5112557_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/sdl3-3.4.18-h5112557_0.conda
@@ -345,6 +346,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstd-1.5.7-h534d264_7.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/zziplib-0.13.69-h3ca93ac_2.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros-humble-desktop-0.10.0-h9490d1a_20.conda
+      - conda: https://conda.anaconda.org/robostack-humble/win-64/ros-humble-foxglove-bridge-3.6.0-h9490d1a_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros-humble-nav2-bringup-1.1.20-h9490d1a_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros-humble-nav2-map-server-1.1.20-h9490d1a_20.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros-humble-navigation2-1.1.20-h9490d1a_22.conda
@@ -448,6 +450,7 @@ environments:
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-fastrtps-2.6.12-np2py314h92dadff_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-fastrtps-cmake-module-2.2.4-np2py314hf807026_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-foonathan-memory-vendor-1.2.0-np2py314hf807026_22.conda
+      - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-foxglove-bridge-3.6.0-np2py314hf807026_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-geometry-msgs-4.9.2-np2py314hf807026_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-geometry2-0.25.24-np2py314hf807026_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-gmock-vendor-1.10.9006-np2py314hf807026_22.conda
@@ -609,6 +612,7 @@ environments:
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-rosidl-typesupport-interface-3.1.9-np2py314hf807026_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-rosidl-typesupport-introspection-c-3.1.9-np2py314hf807026_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-rosidl-typesupport-introspection-cpp-3.1.9-np2py314hf807026_22.conda
+      - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-rosx-introspection-2.3.0-np2py314hf807026_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-rpyutils-0.2.2-np2py314hf807026_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-rqt-action-2.0.1-np2py314hf807026_22.conda
       - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-rqt-bag-1.1.6-np2py314hf807026_22.conda
@@ -5038,6 +5042,18 @@ packages:
     - qt6-serialport >=6.11.2,<6.12.0a0
   size: 109022
   timestamp: 1787085779538
+- conda: https://conda.anaconda.org/conda-forge/win-64/rapidjson-1.1.0.post20250205-h5112557_0.conda
+  sha256: 1c41755b6ce3ebe2c5c31e082a2b965d82b5e68bae4857531ccf9ba8a790b107
+  md5: d34eccfd94486e47a0ffcd667a9082da
+  depends:
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  - ucrt >=10.0.20348.0
+  license: MIT
+  license_family: MIT
+  run_exports: {}
+  size: 153975
+  timestamp: 1784885341946
 - conda: https://conda.anaconda.org/conda-forge/win-64/rav1e-0.8.1-h007690e_0.conda
   sha256: 4ee3caf1260c946e756f2be4cadf720592391b24fce652a67255e4386880249b
   md5: b0ab2fc43381024f5a694e6f5f54c973
@@ -5819,6 +5835,14 @@ packages:
   - ros2-desktop ==0.10.0
   size: 2002
   timestamp: 1790751205466
+- conda: https://conda.anaconda.org/robostack-humble/win-64/ros-humble-foxglove-bridge-3.6.0-h9490d1a_22.conda
+  sha256: 7ba204b8fa16a3b7e8931fa52f6bd52404c47d21a4074cd9e792d0bb4faf0e22
+  md5: 09111749c9ab700eea7802a5de2d44b4
+  depends:
+  - ros2-foxglove-bridge ==3.6.0
+  - ros2-distro-mutex 0.11.* humble_*
+  size: 2086
+  timestamp: 1792828922957
 - conda: https://conda.anaconda.org/robostack-humble/win-64/ros-humble-nav2-bringup-1.1.20-h9490d1a_22.conda
   sha256: 48252c057df383dc02520280397d3c31d0cbe9cd340e693b19ff75b192531931
   md5: 74f1b53831351a15b928c85d00be0f7c
@@ -7758,6 +7782,33 @@ packages:
   license: Apache-2.0 OR Zlib
   size: 18053
   timestamp: 1792809164648
+- conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-foxglove-bridge-3.6.0-np2py314hf807026_22.conda
+  sha256: 0d0c89cf9c63ad08404538383cc1baffa75b205e7a3738382bc5e5c0b4273cda
+  md5: 0568b632150ed680a65c505920c9c3da
+  depends:
+  - python
+  - ros2-ament-index-cpp
+  - ros2-distro-mutex 0.11.* humble_*
+  - ros2-rcl-interfaces
+  - ros2-rclcpp
+  - ros2-rclcpp-components
+  - ros2-rcpputils
+  - ros2-rcutils
+  - ros2-resource-retriever
+  - ros2-ros-workspace
+  - ros2-rosgraph-msgs
+  - ros2-rosidl-typesupport-introspection-cpp
+  - ros2-rosx-introspection
+  - ros2-std-msgs
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  - ucrt >=10.0.20348.0
+  - python_abi 3.14.* *_cp314
+  - ros2-distro-mutex >=0.11.0,<0.12.0a0
+  - numpy >=1.25,<3
+  license: MIT
+  size: 15539927
+  timestamp: 1792828726333
 - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-geometry-msgs-4.9.2-np2py314hf807026_22.conda
   sha256: 3c0b9bc8ab27dda79fd97ab8e5dd89d1ae029c41cd7cd889b3a506d57f22cc84
   md5: 4bf2a4f3ce48e6e41779f0a9b51e9ab4
@@ -11420,6 +11471,26 @@ packages:
   license: Apache-2.0
   size: 48535
   timestamp: 1792813563157
+- conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-rosx-introspection-2.3.0-np2py314hf807026_22.conda
+  sha256: fd207beae944615508a755ea1a1662fef96475e69f44f73f7d9a979e92b20637
+  md5: 684c1e34a26cac4ed6750e9feb085358
+  depends:
+  - python
+  - rapidjson
+  - ros2-ament-index-cpp
+  - ros2-distro-mutex 0.11.* humble_*
+  - ros2-rclcpp
+  - ros2-ros-workspace
+  - ros2-rosbag2-cpp
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  - ucrt >=10.0.20348.0
+  - numpy >=1.25,<3
+  - python_abi 3.14.* *_cp314
+  - ros2-distro-mutex >=0.11.0,<0.12.0a0
+  license: MIT
+  size: 399202
+  timestamp: 1792826997053
 - conda: https://conda.anaconda.org/robostack-humble/win-64/ros2-rpyutils-0.2.2-np2py314hf807026_22.conda
   sha256: 1ce726e5165dee32bc54e3f3925d98f0009c8cee6602d99717fe7ea42e10a3d8
   md5: 34c7fb988d7265d370e9e4be3483571b
