@@ -1,6 +1,6 @@
 # ลำดับรันหุ่นจริง — เปิดสวิตช์จนกลับจุดเริ่ม
 
-ต้องทำไว้ก่อนแล้ว (ครั้งเดียว ดู [REAL_DAY_TH.md](REAL_DAY_TH.md)): แผนที่ `my_map` · `STATIONS` ใน `mission_nav2.py` · ค่าสีจาก `hsv_tuner.py` · คาลิเบรตแขน
+ต้องทำไว้ก่อนแล้ว (ครั้งเดียว ดู [REAL_DAY_TH.md](REAL_DAY_TH.md)): แผนที่ `my_map` · `robot\stations.yaml` จาก `save_stations.py` · ค่าสีจาก `hsv_tuner.py` · คาลิเบรตแขน · (Ubuntu: ดู [UBUNTU_TH.md](UBUNTU_TH.md) หัวข้อ E1–E4)
 
 ## 0. เปิดเครื่อง
 

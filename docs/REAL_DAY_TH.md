@@ -278,29 +278,21 @@ mkdir $HOME\maps -Force; pixi run ros2 run nav2_map_server map_saver_cli -f $HOM
 
 ❌ จุดแดงไม่ทับกำแพง: กด **2D Pose Estimate** คลิกที่ตำแหน่งหุ่นจริง ลากไปทางที่หุ่นหัน
 
-**วางลูกบาศก์ที่ Station 1 และแผ่นจุดวางที่ Station 2 แล้วมาร์คเทปรอบ ๆ** → หน้าต่าง 11:
+**วางกล่อง 9 ซม. + ลูกบาศก์ที่ Station 1 และกล่อง + แผ่นจุดวางที่ Station 2 ตรงที่จะใช้จริง แล้วมาร์คเทปรอบ ๆ** → หน้าต่าง 11:
 ```powershell
-pixi run ros2 topic echo /clicked_point
+pixi run python robot\save_stations.py
 ```
-ใน RViz กด **Publish Point** คลิกตรงลูกบาศก์ → จด x, y · กด Publish Point อีกครั้ง คลิกตรงแผ่นจุดวาง → จด x, y → `Ctrl+C`
-
-แก้ `robot/mission_nav2.py` ตรงนี้ แล้วเซฟ:
-```python
-STATIONS = {
-    "STATION1": (5.30, 1.32, 0.0),            # (x ลูกบาศก์, y ลูกบาศก์, ทิศที่หุ่นวิ่งเข้าหา)
-    "STATION2": (2.85, -2.90, -math.pi / 2),  # (x แผ่นจุดวาง, y แผ่นจุดวาง, ทิศ)
-}
-```
-- x, y = ตำแหน่ง **วัตถุ** ที่จดมา โปรแกรมหาจุดจอดเอง (ห่าง 0.65 ม. หันหน้าเข้าหา แล้ววิ่งตรงเข้าไปจนห่าง 0.31 ม.)
-- ทิศ = จากจุดจอดมองไปหาวัตถุ: `0` = วัตถุอยู่ทาง +x · `math.pi / 2` = ทาง +y · `-math.pi / 2` = ทาง −y · `math.pi` = ทาง −x (ดูแกนแดง/เขียวของ `map` ใน RViz)
-- เลือกทิศที่ **พื้นหน้าวัตถุโล่งอย่างน้อย 0.9 ม.** (ที่จอดรอ 0.65 ม. + ที่ถอยออกหลังหยิบ)
+ใน RViz กด **Publish Point** ก่อนคลิกทุกครั้ง คลิก 4 ครั้งตามที่มันถาม: กลางลูกบาศก์ → พื้นฝั่งที่หุ่นจะวิ่งเข้าไปหา (ฝั่งโล่ง ห่าง ~1 ม.) → กลางแผ่นจุดวาง → พื้นฝั่งที่หุ่นจะวิ่งเข้าไปหา
+- ✅ `เซฟแล้ว: ...\robot\stations.yaml` ภารกิจอ่านไฟล์นี้เอง ไม่ต้องแก้ `STATIONS` ในโค้ด
+- โปรแกรมหาจุดจอดเอง (ห่าง 0.65 ม. บนเส้นที่คลิก หันหน้าเข้าหา แล้ววิ่งตรงเข้าไปจนห่าง 0.31 ม.)
+- ขึ้น ⚠ ทางเข้าชนกำแพง = กด Enter แล้วคลิกฝั่งอื่น (ฝั่งที่พื้นหน้าวัตถุโล่งอย่างน้อย 0.85 ม.)
 
 **ซ้อมวิ่งอย่างเดียว** (หุ่นอยู่ Initial) — หน้าต่าง 9:
 ```powershell
 pixi run python robot\mission_nav2.py --nav-only
 ```
-✅ จอดหน้า Station 1 **ท้ายหันเข้าวัตถุ** → Station 2 → กลับบ้าน · จบด้วย `Mission finished: succeeded`
-❌ จอดผิดที่/ผิดทิศ = แก้ `STATIONS` แล้วรันใหม่ (ยกหุ่นกลับ Initial ก่อนทุกครั้ง)
+✅ บรรทัดแรก `Stations from ...stations.yaml` · จอดหน้า Station 1 **ด้านหน้าหุ่น (แขน/กล้อง) หันเข้ากล่อง** → Station 2 → กลับบ้าน · จบด้วย `Mission finished: succeeded`
+❌ จอดผิดที่/ผิดทิศ = ยกหุ่นกลับ Initial · 2D Pose Estimate · `save_stations.py` ใหม่
 
 ---
 
@@ -338,7 +330,7 @@ pixi run python robot\mission_nav2.py --moveit
 
 ## ขั้น 11 — หลังเดโม: เก็บค่าที่แก้วันนี้ขึ้น GitHub
 
-ค่าที่วัด/แก้วันนี้ (`kobuki_x2.urdf`, `so100_calibration.yaml`, `STATIONS` ใน `mission_nav2.py`) เก็บไว้ใช้ต่อ — หน้าต่าง 11:
+ค่าที่วัด/แก้วันนี้ (`kobuki_x2.urdf`, `so100_calibration.yaml`, `robot\stations.yaml`) เก็บไว้ใช้ต่อ — หน้าต่าง 11:
 ```powershell
 cd D:\ROS2_Windows_Humble
 git add -A
@@ -363,9 +355,9 @@ git push origin main
 | Nav2 `Timed out waiting for transform` ไม่หยุด | หน้าต่าง 1–3 เปิดไหม · SLAM (ขั้น 7) ต้องปิดแล้ว |
 | หุ่นหมุนวน / ไปไม่ถึง / เดินมั่ว | `pixi run python robot
 av_check.py` แล้วแก้ ❌ · 2D Pose Estimate ใหม่ · ปิด slam_toolbox ก่อนเปิด Nav2 · ดู costmap รอบตัวหุ่นมีจุดดำไหม (มี = เพิ่ม `--self-radius`) |
-| `[DETECT_OBJECT] no cube in the camera image` | หน้าต่าง 5, 6 เปิดไหม · ช่อง Camera ใน RViz เห็นลูกบาศก์ไหม → ไม่เห็น = แก้ `STATIONS` · เห็นแต่ไม่มีกรอบ = หาสีใหม่ (6.2) |
+| `[DETECT_OBJECT] no cube in the camera image` | หน้าต่าง 5, 6 เปิดไหม · ช่อง Camera ใน RViz เห็นลูกบาศก์ไหม → ไม่เห็น = `save_stations.py` ใหม่ · เห็นแต่ไม่มีกรอบ = หาสีใหม่ (6.2) |
 | `target ... out of reach` | เช็คมุมกล้องใหม่ (6.4) |
-| หุ่นวิ่งเข้าหาแล้วกันชนโดนกล่อง | กล่องลึกเกิน (กลางลูกบาศก์ต้องห่างหน้ากล่อง ≤ 11 ซม.) → วางลูกบาศก์ชิดหน้ากล่องขึ้น · หลังถอยออกชน = หลังจุดจอดไม่โล่ง → เปลี่ยนทิศใน `STATIONS` |
+| หุ่นวิ่งเข้าหาแล้วกันชนโดนกล่อง | กล่องลึกเกิน (กลางลูกบาศก์ต้องห่างหน้ากล่อง ≤ 11 ซม.) → วางลูกบาศก์ชิดหน้ากล่องขึ้น · หลังถอยออกชน = หลังจุดจอดไม่โล่ง → `save_stations.py` ใหม่ คลิกฝั่งอื่น |
 | `blocked while driving straight` | ล้อติด / ชนอยู่ / หน้าต่าง 2 ไม่มี `--enable-motion` |
 | MoveIt `error code -4` + หน้าต่าง 12 ขึ้น `couldn't receive full current joint state` | หน้าต่างไหนลืมบรรทัด `$env:FASTRTPS_DEFAULT_PROFILES_FILE` → ปิดหน้าต่าง 3, 4, 12 แล้วเปิดใหม่ทุกหน้าต่างพร้อมบรรทัดนั้น |
 | MoveIt `error code 99999` + หน้าต่าง 12 ขึ้น `Skipping invalid start state` | ท่าแขนตอนนี้ชนในโมเดล → `pixi run python tools\moveit_collision_pairs.py` ดูคู่ที่ชน (ถ้าชนแค่ชิ้นแขนกันเองตอนพับ REST ใส่คู่นั้นใน `robot\moveit\so100.srdf`) · หรือตัด `--moveit` ออก |

@@ -19,13 +19,16 @@ Needs, each in its own window (simulation; on demo day the real drivers replace 
     python3 mission_nav2.py                     (Ubuntu)
 Driving only (no camera, no arm needed): add --nav-only
 Arm moves planned by MoveIt (start moveit.launch.py rviz:=false first): add --moveit
+Station positions come from stations.yaml (save_stations.py writes it) if it exists; --default-stations ignores it (simulator)
 """
 import math
+import os
 import sys
 import time
 
 import numpy as np
 import rclpy
+import yaml
 from geometry_msgs.msg import PointStamped, PoseStamped, Twist
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from nav_msgs.msg import Odometry
@@ -85,6 +88,13 @@ STATIONS = {
     "STATION1": (5.30, 1.32, 0.0),            # cube on the floor in front of the Station 1 desk, robot comes from -x
     "STATION2": (2.85, -2.90, -math.pi / 2),  # place marker on the floor at Station 2, robot comes from +y
 }
+STATIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stations.yaml")
+if os.path.exists(STATIONS_FILE) and "--default-stations" not in sys.argv:   # clicked on the real map by save_stations.py
+    with open(STATIONS_FILE, encoding="utf-8") as f:
+        STATIONS.update({k: tuple(float(n) for n in v) for k, v in yaml.safe_load(f).items() if k in STATIONS})
+    STATIONS_FROM = STATIONS_FILE
+else:
+    STATIONS_FROM = "built-in STATIONS"
 PARK = 0.65   # m: Nav2 parks this far from the object (the camera sees it from there), then the robot backs in
 
 
@@ -323,6 +333,8 @@ def main():
     nav = BasicNavigator()
     robot = Robot(nav, moveit="--moveit" in sys.argv)
 
+    nav.info(f"Stations from {STATIONS_FROM}: " + ", ".join(f"{k} x={x:.2f} y={y:.2f} heading={math.degrees(h):.0f} deg"
+                                                          for k, (x, y, h) in STATIONS.items()))
     sm = smach.StateMachine(outcomes=["succeeded", "aborted"])
     tasks = [  # (state name, state object, next state, state to go back to when it fails)
         ("NAV_STATION1", Navigate(robot, "NAV_STATION1", "STATION1"), "DETECT_OBJECT", "NAV_STATION1"),

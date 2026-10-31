@@ -71,7 +71,11 @@ cd ~/kobuki-pick-place/robot
 export FASTRTPS_DEFAULT_PROFILES_FILE=$PWD/fastdds_local.xml
 ```
 
-## E. ทำครั้งเดียวต่อสนาม: แผนที่ + ค่าสี + ตำแหน่ง Station
+## E. ทำครั้งเดียวต่อสนาม (ก่อนวันแข่ง หรือเช้าวันแข่ง) — ทำตามลำดับ E1 → E4
+
+ทำครั้งเดียว แล้วเก็บไฟล์ไว้ (E4) · วันแข่งจริงทำแค่ F · สนามเปลี่ยน/ย้ายกล่อง = ทำส่วนที่เปลี่ยนใหม่ (ย้ายกล่อง = E3 อย่างเดียว)
+
+### E1. แผนที่ (~15 นาที)
 
 **วางหุ่นที่ Initial Location หันไปทาง Station 1 ก่อนเริ่ม** (จุดเริ่มทำแผนที่ = จุด (0,0) ของแผนที่ = จุดที่ Nav2 คิดว่าหุ่นยืนอยู่ตอนเปิด)
 
@@ -93,11 +97,64 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p speed:=0.08 -
 ```bash
 mkdir -p ~/maps && ros2 run nav2_map_server map_saver_cli -f ~/maps/my_map --ros-args -p save_map_timeout:=10.0
 ```
-**ปิด 3 หน้าต่างนี้ทุกครั้งก่อนเปิด Nav2** (ถ้า slam_toolbox ยังเปิดค้าง มันกับ AMCL จะแย่งกันขยับแผนที่ หุ่นเดินมั่ว) · หาค่าสี: `python3 hsv_tuner.py` · ตำแหน่ง Station: `nano mission_nav2.py` แก้ `STATIONS` ตาม [REAL_DAY_TH.md](REAL_DAY_TH.md) ขั้น 8
+✅ ได้ `~/maps/my_map.yaml` + `~/maps/my_map.pgm` · **ปิด 3 หน้าต่างนี้ (slam, rviz, teleop)** — ถ้า slam_toolbox ค้างตอนเปิด Nav2 หุ่นจะเดินมั่ว · หน้าต่าง 1, 2, 3 เปิดค้างไว้
+
+### E2. ค่าสีลูกบาศก์ + จุดวาง (~5 นาที)
+
+วางลูกบาศก์บนกล่องให้กล้องเห็น · เปิดหน้าต่าง 5 (กล้อง) ของ F แล้ว:
+```bash
+python3 hsv_tuner.py
+```
+กด `1` คลิกลูกบาศก์ · ยกกล้อง/หุ่นไปให้เห็นจุดวาง กด `2` คลิกจุดวาง · `q` ออก → มันพิมพ์บรรทัด `-p cube_hsv_low:=...` มาให้ **ก๊อปไปเก็บ**:
+```bash
+nano ~/hsv.txt
+```
+(วาง แล้ว `Ctrl+O` Enter `Ctrl+X`) · บรรทัดนี้ใช้ต่อท้ายหน้าต่าง 6 ของ F
+
+### E3. ตำแหน่ง Station (~10 นาที)
+
+1. วางกล่อง 9 ซม. + ลูกบาศก์ที่ Station 1 และกล่อง + แผ่นจุดวางที่ Station 2 **ตรงที่จะใช้จริง** (มาร์คเทปไว้)
+2. วางหุ่นที่ Initial หันทางเดิม · เปิดหน้าต่าง 7 (Nav2) + 8 (RViz) ของ F
+3. RViz: **2D Pose Estimate** ให้ตรงหุ่น · `python3 nav_check.py` ต้อง `ผ่านหมด`
+4. หน้าต่างใหม่:
+```bash
+python3 save_stations.py
+```
+ใน RViz กด **Publish Point** ก่อนคลิกทุกครั้ง แล้วคลิกตามที่มันถาม 4 ครั้ง:
+| คลิก | ตรงไหน |
+|---|---|
+| 1 | กลางลูกบาศก์ |
+| 2 | พื้นฝั่งที่หุ่นจะวิ่งเข้าไปหาลูกบาศก์ (ฝั่งโล่ง ห่าง ~1 ม.) |
+| 3 | กลางแผ่นจุดวาง |
+| 4 | พื้นฝั่งที่หุ่นจะวิ่งเข้าไปหาจุดวาง |
+
+✅ `เซฟแล้ว: .../robot/stations.yaml` (ภารกิจอ่านไฟล์นี้เอง ไม่ต้องแก้โค้ด) · ขึ้น ⚠ ทางเข้าชนกำแพง = กด Enter แล้วคลิกฝั่งอื่น
+
+5. ซ้อมวิ่งอย่างเดียว (ไม่ใช้แขน/กล้อง):
+```bash
+python3 mission_nav2.py --nav-only
+```
+✅ บรรทัดแรกขึ้น `Stations from .../stations.yaml` · จอดหน้า Station 1 **ด้านหน้าหุ่น (แขน/กล้อง) หันเข้ากล่อง** → Station 2 → กลับ Initial · `Mission finished: succeeded`
+❌ จอดผิดที่/ผิดฝั่ง = ยกหุ่นกลับ Initial · 2D Pose Estimate · `save_stations.py` ใหม่
+
+### E4. เก็บไฟล์ (ทำทุกครั้งที่ E1–E3 เสร็จ)
+
+| ไฟล์ | คืออะไร |
+|---|---|
+| `~/maps/my_map.yaml` + `~/maps/my_map.pgm` | แผนที่ (E1) |
+| `~/hsv.txt` | ค่าสี (E2) |
+| `~/kobuki-pick-place/robot/stations.yaml` | ตำแหน่ง Station (E3) |
+| `~/kobuki-pick-place/robot/so100_calibration.yaml` | คาลิเบรตแขน |
+
+ก๊อปเก็บใส่ USB/ไดรฟ์ไว้ด้วย:
+```bash
+mkdir -p ~/backup && cp ~/maps/my_map.* ~/hsv.txt ~/kobuki-pick-place/robot/stations.yaml ~/kobuki-pick-place/robot/so100_calibration.yaml ~/backup/
+```
+⚠ ห้าม `git pull` ทับโดยไม่ดู: ถ้า `git pull` ฟ้องว่าไฟล์พวกนี้จะโดนทับ ให้ก๊อปเก็บก่อน
 
 ## F. เปิดสวิตช์ → หุ่นกลับจุดเริ่ม
 
-0. หุ่นที่ Initial หันทางเดิม · แขนท่า REST · สวิตช์ Kobuki · ปุ่มแดงแบตแขน · ต่อ USB เข้า VM (C) · ลูกบาศก์/จุดวางบนกล่อง 9 ซม.
+0. ทำ E ครบแล้ว (มีแผนที่ + `~/hsv.txt` + `stations.yaml`) · หุ่นที่ Initial หันทางเดิม · แขนท่า REST · สวิตช์ Kobuki · ปุ่มแดงแบตแขน · ต่อ USB เข้า VM (C) · ลูกบาศก์/จุดวางบนกล่อง 9 ซม.
 
 เปิดทีละหน้าต่าง (แต่ละหน้าต่างเริ่มด้วย D) เปิดค้างไว้ทั้งหมด:
 
@@ -136,7 +193,7 @@ ros2 topic hz /camera/color/image_raw
 python3 camera_node.py --ros-args -p backend:=opencv -p device:=0 -p hfov_deg:=60
 ```
 
-**6 ตัวหาวัตถุ** (ค่าสีของตัวเองแทน `[...]`)
+**6 ตัวหาวัตถุ** (แทน `-p cube_hsv_low:=[...] ...` ด้วยบรรทัดใน `~/hsv.txt` จาก E2)
 ```bash
 python3 cube_detector.py --ros-args -p surface_height:=0.09 -p cube_hsv_low:=[...] -p cube_hsv_high:=[...] -p marker_hsv_low:=[...] -p marker_hsv_high:=[...]
 ```
