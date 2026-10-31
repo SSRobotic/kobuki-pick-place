@@ -1,6 +1,6 @@
 """SO-100 calibration: find how each servo's steps map to the joint angles of kobuki_x2.urdf.
 
-The torque goes off, you move the arm by hand into 3 poses (pictures in docs/DEMO_DAY_TH.md), and the
+The torque goes off, you move the arm by hand into 3 poses (table in GUIDE_WINDOWS_PIXI.md / GUIDE_UBUNTU.md, section B3), and the
 tool works out each joint's zero and direction from what the servos read. Result: so100_calibration.yaml.
     pixi run python robot\\so100_calibrate.py           (Windows)      python3 so100_calibrate.py   (Ubuntu)
     ... --port COM5              if the board is not found by itself
@@ -125,7 +125,7 @@ def main():
            "note": "angle = sign * (step - zero) * 2*pi/4096, angles as in kobuki_x2.urdf"}
     yaml.safe_dump(out, open(CAL_FILE, "w", encoding="utf-8"), sort_keys=False, allow_unicode=True)
     print(f"\nsaved {CAL_FILE}")
-    print("ต่อไป: เปิด so100_driver.py แล้วลอง arm_control.py rest / carry ช้า ๆ (ดู docs/DEMO_DAY_TH.md)")
+    print("ต่อไป: เปิด so100_driver.py แล้วลอง arm_control.py rest / carry ช้า ๆ (ดูคู่มือ ขั้น B4)")
     print("แรงบิดยังปิดอยู่ - วางแขนลงท่า REST ก่อนเปิด driver")
 
 

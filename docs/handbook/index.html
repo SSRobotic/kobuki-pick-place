@@ -840,9 +840,9 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:6px;text-align:center}
   </div>
   <figcaption>ซ้าย: สิ่งที่กล้องเห็นตอนจอดหน้า Station 1 (ลูกบาศก์อยู่ล่างภาพ กรอบแดง = ตัวหาเจอ) · ขวา: เส้นทางจริงทั้งรอบ จอดหน้าแต่ละ Station แล้วถอยเข้า</figcaption>
   <div class="note"><b>ทำไมไม่ใช้ระยะลึกของ Xtion:</b> กล้องวัดระยะได้ตั้งแต่ ~0.8 ม. แต่ตอนหยิบลูกบาศก์อยู่ห่างกล้องแค่ ~0.4 ม. ตัวหาจึงใช้ภาพสีอย่างเดียว ลากเส้นจากกล้องผ่านจุดสีไปชนพื้น (วัตถุอยู่บนพื้น) แขนเอื้อมถึงพื้นได้ 0.20–0.32 ม. หลังกลางหุ่น ภารกิจใช้ 0.27 ม.</div>
-  <p>ซ้อมแค่การวิ่ง (ไม่ต้องเปิดหน้าต่าง 3–4): <code>mission_nav2.py --nav-only</code> · ลองสั่งแขนเอง: <code>arm_control.py open</code>, <code>reach -0.27 0.0 0.10</code> (x ติดลบ = หลังหุ่น), <code>rest</code> · รายละเอียดทั้งหมดอยู่ใน <code>docs/PRACTICE_NO_ROBOT_TH.md</code> ภาค 5</p>
+  <p>ซ้อมแค่การวิ่ง (ไม่ต้องเปิดหน้าต่าง 3–4): <code>mission_nav2.py --nav-only</code> · ลองสั่งแขนเอง: <code>arm_control.py open</code>, <code>reach -0.27 0.0 0.10</code> (x ติดลบ = หลังหุ่น), <code>rest</code> · รายละเอียดทั้งหมดอยู่ใน <code>GUIDE_WINDOWS_PIXI.md</code> ภาค 5</p>
   <h3>วันเดโม: ทำตามลำดับ มีรูปเทียบทุกขั้น</h3>
-  <p>ฉบับเต็ม (ของที่ต้องเอาไป ตารางพอร์ต ทางสำรองเมื่อมีปัญหา) อยู่ใน <a href="https://github.com/SSRobotic/kobuki-pick-place/blob/main/docs/DEMO_DAY_TH.md"><code>docs/DEMO_DAY_TH.md</code></a> ข้างล่างคือขั้นที่ต้องเทียบภาพ</p>
+  <p>ฉบับเต็ม (ของที่ต้องเอาไป ตารางพอร์ต ทางสำรองเมื่อมีปัญหา) อยู่ใน <a href="https://github.com/SSRobotic/kobuki-pick-place/blob/main/GUIDE_WINDOWS_PIXI.md"><code>GUIDE_WINDOWS_PIXI.md</code></a> ข้างล่างคือขั้นที่ต้องเทียบภาพ</p>
   <ol class="steps">
     <li><strong>ประกอบให้ตรงโมเดล</strong> หน้า = กันชน · หลัง = แผงพอร์ต · แขนบนแผ่นขาวหันออกท้าย · Xtion ใต้ชั้นกลางมองออกท้าย · สายห้ามผ่านระนาบเลเซอร์ (สูง ~0.25 ม.) · Kobuki ไม่มีกันชนหลัง ด้านหลังวัตถุต้องโล่ง</li>
     <li><strong>วัดตำแหน่งจริง</strong> แล้วแก้ <code>laser_joint</code>, <code>so100_mount_joint</code>, <code>camera_joint</code> ใน <code>kobuki_x2.urdf</code> วัดจากกลางระหว่างล้อ x ไปหน้า y ไปซ้าย</li>
