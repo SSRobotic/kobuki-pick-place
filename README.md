@@ -112,6 +112,8 @@ echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 | `robot/slam_params.yaml`, `robot/mapping.rviz` | ค่าตั้งทำแผนที่และ RViz |
 | `robot/nav2_params.yaml`, `robot/nav2.launch.py`, `robot/lifecycle_up.py` | Nav2 |
 | `robot/mission_nav2.py` | state machine ภารกิจเต็ม |
+| `robot/announcer.py`, `robot/voice_lines.py`, `robot/sounds/` | หุ่นพูดภาษาไทยบอกทุกขั้นของภารกิจ (เสียงอัดไว้แล้ว ไม่ต้องใช้เน็ต) — `tools/make_voice.py` อัดใหม่ |
+| `robot/foxglove.launch.py`, `robot/image_compress.py` | ดู/ขับหุ่นจากเบราว์เซอร์หรือมือถือผ่านไวไฟ (Foxglove) — `docs/DEMO_DAY_TH.md` ขั้น 11 |
 | `robot/maps/` | แผนที่ (ห้องจำลอง) |
 | `robot/start_mapping.ps1`, `robot/start_mapping.sh` | เปิดทุกหน้าต่างสำหรับทำแผนที่กับหุ่นจริงทีเดียว |
 | `robot/ros_check.py` | ตรวจทั้งระบบในคำสั่งเดียว |

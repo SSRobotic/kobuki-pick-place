@@ -16,6 +16,7 @@ Ubuntu: ตัด `pixi run` ออก, ตัด `robot\` ออก, ใช้ 
 | 6 | กล้อง: เปิด + หาสี + เช็คมุม | 25 นาที |
 | 7 | ทำแผนที่ + จดพิกัด Station | 25 นาที |
 | 8 | ซ้อมวิ่ง → ภารกิจเต็ม | 30 นาที+ |
+| 11 | (ไม่บังคับ) ดู/ขับหุ่นจากอีกเครื่อง: Foxglove + VS Code Remote-SSH | 15 นาที |
 
 ---
 
@@ -280,9 +281,14 @@ saved kobuki_x2.urdf (old one: kobuki_x2.urdf.bak) - restart robot_model.launch.
 | 6 ตัวหา | `pixi run python robot\cube_detector.py --ros-args -p cube_hsv_low:=[...] ...` | `python3 cube_detector.py --ros-args -p ...` |
 | 7 Nav2 | `pixi run ros2 launch robot\nav2.launch.py map:=$HOME\maps\my_map.yaml` | `ros2 launch ./nav2.launch.py map:=$HOME/maps/my_map.yaml` |
 | 8 RViz | `pixi run rviz2 -d robot\mission.rviz` | `rviz2 -d mission.rviz` |
+| 10 เสียงหุ่น | `pixi run python robot\announcer.py` | `python3 announcer.py` |
 | 9 ภารกิจ | `pixi run python robot\mission_nav2.py` | `python3 mission_nav2.py` |
 
 เปิดตามลำดับ วางแขนท่า REST ก่อนเปิดหน้าต่าง 4 · รอหน้าต่าง 7 ขึ้น `Activating bt_navigator` ก่อนเปิดหน้าต่าง 9
+
+**หน้าต่าง 10 เสียงหุ่น (ไม่บังคับ แต่ช่วยกรรมการให้คะแนน):** เปิดก่อนหน้าต่าง 9 ต้องได้ยิน "หุ่นยนต์พร้อมแล้ว" (= ลำโพงใช้ได้ เปิดเสียงโน้ตบุ๊กให้ดังสุด)
+ระหว่างภารกิจหุ่นจะพูดทุกขั้นที่มีคะแนน: "ถึงสถานีที่หนึ่งแล้ว" → "เจอวัตถุแล้ว" → "หยิบวัตถุสำเร็จ" → "ถึงสถานีที่สองแล้ว" → "เจอจุดวางแล้ว" → "วางวัตถุเรียบร้อย" → "กลับถึงจุดเริ่มต้นแล้ว"
+หน้าต่างนี้แค่พูด ไม่สั่งหุ่น ถ้าไม่มีเสียง ภารกิจก็วิ่งได้ปกติ · ไม่ต้องใช้เน็ต (เสียงอัดไว้แล้วใน `robot/sounds/`) · แก้ประโยคได้ที่ `robot/voice_lines.py` แล้วรัน `tools/make_voice.py`
 ถ้าเลเซอร์ไม่ทับกำแพงใน RViz: กด **2D Pose Estimate** ที่ตำแหน่งหุ่นจริง
 
 สิ่งที่หุ่นทำ (ผลจริงจากซิม หุ่นแบบประกอบจริง ถอยเข้าวัตถุบนพื้น 28 ต.ค.):
@@ -336,5 +342,71 @@ Mission finished: succeeded in 229 s
 - [ ] แผนที่ห้องจริง + `STATIONS` ใส่ตำแหน่งวัตถุจริง
 - [ ] `--nav-only` จบด้วย `succeeded`
 - [ ] ภารกิจเต็มจบด้วย `succeeded` อย่างน้อย 1 รอบ
+- [ ] (ถ้าใช้เสียง) เปิดหน้าต่าง 10 ได้ยิน "หุ่นยนต์พร้อมแล้ว" เสียงโน้ตบุ๊กดังสุด
 - [ ] แบต Kobuki / แบตแขน / โน้ตบุ๊ก ชาร์จระหว่างรอ
 - [ ] มาร์คจุด Initial, ลูกบาศก์, จุดวาง ด้วยเทปบนพื้น วางให้ตรงทุกรอบ
+
+---
+
+## 11. (ไม่บังคับ) ดูและสั่งหุ่นจากอีกเครื่อง: Foxglove + VS Code Remote-SSH
+
+โน้ตบุ๊กยังวางบนหุ่นและเสียบสาย USB เหมือนเดิม (Kobuki กับ LiDAR ต่อไร้สายไม่ได้) แต่คนในทีมยืนห่าง ๆ แล้ว
+**ดูแผนที่/เลเซอร์/กล้อง และขับหุ่นจากเบราว์เซอร์หรือมือถือ** (Foxglove) และ **เปิด terminal ของโน้ตบุ๊กหุ่นจากเครื่องตัวเอง** (VS Code Remote-SSH)
+
+> ⚠️ ภารกิจต้องรันได้โดยไม่พึ่งไวไฟ ถ้าไวไฟห้องสอบมีปัญหา ข้ามข้อนี้ไปเลย ใช้โน้ตบุ๊กบนหุ่นตามขั้น 0–10
+> ทั้งสองเครื่องต้องต่อไวไฟวงเดียวกัน แนะนำ **ฮอตสปอตมือถือ** (ไวไฟมหาลัยมักบล็อกไม่ให้เครื่องเห็นกัน)
+
+**หาเลข IP ของโน้ตบุ๊กหุ่น:** PowerShell พิมพ์ `ipconfig` ดูบรรทัด `IPv4 Address` ใต้ `Wireless LAN adapter Wi-Fi` เช่น `192.168.43.25`
+
+### 11.1 Foxglove: ดู + ขับหุ่นจากเบราว์เซอร์/มือถือ
+
+ทดสอบกับหุ่นปลอมแล้ว 31 ต.ค.: ข้อมูลออกครบ 31 topic (เลเซอร์ 4 Hz, odom 50 Hz, แผนที่, กล้อง, โมเดลหุ่น) และสั่งหมุนหุ่นผ่าน Teleop ได้
+
+**บนโน้ตบุ๊กหุ่น** เปิดเพิ่ม 2 หน้าต่าง (ตอนไหนก็ได้ หลังขั้น 4):
+```powershell
+pixi run ros2 launch robot\foxglove.launch.py
+```
+✅ `Starting foxglove_bridge (humble, 3.6.0...)` · ครั้งแรก Windows Firewall จะถาม → ติ๊ก **Private networks** → **Allow access**
+```powershell
+pixi run python robot\image_compress.py
+```
+✅ `JPEG copy of /camera/color/image_raw on /camera/color/image_raw/compressed`
+(ภาพกล้องดิบใช้เน็ต 3.4 MB/วินาที ตัวนี้ย่อเป็น JPEG เหลือ ~30 KB/วินาที ไว้ดูผ่านไวไฟ — ตัวหาวัตถุยังใช้ภาพดิบเหมือนเดิม)
+
+**บนเครื่องที่ถือ** (คอม/แท็บเล็ต/มือถือ):
+1. เปิด **app.foxglove.dev** ใน Chrome หรือแอป Foxglove (ใช้ตัวล่าสุด) อาจต้องสมัครบัญชีฟรี
+2. **Open connection** → **Foxglove WebSocket** → ใส่ `ws://<IP โน้ตบุ๊กหุ่น>:8765` → **Open**
+3. เพิ่มแผง (ปุ่ม **Add panel**) แล้วตั้งค่า:
+
+| แผง | ตั้งค่า | ได้อะไร |
+|---|---|---|
+| **3D** | Display frame = `map` · ใน Topics ติ๊ก `/map`, `/scan`, `/global_costmap/costmap`, `/plan`, `/stations`, `/robot_description` | แผนที่ + เลเซอร์ + เส้นทาง + โมเดลหุ่น |
+| **Image** | Topic = `/camera/color/image_raw/compressed` | ภาพกล้องท้ายหุ่น |
+| **Teleop** | Topic = `/cmd_vel` · **Publish rate = 10** · Up: `linear-x` `0.08` · Down: `linear-x` `-0.08` · Left: `angular-z` `0.35` · Right: `angular-z` `-0.35` | จอยกดขับหุ่น (ใช้ทำแผนที่ขั้น 7 แทนคีย์บอร์ดได้) |
+
+- **Publish rate ต้อง 10:** ไดรเวอร์ Kobuki หยุดล้อเองถ้าไม่ได้คำสั่งเกิน 0.4 วินาที ค่าเริ่มต้นที่ช้ากว่านี้จะทำให้หุ่นเดินกระตุก
+- ปล่อยปุ่ม = หุ่นหยุดภายใน 0.4 วินาที · ไวไฟหลุด = หุ่นหยุดเอง
+- **อย่ากด Teleop ตอนภารกิจกำลังวิ่ง** (คำสั่งจะตีกับ Nav2 และกรรมการอาจนับว่าคนช่วย)
+
+### 11.2 VS Code Remote-SSH: terminal ของโน้ตบุ๊กหุ่นบนเครื่องตัวเอง
+
+**บนโน้ตบุ๊กหุ่น (ครั้งเดียว ต้องใช้สิทธิ์ admin):**
+1. Settings → System → **Optional features** → **View features** → ค้น `OpenSSH Server` → Install
+2. เปิด PowerShell แบบ **Run as administrator**:
+   ```powershell
+   Start-Service sshd
+   Set-Service sshd -StartupType Automatic
+   ```
+3. จดชื่อผู้ใช้: `whoami` (เอาส่วนหลัง `\`) · รหัสผ่าน = รหัสที่ใช้ล็อกอิน Windows (ถ้าล็อกอินด้วยบัญชี Microsoft ใช้รหัสบัญชีนั้น **ไม่ใช่ PIN**)
+
+**บนเครื่องที่ถือ:**
+1. VS Code → Extensions → ลง **Remote - SSH** (ของ Microsoft)
+2. กด `F1` → `Remote-SSH: Connect to Host...` → พิมพ์ `ชื่อผู้ใช้@IP` เช่น `pomma@192.168.43.25` → เลือก **Windows** → ใส่รหัสผ่าน
+3. **File → Open Folder** → โฟลเดอร์โปรเจกต์บนโน้ตบุ๊กหุ่น
+4. **Terminal → New Terminal** (กด `+` เพิ่มได้หลายหน้าต่าง) → พิมพ์คำสั่งตามคู่มือได้เลย ถ้าขึ้น `C:\...>` (cmd) ให้พิมพ์ `powershell` ก่อน
+5. ✅ ลอง `pixi run ros2 topic list` ต้องเห็น topic ของหุ่น
+
+ข้อควรรู้:
+- โปรแกรมที่มีหน้าต่าง (RViz, `hsv_tuner.py`) จะเปิด**บนจอโน้ตบุ๊กหุ่น** ไม่ขึ้นบนเครื่องเรา → ดูภาพผ่าน Foxglove แทน
+- คีย์บอร์ดขับหุ่น (`teleop_twist_keyboard`) ใช้ใน terminal ของ VS Code ได้ (คลิกใน terminal ก่อนกด)
+- ถ้า SSH หลุด คำสั่งที่รันใน terminal นั้นจะหยุดหมด (หุ่นหยุด) → **ตอนวิ่งภารกิจจริง ให้รันหน้าต่างภารกิจบนโน้ตบุ๊กหุ่นโดยตรง** ปลอดภัยกว่า

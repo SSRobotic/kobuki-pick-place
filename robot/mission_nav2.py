@@ -28,6 +28,7 @@ import rclpy
 from geometry_msgs.msg import PointStamped, PoseStamped, Twist
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from nav_msgs.msg import Odometry
+from std_msgs.msg import String
 
 from arm_control import MOUNT, ArmController
 
@@ -113,6 +114,7 @@ class Robot:
         self.seen = {"cube": [], "station": []}   # (receive time, xyz in odom)
         self.target = {}                          # last good detection per name
         self.cmd = nav.create_publisher(Twist, "/cmd_vel", 10)
+        self.events = nav.create_publisher(String, "/mission/event", 10)   # announcer.py speaks these
         nav.create_subscription(Odometry, "/odom", lambda m: setattr(self, "odom", m.pose.pose), 10)
         for name in self.seen:
             nav.create_subscription(PointStamped, f"/detected/{name}",
@@ -120,6 +122,10 @@ class Robot:
 
     def spin(self, sec=0.05):
         rclpy.spin_once(self.nav, timeout_sec=sec)
+
+    def event(self, name):
+        """Tell the world what just happened (voice_lines.py has one sentence per name)."""
+        self.events.publish(String(data=name))
 
     def pose(self):
         o = self.odom
@@ -222,11 +228,12 @@ class Navigate(smach.State):
     def __init__(self, robot, name, goal):
         super().__init__(outcomes=["succeeded", "failed", "aborted"],
                          input_keys=["retry"], output_keys=["retry"])
-        self.nav, self.name, self.goal = robot.nav, name, goal
+        self.robot, self.nav, self.name, self.goal = robot, robot.nav, name, goal
 
     def execute(self, ud):
         x, y, yaw = GOALS[self.goal]
         self.nav.info(f"[{self.name}] go to {self.goal} x={x:.2f} y={y:.2f} yaw={math.degrees(yaw):.0f} deg")
+        self.robot.event("go_" + self.goal.lower())
         start = time.time()
         self.nav.goToPose(make_pose(self.nav, x, y, yaw))
         last_print = 0.0
@@ -241,14 +248,17 @@ class Navigate(smach.State):
         result = self.nav.getResult()
         if result == TaskResult.SUCCEEDED:
             self.nav.info(f"[{self.name}] arrived in {time.time() - start:.0f} s")
+            self.robot.event("arrived_" + self.goal.lower())
             ud.retry = 0
             return "succeeded"
-        return fail(self.nav, self.name, f"navigation {result}", ud)
+        return fail(self.robot, self.name, f"navigation {result}", ud)
 
 
-def fail(nav, name, why, ud):
+def fail(robot, name, why, ud):
     ud.retry += 1
-    nav.warn(f"[{name}] {why} ({ud.retry}/{MAX_RETRY})")
+    robot.nav.warn(f"[{name}] {why} ({ud.retry}/{MAX_RETRY})")
+    if ud.retry < MAX_RETRY:
+        robot.event("retry")
     return "aborted" if ud.retry >= MAX_RETRY else "failed"
 
 
@@ -267,8 +277,9 @@ class Detect(smach.State):
         if p is None:
             r.drive(-WORK * 0.12)                            # step away (it may be too close to see), then look again
             r.turn(0.15 if ud.retry % 2 == 0 else -0.3)
-            return fail(r.nav, self.name, f"no {self.what} in the camera image", ud)
+            return fail(r, self.name, f"no {self.what} in the camera image", ud)
         r.target[self.what] = p
+        r.event("found_" + self.what)
         b = r.to_base(p)
         r.nav.info(f"[{self.name}] {self.what} at x={p[0]:.3f} y={p[1]:.3f} (odom) = "
                    f"{b[0]:.2f} m ahead, {b[1]:+.2f} m left of the robot")
@@ -292,8 +303,9 @@ class Manipulate(smach.State):
         r.drive(-WORK * (BACK_OFF if ok else PARK - REACH_X))   # failed: back to where the camera sees it again
         r.arm.stow(holding=self.picking and ok)
         if not ok:
-            return fail(r.nav, self.name, "arm could not finish", ud)
+            return fail(r, self.name, "arm could not finish", ud)
         r.nav.info(f"[{self.name}] done")
+        r.event("picked" if self.picking else "placed")
         ud.retry = 0
         return "succeeded"
 
@@ -325,6 +337,8 @@ def main():
     start = time.time()
     result = sm.execute()
     nav.info(f"Mission finished: {result} in {time.time() - start:.0f} s")
+    robot.event("finished_" + result)
+    robot.spin(0.5)  # let the last event go out before the node closes
     nav.destroy_node()
     rclpy.try_shutdown()
 
