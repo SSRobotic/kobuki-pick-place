@@ -7,7 +7,7 @@ Final Project mission: Nav2 driving + camera detection + SO-100 pick and place.
 Same states as final_project_state_machine.py:
   NAV_*          send a goal to Nav2 and wait until the robot really arrives
   DETECT_*       wait for cube_detector.py to see the cube / the place marker (position in odom)
-  PICK / PLACE   turn the arm side toward it, drive straight until it is 0.27 m from the robot centre (arm reach),
+  PICK / PLACE   turn the arm side toward it, drive straight until it is 0.31 m from the robot centre (arm reach),
                  look again, move the arm with arm_control.py, drive 0.2 m away, fold the arm
 The arm and the camera work out of the robot's REAR (as built), so the robot parks 0.65 m from the object with its
 back toward it and reverses in. The working side is read from the arm mount in kobuki_x2.urdf.
@@ -18,6 +18,7 @@ Needs, each in its own window (simulation; on demo day the real drivers replace 
     pixi run python robot\\mission_nav2.py      (Windows)
     python3 mission_nav2.py                     (Ubuntu)
 Driving only (no camera, no arm needed): add --nav-only
+Arm moves planned by MoveIt (start moveit.launch.py rviz:=false first): add --moveit
 """
 import math
 import sys
@@ -73,7 +74,8 @@ except ImportError:  # RoboStack on Windows has no smach: use a tiny stand-in wi
 MAX_RETRY = 3
 NAV_TIMEOUT = 240.0    # seconds allowed for one navigation leg
 DETECT_TIMEOUT = 8.0   # seconds to wait for the camera to see the cube / marker
-REACH_X = 0.27         # m from the robot centre to the object when the arm works (floor object, arm on the deck)
+REACH_X = 0.31         # m from the robot centre to the object when the arm works: cube on a 22 cm box, whose near face
+                       # is then 0.20 m out, clear of the Kobuki rim (0.176 m); the arm still reaches it (31 Oct)
 BACK_OFF = 0.20        # m to drive away after picking / placing, so the arm can fold clear
 WORK = 1 if math.sin(MOUNT[3]) > 0 else -1   # +1 = arm reaches out of the front, -1 = out of the rear (as built)
 
@@ -107,9 +109,9 @@ def make_pose(nav, x, y, yaw):
 class Robot:
     """Everything the states share: Nav2, odometry, detections, the arm and straight-line driving."""
 
-    def __init__(self, nav):
+    def __init__(self, nav, moveit=False):
         self.nav = nav
-        self.arm = ArmController(nav)
+        self.arm = ArmController(nav, moveit=moveit)
         self.odom = None
         self.seen = {"cube": [], "station": []}   # (receive time, xyz in odom)
         self.target = {}                          # last good detection per name
@@ -313,7 +315,7 @@ class Manipulate(smach.State):
 def main():
     rclpy.init()
     nav = BasicNavigator()
-    robot = Robot(nav)
+    robot = Robot(nav, moveit="--moveit" in sys.argv)
 
     sm = smach.StateMachine(outcomes=["succeeded", "aborted"])
     tasks = [  # (state name, state object, next state, state to go back to when it fails)

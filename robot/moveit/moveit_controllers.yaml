@@ -1,0 +1,22 @@
+# Where move_group sends planned trajectories. so100_trajectory_bridge.py serves both actions and plays the
+# trajectory on /arm/joint_command, so the same setup drives the real arm (so100_driver.py) and the fake one.
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+moveit_simple_controller_manager:
+  controller_names: [arm_controller, gripper_controller]
+  arm_controller:
+    type: FollowJointTrajectory
+    action_ns: follow_joint_trajectory
+    default: true
+    joints: [shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, wrist_roll]
+  gripper_controller:
+    type: FollowJointTrajectory
+    action_ns: follow_joint_trajectory
+    default: true
+    joints: [gripper]
+
+# real servos lag behind the plan, and a gripper closing on the cube never reaches its target
+trajectory_execution:
+  allowed_execution_duration_scaling: 3.0
+  allowed_goal_duration_margin: 3.0
+  allowed_start_tolerance: 0.1

@@ -27,6 +27,7 @@ LIMITS = {"shoulder_pan": (-1.92, 1.92), "shoulder_lift": (-3.32, 0.174), "elbow
           "wrist_flex": (-1.66, 1.66), "wrist_roll": (-2.79, 2.79), "gripper": (-0.174, 1.75)}
 REST = {"shoulder_pan": 0.0, "shoulder_lift": -3.32, "elbow_flex": 3.11,
         "wrist_flex": 1.18, "wrist_roll": -1.5708, "gripper": -0.17}
+HOLD_STEPS = 45   # a blocked gripper keeps its goal this far past where it stopped (~4 deg): firm grip, little heat
 HERE = os.path.dirname(os.path.abspath(__file__))
 CAL_FILE = os.path.join(HERE, "so100_calibration.yaml")
 
@@ -87,11 +88,17 @@ class SO100Driver(Node):
         # hold the arm where it is (no jump), then switch the torque on
         here = {j: self.bus.read_position(IDS[j]) for j in JOINTS}
         self.bus.write_goals({IDS[j]: s for j, s in here.items()}, self.speed, self.acc)
+        self.written = {IDS[j]: round(s) for j, s in here.items()}   # last goal step written to each servo
         for j in JOINTS:
             self.bus.write(IDS[j], "torque_enable", 1)
+        # the gripper holds the cube by pushing into it: at full torque that tripped the servo's overload protection
+        # within seconds (31 Oct) and the jaw let go, so it gets half (0..1000, RAM: set again at every start)
+        self.bus.write(IDS["gripper"], "torque_limit", p("gripper_torque", 500).value)
         self.state_pub = self.create_publisher(JointState, "/joint_states", 10)
         self.create_subscription(JointState, "/arm/joint_command", self.on_command, 10)
-        self.create_timer(1 / p("rate", 15.0).value, self.publish_state)
+        self.dt = 1 / p("rate", 15.0).value
+        self.squeeze_ticks = 0
+        self.create_timer(self.dt, self.publish_state)
         self.create_timer(2.0, self.check_health)
         # supply voltage at the start: 7.4 V servos run on ~5 V (LeRobot's 5 V supply) or a 2S pack, 12 V servos on 12 V
         self.volts0 = self.bus.read(IDS[JOINTS[0]], "present_voltage") / 10
@@ -110,9 +117,14 @@ class SO100Driver(Node):
                                            throttle_duration_sec=2)
                     continue
                 goals[IDS[name]] = step
+        # a goal the servo already has is not written again: every write restarts its speed profile (jerky arm)
+        goals = {sid: s for sid, s in goals.items() if self.written.get(sid) != round(s)}
         if goals:
             try:
                 self.bus.write_goals(goals, self.speed, self.acc)
+                self.written.update((sid, round(s)) for sid, s in goals.items())
+                if IDS["gripper"] in goals:
+                    self.squeeze_ticks = 0   # a new gripper command (e.g. open) must not be taken for the old squeeze
             except BusError as e:
                 self.get_logger().error(str(e))
 
@@ -121,7 +133,7 @@ class SO100Driver(Node):
         msg.header.stamp = self.get_clock().now().to_msg()
         for j in JOINTS:
             try:
-                step, _, load = self.bus.read_state(IDS[j])
+                step, speed, load = self.bus.read_state(IDS[j])
                 load /= 1000.0
             except BusError as e:
                 self.get_logger().warn(str(e), throttle_duration_sec=2)
@@ -129,9 +141,40 @@ class SO100Driver(Node):
             msg.name.append(j)
             msg.position.append(to_angle(self.cal, j, step))
             msg.effort.append(load)
+            if j == "gripper":
+                self.soft_hold(step, speed, load)
         self.state_pub.publish(msg)
 
+    def soft_hold(self, step, speed, load):
+        """A jaw squeezing the cube (or its own stop) at a standstill heated the servo to 72 C in minutes (31 Oct):
+        after a second of that, move its goal to HOLD_STEPS past where it stopped - still a firm grip, less strain."""
+        sid = IDS["gripper"]
+        target = self.written.get(sid, step)
+        squeezing = abs(speed) < 5 and abs(load) > 0.2 and abs(target - step) > HOLD_STEPS
+        self.squeeze_ticks = self.squeeze_ticks + 1 if squeezing else 0
+        if self.squeeze_ticks * self.dt > 1.0:
+            hold = step + HOLD_STEPS * (1 if target > step else -1)
+            try:
+                self.bus.write_goals({sid: hold}, self.speed, self.acc)
+                self.written[sid] = hold
+                self.get_logger().info(f"gripper blocked at {to_angle(self.cal, 'gripper', step):+.2f} rad - holding gently")
+            except BusError as e:
+                self.get_logger().error(str(e))
+            self.squeeze_ticks = 0
+
     def check_health(self):
+        for sid, what in list(self.bus.errors.items()):
+            j = JOINTS[sid - 1]
+            self.get_logger().warn(f"{j} (servo {sid}): {what}", throttle_duration_sec=5)
+            if "overload" in what:   # the servo switched itself off: stop it pushing, then switch it back on
+                try:
+                    step = self.bus.read_position(sid)
+                    self.bus.write_goals({sid: step}, self.speed, self.acc)
+                    self.written[sid] = step
+                    self.bus.write(sid, "torque_enable", 1)
+                    self.get_logger().info(f"{j}: holds where it is now ({to_angle(self.cal, j, step):+.2f} rad), torque on again")
+                except BusError as e:
+                    self.get_logger().error(str(e))
         for j in JOINTS:
             try:
                 volts = self.bus.read(IDS[j], "present_voltage") / 10

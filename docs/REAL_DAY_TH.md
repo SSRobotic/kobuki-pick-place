@@ -7,6 +7,10 @@
 - ทุกหน้าต่างใหม่ เริ่มด้วย `cd` เข้าโฟลเดอร์โปรเจกต์ก่อนเสมอ:
   - โน้ตบุ๊กหลักของทีม: `cd D:\ROS2_Windows_Humble`
   - เครื่องที่ clone จาก GitHub: `cd ~\kobuki-pick-place`
+- **แล้วบรรทัดที่สองทุกหน้าต่าง (ห้ามลืม):** ให้ ROS คุยกันในเครื่องผ่าน 127.0.0.1 — ถ้าไม่ใส่ MoveIt จะไม่ได้รับ `/joint_states` แล้วแขนไม่ขยับ (`couldn't receive full current joint state`) เจอจริง 31 ต.ค.
+  ```powershell
+  $env:FASTRTPS_DEFAULT_PROFILES_FILE = "$PWD\robot\fastdds_local.xml"
+  ```
 - **1 คำสั่งที่รันค้าง = 1 หน้าต่าง** อย่าปิด หยุดด้วย `Ctrl+C` ในหน้าต่างนั้น
 - Ubuntu: `cd ~/kobuki-pick-place/robot` แล้วตัด `pixi run` และ `robot\` ออก ใช้ `python3` แทน `python`
 
@@ -25,6 +29,7 @@
 | 9 | คีย์บอร์ด → (ขั้น 8) ภารกิจ | ขั้น 7 |
 | 10 | เสียงหุ่น | ขั้น 9 |
 | 11 | **สำรอง** คำสั่งสั้น ๆ ที่รันแล้วจบเอง | ทั้งวัน |
+| 12 | MoveIt (วางแผนท่าแขน) | ขั้น 5 |
 
 ---
 
@@ -113,10 +118,12 @@ pixi run ros2 run tf2_ros tf2_echo base_link laser
 
 ## ขั้น 5 — แขน SO-100 (25 นาที)
 
-**5.1 คาลิเบรต** (ครั้งเดียว ถ้าในโฟลเดอร์ `robot` ยังไม่มีไฟล์ `so100_calibration.yaml`) — หน้าต่าง 11:
+**5.1 คาลิเบรต** (ครั้งเดียว ถ้าในโฟลเดอร์ `robot` ยังไม่มีไฟล์ `so100_calibration.yaml` · 31 ต.ค. ทำแล้ว ถ้าไม่ได้ถอดแขนข้ามไปได้) — **ปิดหน้าต่าง 4 (ไดรเวอร์) ก่อน** แล้วหน้าต่าง 11:
 ```powershell
-pixi run python robot\so100_calibrate.py
+pixi run python robot\so100_calibrate_app.py
 ```
+แอปแสดงค่าเซอร์โวสด ๆ + รูปท่า + เช็คก่อนบันทึก (ท่า HOME กดบันทึกไม่ได้จนกว่าจะอ้าปากคีบ) → กด **Torque OFF** (ประคองแขน) → จัดทีละท่า กด **บันทึกท่านี้** → ดูผล ไม่มีคำเตือนแดง → **บันทึกไฟล์** → วางลูกบาศก์ระหว่างนิ้วแล้วกด **วัดจุดคีบ** (ได้ค่า GRIP ให้ `arm_control.py` เอง) → วางแขนท่า REST แล้วเปิดหน้าต่าง 4 ใหม่
+(แบบไม่มีหน้าต่าง: `pixi run python robot\so100_calibrate.py` ทำ 3 ท่าเดียวกันใน terminal)
 **ประคองแขนก่อนกด Enter** (แรงบิดหาย แขนจะตก) แล้วจัดท่าด้วยมือตามที่โปรแกรมบอก 3 ท่า (รูปท่าใน [DEMO_DAY_TH.md ขั้น 5.2](DEMO_DAY_TH.md)):
 
 | ท่า | จัดยังไง |
@@ -138,17 +145,43 @@ pixi run python robot\so100_driver.py
 pixi run python robot\arm_control.py carry
 pixi run python robot\arm_control.py open
 pixi run python robot\arm_control.py close
-pixi run python robot\arm_control.py reach -0.27 0.0 0.10
-pixi run python robot\arm_control.py reach -0.27 0.0 0.03
+pixi run python robot\arm_control.py reach -0.31 0.0 0.19
+pixi run python robot\arm_control.py reach -0.31 0.0 0.12
 pixi run python robot\arm_control.py rest
 ```
-✅ ทุกบรรทัดจบด้วย `done` · `reach ... 0.03` วัดด้วยไม้บรรทัด: กลางปากคีบอยู่หลังกลางหุ่น 27 ซม. สูงจากพื้น 3 ซม. คลาดไม่เกิน 1 ซม.
+✅ ทุกบรรทัดจบด้วย `done` · `reach ... 0.12` วัดด้วยไม้บรรทัด: กลางปากคีบอยู่หลังกลางหุ่น 31 ซม. (= หลังขอบท้าย Kobuki 13.4 ซม.) สูงจากพื้น 12 ซม. คลาดไม่เกิน 1 ซม.
 
-**ลองหยิบด้วยมือ:** วางลูกบาศก์หลังกลางหุ่น 27 ซม. → `open` → `reach -0.27 0.0 0.02` → `close` → `reach -0.27 0.0 0.10`
+**ลองหยิบ-วางด้วยโค้ดเดียวกับภารกิจ:** ลูกบาศก์ 4 ซม. บนกล่องสูง 9 ซม. (กล่องกว้าง 22 ซม. หน้ากล่องห่างขอบท้าย Kobuki 2–3 ซม.) กลางลูกบาศก์หลังกลางหุ่น 31 ซม.:
+```powershell
+pixi run python robot\arm_control.py pick -0.31 0.0 0.11
+pixi run python robot\arm_control.py place -0.31 0.0 0.09
+```
+(`pick` = ความสูงกลางลูกบาศก์ · `place` = ความสูงผิวบนกล่อง · ปลายนิ้วคีบยื่นต่ำกว่ากลางปากคีบ 4.5 ซม. โปรแกรมเผื่อให้แล้ว: เล็งกลางปากคีบสูงกว่ากลางลูกบาศก์ 3 ซม. ปลายนิ้วจึงหยุดเหนือฝากล่อง 0.5 ซม.)
 ✅ ลูกบาศก์ลอยขึ้น → `rest`
 
 - ❌ คลาดเกิน 1 ซม. ไปทางเดียวกันทุกครั้ง = วัด `so100_mount_joint` ใหม่ (ขั้น 2) แล้วเปิดหน้าต่าง 3 และ 4 ใหม่
 - ❌ ข้อไหนหมุนกลับทาง = คาลิเบรตใหม่ (5.1)
+
+**5.4 MoveIt** — หน้าต่าง 12 (เปิดค้างไว้ทั้งวัน):
+```powershell
+pixi run ros2 launch robot\moveit.launch.py
+```
+✅ `You can start planning now!` + `MoveIt trajectory bridge ready` + RViz เปิดขึ้นมาพร้อมแผง MotionPlanning (บรรทัดแดง `No 3D sensor plugin(s) defined for octomap updates` ไม่เป็นไร: เราไม่ได้ใช้ point cloud)
+
+ลองใน RViz: แท็บ Planning → ลากลูกบอลส้มที่ปากคีบ → **Plan** (เห็นแขนผีวิ่งให้ดู) → **Execute** (แขนจริงขยับตาม) · Goal State เลือกท่าสำเร็จรูปได้: `rest` / `carry` / `home` และชุดหยิบ-วางที่จุดมาตรฐาน (ลูกบาศก์บนกล่อง 9 ซม. กลางลูกบาศก์หลังกลางหุ่น 31 ซม.) `pick_above` → (Planning Group `gripper`: `open`) → `pick_grasp` → (`grip`) → `pick_lift` → `place_above` → `place_release` → (`open`) → `rest`
+
+แล้วสั่งจาก terminal ผ่าน MoveIt — หน้าต่าง 11 (เหมือน 5.3 แต่มี `--moveit`):
+```powershell
+pixi run python robot\arm_control.py --moveit carry
+pixi run python robot\arm_control.py --moveit open
+pixi run python robot\arm_control.py --moveit pick -0.31 0.0 0.11
+pixi run python robot\arm_control.py --moveit place -0.31 0.0 0.09
+pixi run python robot\arm_control.py --moveit rest
+```
+✅ ทุกบรรทัดจบด้วย `done` · MoveIt วางเส้นทางไม่ให้แขนชน Kobuki ชั้นอะคริลิก LiDAR กล้อง แล้วส่งให้แขนเล่นตาม (`so100_trajectory_bridge.py` → `/arm/joint_command`)
+- ❌ `no MoveIt /move_action` = หน้าต่าง 12 ยังไม่เปิด / ยังไม่ขึ้น `You can start planning now!`
+- ❌ `error code -10` หรือ `-12` (ท่าเริ่ม/ท่าเป้าหมายชน) = ตัวเลข MEASURE ใน URDF ทำให้แขนในโมเดลทะลุตัวหุ่น → แก้ URDF แล้วเปิดหน้าต่าง 3 และ 12 ใหม่ · ถ้าแก้ URDF แล้ว รัน `pixi run python tools\moveit_collision_pairs.py` ดูคู่ชิ้นที่ต้องปิดการเช็คชน
+- ❌ MoveIt ไม่ผ่านแต่เวลาไม่พอ = ตัด `--moveit` ออก แขนกลับไปสั่งตรงแบบ 5.3 ได้ทันที
 
 ---
 
@@ -175,9 +208,9 @@ pixi run python robot\hsv_tuner.py
 ✅ ได้บรรทัด `-p cube_hsv_low:=[...] -p cube_hsv_high:=[...] -p marker_hsv_low:=[...] -p marker_hsv_high:=[...]` → **คัดลอกเก็บไว้**
 (ก้อนขาวมีรู = ลดแถบ S min / V min · มีจุดขาวที่พื้น = เพิ่ม S min)
 
-**6.3 หน้าต่าง 6: ตัวหาวัตถุ** (วางบรรทัดจาก 6.2 ต่อท้าย):
+**6.3 หน้าต่าง 6: ตัวหาวัตถุ** (วางบรรทัดจาก 6.2 ต่อท้าย · `surface_height:=0.09` = ลูกบาศก์และจุดวางอยู่บนกล่องสูง 9 ซม.):
 ```powershell
-pixi run python robot\cube_detector.py --ros-args -p cube_hsv_low:=[...] -p cube_hsv_high:=[...] -p marker_hsv_low:=[...] -p marker_hsv_high:=[...]
+pixi run python robot\cube_detector.py --ros-args -p surface_height:=0.09 -p cube_hsv_low:=[...] -p cube_hsv_high:=[...] -p marker_hsv_low:=[...] -p marker_hsv_high:=[...]
 ```
 ✅ `Cube detector on /camera/color/image_raw, objects on a surface 0.00 m high`
 
@@ -262,10 +295,11 @@ pixi run python robot\announcer.py
 ```
 ✅ ได้ยิน "หุ่นยนต์พร้อมแล้ว" (ไม่ได้ยิน = ข้ามได้ ภารกิจไม่พึ่งเสียง)
 
-วางลูกบาศก์ + แผ่นจุดวางตรงเทป · หุ่นที่ Initial หันทางเดิม · แขนท่า REST → หน้าต่าง 9:
+วางลูกบาศก์ + แผ่นจุดวางตรงเทป · หุ่นที่ Initial หันทางเดิม · แขนท่า REST · หน้าต่าง 12 (MoveIt) เปิดอยู่ → หน้าต่าง 9:
 ```powershell
-pixi run python robot\mission_nav2.py
+pixi run python robot\mission_nav2.py --moveit
 ```
+(ขึ้น `arm moves are planned by MoveIt` ตอนเริ่ม · ไม่ใช้ MoveIt = ตัด `--moveit` ออก)
 ✅ ประมาณ 4 นาที หุ่นพูด: "ถึงสถานีที่หนึ่งแล้ว" → "เจอวัตถุแล้ว" → "หยิบวัตถุสำเร็จ" → "ถึงสถานีที่สองแล้ว" → "เจอจุดวางแล้ว" → "วางวัตถุเรียบร้อย" → "กลับถึงจุดเริ่มต้นแล้ว"
 หน้าต่าง 9 จบด้วย `Mission finished: succeeded`
 
@@ -275,7 +309,7 @@ pixi run python robot\mission_nav2.py
 
 ## ขั้น 10 — รอบกรรมการ
 
-- [ ] หน้าต่าง 1–8 และ 10 เปิดอยู่ ไม่มีบรรทัดแดงค้าง · ภารกิจเต็ม `succeeded` มาแล้วอย่างน้อย 1 รอบ
+- [ ] หน้าต่าง 1–8, 10 และ 12 เปิดอยู่ ไม่มีบรรทัดแดงค้าง · ภารกิจเต็ม `succeeded` มาแล้วอย่างน้อย 1 รอบ
 - [ ] แบต Kobuki / แบตแขน / โน้ตบุ๊ก ยังพอ (ชาร์จระหว่างรอคิว)
 - [ ] ลูกบาศก์ + แผ่นจุดวางตรงเทป · หุ่นที่ Initial หันทางเดิม · แขนท่า REST
 - [ ] ไฟห้องเหมือนตอนหาสี (ไม่เหมือน = ทำขั้น 6.2–6.3 ใหม่)
@@ -315,3 +349,7 @@ git push origin main
 | `target ... out of reach` | เช็คมุมกล้องใหม่ (6.4) |
 | หุ่นถอยแล้วชน | หลังวัตถุไม่โล่ง → เปลี่ยนทิศใน `STATIONS` |
 | `blocked while driving straight` | ล้อติด / ชนอยู่ / หน้าต่าง 2 ไม่มี `--enable-motion` |
+| MoveIt `error code -4` + หน้าต่าง 12 ขึ้น `couldn't receive full current joint state` | หน้าต่างไหนลืมบรรทัด `$env:FASTRTPS_DEFAULT_PROFILES_FILE` → ปิดหน้าต่าง 3, 4, 12 แล้วเปิดใหม่ทุกหน้าต่างพร้อมบรรทัดนั้น |
+| MoveIt `error code 99999` + หน้าต่าง 12 ขึ้น `Skipping invalid start state` | ท่าแขนตอนนี้ชนในโมเดล → `pixi run python tools\moveit_collision_pairs.py` ดูคู่ที่ชน (ถ้าชนแค่ชิ้นแขนกันเองตอนพับ REST ใส่คู่นั้นใน `robot\moveit\so100.srdf`) · หรือตัด `--moveit` ออก |
+| ลูกบาศก์หลุดจากปากคีบ | ปากคีบต้องบีบเลยจุดแตะลูกบาศก์: หน้าต่าง 4 ต้องขึ้น `gripper blocked at +0.2x rad - holding gently` ตอนหนีบ · ไม่ขึ้น = ลูกบาศก์ใหญ่/เล็กกว่า 4 ซม. → แก้ `GRIP` ใน `robot\arm_control.py` ให้น้อยกว่ามุมที่นิ้วแตะลูกบาศก์ 0.1 rad (31 ต.ค. แตะที่ 0.20 → `GRIP = 0.10`) |
+| คาลิเบรตแล้ว `gripper` อ่านค่าเดิมทั้ง REST และ HOME | ตอนท่า HOME ไม่ได้อ้าปากคีบ → คาลิเบรตใหม่ อ้าปากคีบ ~60° ค้างไว้ตอนกด Enter |

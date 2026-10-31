@@ -2,7 +2,7 @@
 authors = ["SSRobotic <sarunyaphat2545@gmail.com>"]
 channels = ["https://conda.anaconda.org/robostack-humble", "conda-forge"]
 name = "ROS2_Windows_Humble"
-platforms = ["win-64"]
+platforms = ["win-64", "linux-64"]
 version = "0.1.0"
 
 [tasks]
@@ -15,3 +15,8 @@ ros-humble-nav2-map-server = ">=1.1.20,<2"
 ros-humble-navigation2 = ">=1.1.20,<2"
 ros-humble-nav2-bringup = ">=1.1.20,<2"
 ros-humble-foxglove-bridge = ">=3.6.0,<4"
+ros-humble-moveit-ros-move-group = ">=2.5.10,<3"
+ros-humble-moveit-kinematics = ">=2.5.10,<3"
+ros-humble-moveit-planners-ompl = ">=2.5.10,<3"
+ros-humble-moveit-simple-controller-manager = ">=2.5.10,<3"
+ros-humble-moveit-ros-visualization = ">=2.5.10,<3"

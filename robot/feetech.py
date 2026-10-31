@@ -53,6 +53,7 @@ class FeetechBus:
         else:
             self.ser = port
         self.timeout = timeout
+        self.errors = {}   # {id: "overload, ..."} from the last reply of each servo that reported a problem
 
     def close(self):
         self.ser.close()
@@ -77,8 +78,11 @@ class FeetechBus:
                 reply = buf[start:start + need]
                 if reply[3] != reply_params + 2 or (~sum(reply[2:-1]) & 0xFF) != reply[-1]:
                     raise BusError(f"servo {sid}: bad reply {reply.hex(' ')}")
+                # an error flag (overload, overheat...) still comes with good data: keep it, report it in self.errors
                 if reply[4]:
-                    raise BusError(f"servo {sid}: error " + ", ".join(n for b, n in ERRORS.items() if reply[4] & b))
+                    self.errors[sid] = ", ".join(n for b, n in ERRORS.items() if reply[4] & b) or f"0x{reply[4]:02x}"
+                else:
+                    self.errors.pop(sid, None)
                 return reply[5:-1]
         raise BusError(f"servo {sid}: no reply")
 

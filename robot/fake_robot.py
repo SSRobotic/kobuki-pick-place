@@ -58,6 +58,7 @@ MARKER_SIZE = 0.10
 GRIP_CLOSED = 0.35              # gripper joint below this = closed (rad, so_arm100.xml "Jaw")
 GRIP_OPEN = 0.5                 # above this = open
 GRAB_DISTANCE = 0.03            # jaw centre must be this close to the cube centre to catch it
+FINGERS_BELOW_TIP = 0.03        # the real fingers hold the cube this far below gripper_tip (arm_control.GRASP_UP, 31 Oct)
 
 
 def laser_mount():
@@ -182,7 +183,7 @@ class FakeRobot(Node):
         if self.gripper is not None:
             try:
                 t = self.tf_buffer.lookup_transform("odom", "gripper_tip", Time()).transform.translation
-                tip = (t.x, t.y, t.z)
+                tip = (t.x, t.y, t.z - FINGERS_BELOW_TIP)   # where a held cube's centre really is
             except TransformException:
                 tip = None
             if tip and not self.held and self.gripper < GRIP_CLOSED and math.dist(tip, self.cube) < GRAB_DISTANCE:

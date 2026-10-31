@@ -1,0 +1,13 @@
+# Speed and acceleration MoveIt plans with (position limits come from kobuki_x2.urdf).
+# STS3215 servos manage about 3 rad/s unloaded; 1.0 rad/s keeps the arm steady on a moving base.
+# Raise both scaling factors (0..1) for a faster arm once it works.
+default_velocity_scaling_factor: 0.5
+default_acceleration_scaling_factor: 0.5
+
+joint_limits:
+  shoulder_pan:  {has_velocity_limits: true, max_velocity: 1.0, has_acceleration_limits: true, max_acceleration: 2.0}
+  shoulder_lift: {has_velocity_limits: true, max_velocity: 1.0, has_acceleration_limits: true, max_acceleration: 2.0}
+  elbow_flex:    {has_velocity_limits: true, max_velocity: 1.0, has_acceleration_limits: true, max_acceleration: 2.0}
+  wrist_flex:    {has_velocity_limits: true, max_velocity: 1.0, has_acceleration_limits: true, max_acceleration: 2.0}
+  wrist_roll:    {has_velocity_limits: true, max_velocity: 1.0, has_acceleration_limits: true, max_acceleration: 2.0}
+  gripper:       {has_velocity_limits: true, max_velocity: 1.5, has_acceleration_limits: true, max_acceleration: 3.0}

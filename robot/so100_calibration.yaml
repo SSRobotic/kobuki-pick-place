@@ -1,0 +1,46 @@
+joints:
+  shoulder_lift:
+    zero: 3072.9
+    sign: 1
+  elbow_flex:
+    zero: 1052.1
+    sign: 1
+  wrist_flex:
+    zero: 1991.1
+    sign: 1
+  gripper:
+    zero: 1114.8
+    sign: 1
+  shoulder_pan:
+    zero: 2060.0
+    sign: 1
+  wrist_roll:
+    zero: 3171.0
+    sign: 1
+readings:
+  REST:
+    shoulder_pan: 2060
+    shoulder_lift: 884
+    elbow_flex: 3065
+    wrist_flex: 2793
+    wrist_roll: 2147
+    gripper: 1004
+  HOME:
+    shoulder_pan: 2070
+    shoulder_lift: 2074
+    elbow_flex: 2090
+    wrist_flex: 2982
+    wrist_roll: 2147
+    gripper: 1004
+  PAN_90:
+    shoulder_pan: 3080
+    shoulder_lift: 2074
+    elbow_flex: 2090
+    wrist_flex: 2976
+    wrist_roll: 2146
+    gripper: 1004
+date: '2026-10-31T13:15:47'
+note: angle = sign * (step - zero) * 2*pi/4096, angles as in kobuki_x2.urdf
+gripper_note: 'gripper set by hand 31 Oct: jaws were not opened in HOME. Measured
+  by hand: 945 closed .. 2375 fully open (opening raises the steps -> sign 1); zero
+  from the REST (closed) reading 1004.'

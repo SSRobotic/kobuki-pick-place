@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<!-- MoveIt semantic description of the SO-100 on the Kobuki (kobuki_x2.urdf). Hand-written, no Setup Assistant.
+     arm = shoulder_pan..wrist_roll, tip = gripper_tip (the point between the jaw pads). gripper = the moving jaw.
+     Poses match arm_control.py (REST / CARRY / OPEN / GRIP). -->
+<robot name="kobuki_x2">
+  <group name="arm">
+    <chain base_link="so100_base" tip_link="gripper_tip"/>
+  </group>
+  <group name="gripper">
+    <joint name="gripper"/>
+  </group>
+
+  <group_state name="rest" group="arm">
+    <joint name="shoulder_pan" value="0"/><joint name="shoulder_lift" value="-3.32"/><joint name="elbow_flex" value="3.11"/>
+    <joint name="wrist_flex" value="1.18"/><joint name="wrist_roll" value="-1.5708"/>
+  </group_state>
+  <group_state name="carry" group="arm">
+    <joint name="shoulder_pan" value="0"/><joint name="shoulder_lift" value="-2.3"/><joint name="elbow_flex" value="2.2"/>
+    <joint name="wrist_flex" value="1.66"/><joint name="wrist_roll" value="-1.5708"/>
+  </group_state>
+  <group_state name="home" group="arm">
+    <joint name="shoulder_pan" value="0"/><joint name="shoulder_lift" value="-1.57"/><joint name="elbow_flex" value="1.57"/>
+    <joint name="wrist_flex" value="1.57"/><joint name="wrist_roll" value="-1.5708"/>
+  </group_state>
+  <!-- pick and place at the standard spot: 4 cm cube on a 9 cm box (22 cm wide), cube centre 31 cm behind the robot
+       centre on its centre line = mission_nav2.py REACH_X (arm_control.py inverse() with GRASP_UP: the jaw centre 3 cm over the cube centre, 31 Oct). The place marker is on
+       the same kind of box. In RViz: arm pick_above -> gripper open -> arm pick_grasp -> gripper grip -> arm pick_lift
+       ... arm place_above -> place_release -> gripper open -> arm rest -->
+  <group_state name="pick_above" group="arm">     <!-- jaw centre 21 cm up: fingertips 3.5 cm over the cube top -->
+    <joint name="shoulder_pan" value="-0.147"/><joint name="shoulder_lift" value="-1.211"/><joint name="elbow_flex" value="1.772"/>
+    <joint name="wrist_flex" value="1.020"/><joint name="wrist_roll" value="-1.5708"/>
+  </group_state>
+  <group_state name="pick_grasp" group="arm">     <!-- 14 cm up: fingertips 0.5 cm over the box, cube between the fingers -->
+    <joint name="shoulder_pan" value="-0.147"/><joint name="shoulder_lift" value="-0.816"/><joint name="elbow_flex" value="1.742"/>
+    <joint name="wrist_flex" value="0.655"/><joint name="wrist_roll" value="-1.5708"/>
+  </group_state>
+  <group_state name="pick_lift" group="arm">      <!-- 22 cm up: cube lifted 8 cm off the box -->
+    <joint name="shoulder_pan" value="-0.147"/><joint name="shoulder_lift" value="-1.253"/><joint name="elbow_flex" value="1.752"/>
+    <joint name="wrist_flex" value="1.081"/><joint name="wrist_roll" value="-1.5708"/>
+  </group_state>
+  <group_state name="place_above" group="arm">    <!-- 22.5 cm up: cube 8 cm over the marker on its box -->
+    <joint name="shoulder_pan" value="-0.147"/><joint name="shoulder_lift" value="-1.271"/><joint name="elbow_flex" value="1.740"/>
+    <joint name="wrist_flex" value="1.112"/><joint name="wrist_roll" value="-1.5708"/>
+  </group_state>
+  <group_state name="place_release" group="arm">  <!-- 14.5 cm up: cube just above the box top, then open -->
+    <joint name="shoulder_pan" value="-0.147"/><joint name="shoulder_lift" value="-0.848"/><joint name="elbow_flex" value="1.753"/>
+    <joint name="wrist_flex" value="0.677"/><joint name="wrist_roll" value="-1.5708"/>
+  </group_state>
+  <group_state name="open" group="gripper"><joint name="gripper" value="0.8"/></group_state>
+  <group_state name="grip" group="gripper"><joint name="gripper" value="0.10"/></group_state>  <!-- touches the 4 cm cube at 0.20 -->
+  <group_state name="closed" group="gripper"><joint name="gripper" value="-0.17"/></group_state>
+
+  <end_effector name="jaws" parent_link="so100_gripper" group="gripper" parent_group="arm"/>
+
+  <!-- parts bolted to the Kobuki never move relative to each other -->
+  <disable_collisions link1="base_link" link2="decks" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="standoffs" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="white_plates" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="battery" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="battery_button" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="servo_terminal" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="laser" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="laser_cap" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="camera_link" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="so100_base" reason="Adjacent"/>
+  <disable_collisions link1="decks" link2="standoffs" reason="Adjacent"/>
+  <disable_collisions link1="decks" link2="white_plates" reason="Adjacent"/>
+  <disable_collisions link1="decks" link2="battery" reason="Adjacent"/>
+  <disable_collisions link1="decks" link2="battery_button" reason="Adjacent"/>
+  <disable_collisions link1="decks" link2="servo_terminal" reason="Adjacent"/>
+  <disable_collisions link1="decks" link2="laser" reason="Adjacent"/>
+  <disable_collisions link1="decks" link2="laser_cap" reason="Adjacent"/>
+  <disable_collisions link1="decks" link2="camera_link" reason="Adjacent"/>
+  <disable_collisions link1="decks" link2="so100_base" reason="Adjacent"/>
+  <disable_collisions link1="standoffs" link2="white_plates" reason="Adjacent"/>
+  <disable_collisions link1="standoffs" link2="battery" reason="Adjacent"/>
+  <disable_collisions link1="standoffs" link2="battery_button" reason="Adjacent"/>
+  <disable_collisions link1="standoffs" link2="servo_terminal" reason="Adjacent"/>
+  <disable_collisions link1="standoffs" link2="laser" reason="Adjacent"/>
+  <disable_collisions link1="standoffs" link2="laser_cap" reason="Adjacent"/>
+  <disable_collisions link1="standoffs" link2="camera_link" reason="Adjacent"/>
+  <disable_collisions link1="standoffs" link2="so100_base" reason="Adjacent"/>
+  <disable_collisions link1="white_plates" link2="battery" reason="Adjacent"/>
+  <disable_collisions link1="white_plates" link2="battery_button" reason="Adjacent"/>
+  <disable_collisions link1="white_plates" link2="servo_terminal" reason="Adjacent"/>
+  <disable_collisions link1="white_plates" link2="laser" reason="Adjacent"/>
+  <disable_collisions link1="white_plates" link2="laser_cap" reason="Adjacent"/>
+  <disable_collisions link1="white_plates" link2="camera_link" reason="Adjacent"/>
+  <disable_collisions link1="white_plates" link2="so100_base" reason="Adjacent"/>
+  <disable_collisions link1="battery" link2="battery_button" reason="Adjacent"/>
+  <disable_collisions link1="battery" link2="servo_terminal" reason="Adjacent"/>
+  <disable_collisions link1="battery" link2="laser" reason="Adjacent"/>
+  <disable_collisions link1="battery" link2="laser_cap" reason="Adjacent"/>
+  <disable_collisions link1="battery" link2="camera_link" reason="Adjacent"/>
+  <disable_collisions link1="battery" link2="so100_base" reason="Adjacent"/>
+  <disable_collisions link1="battery_button" link2="servo_terminal" reason="Adjacent"/>
+  <disable_collisions link1="battery_button" link2="laser" reason="Adjacent"/>
+  <disable_collisions link1="battery_button" link2="laser_cap" reason="Adjacent"/>
+  <disable_collisions link1="battery_button" link2="camera_link" reason="Adjacent"/>
+  <disable_collisions link1="battery_button" link2="so100_base" reason="Adjacent"/>
+  <disable_collisions link1="servo_terminal" link2="laser" reason="Adjacent"/>
+  <disable_collisions link1="servo_terminal" link2="laser_cap" reason="Adjacent"/>
+  <disable_collisions link1="servo_terminal" link2="camera_link" reason="Adjacent"/>
+  <disable_collisions link1="servo_terminal" link2="so100_base" reason="Adjacent"/>
+  <disable_collisions link1="laser" link2="laser_cap" reason="Adjacent"/>
+  <disable_collisions link1="laser" link2="camera_link" reason="Adjacent"/>
+  <disable_collisions link1="laser" link2="so100_base" reason="Adjacent"/>
+  <disable_collisions link1="laser_cap" link2="camera_link" reason="Adjacent"/>
+  <disable_collisions link1="laser_cap" link2="so100_base" reason="Adjacent"/>
+  <disable_collisions link1="camera_link" link2="so100_base" reason="Adjacent"/>
+  <!-- neighbouring arm links touch at every joint -->
+  <disable_collisions link1="so100_base" link2="so100_shoulder" reason="Adjacent"/>
+  <disable_collisions link1="so100_shoulder" link2="so100_upper_arm" reason="Adjacent"/>
+  <disable_collisions link1="so100_upper_arm" link2="so100_lower_arm" reason="Adjacent"/>
+  <disable_collisions link1="so100_lower_arm" link2="so100_wrist" reason="Adjacent"/>
+  <disable_collisions link1="so100_wrist" link2="so100_gripper" reason="Adjacent"/>
+  <disable_collisions link1="so100_gripper" link2="so100_jaw" reason="Adjacent"/>
+  <!-- SAMPLED: tools/moveit_collision_pairs.py found no other pair to switch off (31 Oct, 3000 random poses + rest/carry/home) -->
+  <!-- the real arm folded in REST (31 Oct, calibrated: wrist_flex 1.46, lift -3.36) has its wrist and jaws against the
+       shoulder in the model, although the real parts only meet: MoveIt would refuse to start from REST otherwise -->
+  <disable_collisions link1="so100_shoulder" link2="so100_wrist" reason="Default"/>
+  <disable_collisions link1="so100_gripper" link2="so100_shoulder" reason="Default"/>
+  <disable_collisions link1="so100_jaw" link2="so100_shoulder" reason="Default"/>
+</robot>
