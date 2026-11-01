@@ -53,6 +53,26 @@ class MotorProtocolTests(unittest.TestCase):
                 self.assertEqual(ctl.frame(0.2), STOP_FRAME)
                 self.assertTrue(ctl.accept(0.1, 0, 0.2))
 
+    def test_bump_backs_off_then_turns_away_then_obeys_again(self):
+        from kobuki_motion import BUMP_BACK_TIME, BUMP_TURN_TIME
+        ctl = MotionController(bump_escape=True)
+        ctl.update_telemetry(GOOD_TELEMETRY, 0)
+        self.assertTrue(ctl.accept(0.1, 0, 0))
+        ctl.update_telemetry({**GOOD_TELEMETRY, "bumper": 4}, 0.1)        # left bumper
+        self.assertEqual(ctl.frame(0.1), command_frame(-0.05, 0.0))         # backs off, bumper still pressed
+        self.assertFalse(ctl.accept(0.1, 0, 0.15))                         # Nav2 is ignored meanwhile
+        ctl.update_telemetry(GOOD_TELEMETRY, 0.1 + BUMP_BACK_TIME + 0.1)
+        self.assertEqual(ctl.frame(0.1 + BUMP_BACK_TIME + 0.1), command_frame(0.0, -0.4))   # turns right
+        t = 0.1 + BUMP_BACK_TIME + BUMP_TURN_TIME + 0.1
+        ctl.update_telemetry(GOOD_TELEMETRY, t)
+        self.assertEqual(ctl.frame(t), STOP_FRAME)                         # done, old command not replayed
+        self.assertTrue(ctl.accept(0.1, 0, t))
+
+    def test_bump_while_lifted_just_stops(self):
+        ctl = MotionController(bump_escape=True)
+        ctl.update_telemetry({**GOOD_TELEMETRY, "bumper": 2, "wheel_drop": 1}, 0)
+        self.assertEqual(ctl.frame(0), STOP_FRAME)
+
     def test_limits_and_invalid_input(self):
         ctl = MotionController()
         ctl.update_telemetry(GOOD_TELEMETRY, 0)

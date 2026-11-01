@@ -94,7 +94,7 @@ def make_odometry(state, stamp):
 
 
 class KobukiOdometryNode(Node):
-    def __init__(self, port, enable_motion=False):
+    def __init__(self, port, enable_motion=False, bump_escape=True):
         super().__init__("windows_kobuki_odometry")
         self.publisher = self.create_publisher(Odometry, "/odom", 10)
         self.broadcaster = TransformBroadcaster(self)
@@ -102,7 +102,7 @@ class KobukiOdometryNode(Node):
         self.odometry = EncoderOdometry()
         self.samples = 0
         self.latest = {}
-        self.motion = MotionController() if enable_motion else None
+        self.motion = MotionController(bump_escape=bump_escape) if enable_motion else None
         self.last_report = time.monotonic()
         self.connection = serial.Serial(port=None, baudrate=115200, timeout=0, write_timeout=0.1)
         self.connection.dtr = False
@@ -184,6 +184,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--port", help="Auto-selects the USB serial number containing KOBUKI")
     ap.add_argument("--enable-motion", action="store_true", help="Accept /cmd_vel with speed limits and timeout stops")
+    ap.add_argument("--no-bump-escape", action="store_true",
+                    help="On a bumper hit just stop (default: back off 12 cm and turn a little away by itself)")
     args, ros_args = ap.parse_known_args()
     candidates = [p.device for p in list_ports.comports() if "KOBUKI" in p.hwid.upper()]
     port = args.port or (candidates[0] if len(candidates) == 1 else None)
@@ -194,7 +196,7 @@ def main():
     restore_console = disable_console_selection() if args.enable_motion else lambda: None
     code = 0
     try:
-        node = KobukiOdometryNode(port, enable_motion=args.enable_motion)
+        node = KobukiOdometryNode(port, enable_motion=args.enable_motion, bump_escape=not args.no_bump_escape)
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass

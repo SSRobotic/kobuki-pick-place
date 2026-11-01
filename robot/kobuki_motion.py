@@ -35,10 +35,18 @@ def command_frame(linear, angular):
 STOP_FRAME = command_frame(0.0, 0.0)
 
 
+# Bumped into a wall or a door: back off on its own (no one may touch the robot in the run), then turn a little away
+# from a side bump, then /cmd_vel again (Nav2 replans). Bumper bits (Kobuki protocol): 1 right, 2 centre, 4 left.
+BUMP_BACK_SPEED, BUMP_BACK_TIME = -0.05, 2.5     # m/s, s: 12.5 cm back
+BUMP_TURN_SPEED, BUMP_TURN_TIME = 0.4, 0.8       # rad/s, s: ~18 deg away from a side bump
+
+
 class MotionController:
-    def __init__(self, command_timeout=0.4, telemetry_timeout=0.2):
+    def __init__(self, command_timeout=0.4, telemetry_timeout=0.2, bump_escape=False):
         self.command_timeout = command_timeout
         self.telemetry_timeout = telemetry_timeout
+        self.bump_escape = bump_escape
+        self.escape = None      # (start time, turn rad/s) while backing off after a bump
         self.last_command = None
         self.last_telemetry = None
         self.linear = self.angular = 0.0
@@ -49,15 +57,40 @@ class MotionController:
         self.last_telemetry = now
         faults = [name for name in ("bumper", "wheel_drop", "cliff", "overcurrent", "charger")
                   if data.get(name, 1)]
+        lifted = data.get("wheel_drop", 1) or data.get("cliff", 1)
+        if self.bump_escape and "bumper" in faults and not lifted:
+            if self.escape is None:     # a fresh bump: start backing off
+                side = data.get("bumper", 0)
+                turn = BUMP_TURN_SPEED if side == 1 else -BUMP_TURN_SPEED if side == 4 else 0.0
+                self.escape = (now, turn)
+            faults.remove("bumper")     # the bumper is ours to deal with
+        if lifted:
+            self.escape = None          # picked up / at an edge: stop dead
         self.blocked_reason = ", ".join(faults)
         if faults:
             self.stop()
+
+    def escape_command(self, now):
+        """(linear, angular) while backing off after a bump, or None when not (or no longer) escaping."""
+        if self.escape is None:
+            return None
+        start, turn = self.escape
+        if now - start < BUMP_BACK_TIME:
+            return BUMP_BACK_SPEED, 0.0
+        if turn and now - start < BUMP_BACK_TIME + BUMP_TURN_TIME:
+            return 0.0, turn
+        self.escape = None
+        self.last_command = None        # do not replay the command that drove into the wall
+        return None
 
     def stop(self):
         self.linear = self.angular = 0.0
         self.last_command = None
 
     def accept(self, linear, angular, now):
+        if self.escape is not None:
+            self.reason = "bumped - backing off"
+            return False
         if not math.isfinite(linear) or not math.isfinite(angular):
             self.stop()
             self.reason = "invalid velocity"
@@ -74,6 +107,11 @@ class MotionController:
         return True
 
     def frame(self, now):
+        escaping = self.escape_command(now)
+        if escaping and not self.blocked_reason and self.last_telemetry is not None \
+                and now - self.last_telemetry <= self.telemetry_timeout:
+            self.reason = "bumped - backing off"
+            return command_frame(*escaping)
         if self.blocked_reason:
             self.stop()
             self.reason = self.blocked_reason
