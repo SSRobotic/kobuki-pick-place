@@ -49,6 +49,28 @@ HOME = [0.0, -1.57, 1.57, 1.57, OPEN]    # the calibration HOME pose, jaws open
 # the real fingertips reach 4.5 cm below gripper_tip (measured 31 Oct, cube on a 9 cm box): aim the jaw centre this
 # far above the cube centre, so the tips stop 0.5 cm above what the cube stands on and the cube sits between the fingers
 GRASP_UP = 0.03
+# Learning from misses: each missed pick in a row aims the jaws a bit further along this pattern around where the camera
+# put the cube (m, base_link x = away from the robot, y = left). The jaws close sideways (y), so x needs ~1 cm and y is
+# looser. A pick that grips moves the remembered shift halfway towards the one that worked (pick_learned.yaml), so the
+# next run starts closer. Delete that file to forget.
+PICK_PATTERN = [(0, 0), (0.015, 0), (-0.015, 0), (0.03, 0), (-0.03, 0), (0, 0.015), (0, -0.015),
+                (0.015, 0.015), (0.015, -0.015), (-0.015, 0.015), (-0.015, -0.015), (0.045, 0), (-0.045, 0)]
+LEARNED_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pick_learned.yaml")
+
+
+def load_learned():
+    try:
+        import yaml
+        with open(LEARNED_FILE, encoding="utf-8") as f:
+            return np.array([float(v) for v in (yaml.safe_load(f) or {}).get("pick_shift", [0, 0])])
+    except (OSError, ValueError, ImportError, AttributeError):
+        return np.zeros(2)
+
+
+def save_learned(shift, picks):
+    with open(LEARNED_FILE, "w", encoding="utf-8") as f:
+        f.write(f"# arm_control.py: extra aim (m, base_link x y) that made picks grip, updated after every pick\n"
+                f"pick_shift: [{shift[0]:.4f}, {shift[1]:.4f}]\npicks: {picks}\n")
 
 
 def mount_from_urdf():
@@ -123,6 +145,8 @@ class ArmController:
     def __init__(self, node, moveit=False):
         self.node = node
         self.q = {}
+        self.misses = 0                  # missed picks in a row: index into PICK_PATTERN
+        self.learned = load_learned()    # aim shift that made earlier picks grip
         self.pub = node.create_publisher(JointState, "/arm/joint_command", 10)
         node.create_subscription(JointState, "/joint_states", self.on_joints, 10)
         self.move_group = None
@@ -242,10 +266,24 @@ class ArmController:
         about 0.1 rad short of it (the cube is in the way)."""
         return self.current()[4] > GRIP + 0.05
 
+    @staticmethod
+    def _count_picks():
+        try:
+            import yaml
+            with open(LEARNED_FILE, encoding="utf-8") as f:
+                return int((yaml.safe_load(f) or {}).get("picks", 0))
+        except (OSError, ValueError, ImportError, AttributeError):
+            return 0
+
     def pick(self, cube):
         """cube = centre of the cube in base_link. Ends with the cube held up in HOME, clear of the desk.
-        False (and the arm up in HOME, out of the way) when the jaws closed on nothing or the cube slipped out."""
-        grasp = np.asarray(cube, dtype=float) + [0, 0, GRASP_UP]
+        False (and the arm up in HOME, out of the way) when the jaws closed on nothing or the cube slipped out.
+        Each miss in a row tries the next spot of PICK_PATTERN; a grip teaches the shift for the next pick."""
+        step = np.array(PICK_PATTERN[self.misses % len(PICK_PATTERN)], dtype=float)
+        shift = self.learned + step
+        grasp = np.asarray(cube, dtype=float) + [shift[0], shift[1], GRASP_UP]
+        self.node.get_logger().info(f"pick try {self.misses + 1}: aiming {100 * shift[0]:+.1f} cm out, "
+                                    f"{100 * shift[1]:+.1f} cm left of where the camera put the cube")
         closed = (self.up(self.current()[4])                   # rise first, jaws as they are
                   and self.gripper(OPEN)                       # open up high
                   and self.reach(grasp + [0, 0, 0.07], OPEN)   # above it
@@ -254,7 +292,16 @@ class ArmController:
         missed = closed and not self.holding()
         lifted = self.reach(grasp + [0, 0, 0.08], GRIP) and self.up(GRIP)   # straight up off the desk, then up high
         if closed and lifted and self.holding():
+            if self.misses:   # the spot that worked: remember half of the step, so one lucky try does not swing it
+                self.learned = self.learned + 0.5 * step
+            picks = self._count_picks() + 1
+            save_learned(self.learned, picks)
+            self.node.get_logger().info(f"pick gripped on try {self.misses + 1} - remembered aim "
+                                        f"{100 * self.learned[0]:+.1f} / {100 * self.learned[1]:+.1f} cm")
+            self.misses = 0
             return True
+        if closed:   # the arm got there and closed: next time aim elsewhere
+            self.misses += 1
         self.node.get_logger().warn("pick: the jaws closed on nothing - missed the cube" if missed else
                                     "pick: the cube is not in the jaws after lifting" if closed and lifted else
                                     "pick: the arm could not finish")
