@@ -211,17 +211,9 @@ class Robot:
         self.nav.info(f"  approach: {name} is {abs(b[0]):.2f} m {'ahead' if WORK > 0 else 'behind'}, "
                       f"driving {move:+.2f} m")
         self.drive(move)
-        again = self.look(name, timeout=4.0)       # closer view = better position (may be out of view: keep the old one)
-        # this close the cube can be cut off at the bottom of the image (front camera, cube on a box): the detector then
-        # puts it too far away (4 cm in the 31 Oct sim) while the far view + odometry stays within ~1 cm
-        moved = None if again is None else float(np.hypot(*(np.asarray(again[:2]) - np.asarray(self.target[name][:2]))))
-        if moved is not None and moved < 0.03:
-            self.target[name] = again
-        elif moved is not None:
-            self.nav.info(f"  close view of the {name} is {100 * moved:.0f} cm off the far view (cut off by the image "
-                          "edge?) - keeping the far view")
-        else:
-            self.nav.info(f"  {name} is now too close for the camera - using where it was seen before")
+        # No second look from here: 31 cm out the cube sits at the bottom edge of the front camera's image and is cut
+        # off, which puts it 1-4 cm too far (sim 31 Oct, real robot 1 Nov: a 2-3 cm "close view" made the jaws miss),
+        # while the far view + odometry lands within ~1 cm.
         return self.to_base(self.target[name])
 
 

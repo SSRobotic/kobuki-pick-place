@@ -143,7 +143,7 @@ class ArmController:
             rclpy.spin_once(self.node, timeout_sec=0.05)
         return [self.q.get(n, 0.0) for n in JOINTS[:4]] + [self.q.get("gripper", 0.0)]
 
-    def move(self, q5, timeout=10.0, tol=0.03):
+    def move(self, q5, timeout=10.0, tol=0.03, check=None):
         """q5 = [shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, gripper]. True when the arm got there,
         or stopped close to it (real servos sag a little under load, and a gripper closed on the cube stops early)."""
         if self.move_group:
@@ -157,7 +157,7 @@ class ArmController:
             rclpy.spin_once(self.node, timeout_sec=0.05)
             if not self.q:
                 continue
-            err = max(abs(self.q.get(n, 1e9) - v) for n, v in goal.items())
+            err = max(abs(self.q.get(n, 1e9) - v) for n, v in goal.items() if check is None or n in check)
             if err < tol:
                 return True
             now = [self.q.get(n, 0.0) for n in goal]
@@ -228,7 +228,8 @@ class ArmController:
         return self.move(list(q) + [gripper])
 
     def gripper(self, value):
-        return self.move(self.current()[:4] + [value], timeout=4.0)
+        # judged on the jaws alone: letting go of the cube the loaded arm springs back a few degrees (1 Nov, new arm)
+        return self.move(self.current()[:4] + [value], timeout=6.0, check=("gripper",))
 
     def up(self, gripper):
         """HOME (upper arm up, forearm out front) without changing the jaws: the way in and out of REST/CARRY.
