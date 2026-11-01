@@ -8,7 +8,7 @@ param([string]$Map = "$HOME\maps\my_map.yaml")
 
 $root = Split-Path -Parent $PSScriptRoot
 $profile_xml = Join-Path $root "robot\fastdds_local.xml"
-$hsv = "-p cube_hsv_low:=[0,176,111] -p cube_hsv_high:=[13,255,255] -p marker_hsv_low:=[126,41,60] -p marker_hsv_high:=[146,255,255]"
+$hsv = "-p cube_hsv_low:=[0,170,60] -p cube_hsv_high:=[13,255,255] -p marker_hsv_low:=[126,41,60] -p marker_hsv_high:=[146,255,255]"
 if (Test-Path "$HOME\hsv.txt") { $hsv = (Get-Content "$HOME\hsv.txt" -Raw).Trim() }
 if (-not (Test-Path $Map)) { Write-Host "map not found: $Map" -ForegroundColor Red; exit 1 }
 
