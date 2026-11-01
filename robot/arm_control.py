@@ -53,8 +53,9 @@ GRASP_UP = 0.03
 # put the cube (m, base_link x = away from the robot, y = left). The jaws close sideways (y), so x needs ~1 cm and y is
 # looser. A pick that grips moves the remembered shift halfway towards the one that worked (pick_learned.yaml), so the
 # next run starts closer. Delete that file to forget.
-PICK_PATTERN = [(0, 0), (0.015, 0), (-0.015, 0), (0.03, 0), (-0.03, 0), (0, 0.015), (0, -0.015),
-                (0.015, 0.015), (0.015, -0.015), (-0.015, 0.015), (-0.015, -0.015), (0.045, 0), (-0.045, 0)]
+# Sideways early too: a fingertip landing on top of the cube (1 Nov) is fixed by moving 2-3.5 cm left or right
+PICK_PATTERN = [(0, 0), (0, 0.025), (0, -0.025), (0.015, 0), (-0.015, 0), (0.015, 0.025), (0.015, -0.025),
+                (-0.015, 0.025), (-0.015, -0.025), (0, 0.035), (0, -0.035), (0.03, 0), (-0.03, 0)]
 LEARNED_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pick_learned.yaml")
 
 
