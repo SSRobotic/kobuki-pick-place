@@ -260,6 +260,11 @@ class Init(smach.State):
         if "--keep-pose" in sys.argv or START_AT == "place":   # keep your RViz 2D Pose Estimate; come back here
             nav._waitForNodeToActivate("amcl")   # not waitUntilNav2Active: that waits for a new initial pose
             nav._waitForNodeToActivate("bt_navigator")
+            if "--spin" in sys.argv:   # one slow turn on the spot: AMCL sees every wall and locks on (24% -> 69%, 1 Nov)
+                nav.info("[INIT] turning once on the spot so AMCL settles ...")
+                for _ in range(4):
+                    self.robot.turn(math.pi / 2)
+                    self.robot.spin(0.5)
             home = None if START_AT == "place" else self.robot.map_pose()   # a re-run from mid-field: home stays (0,0)
             if START_AT == "place":
                 nav.info("[INIT] starting at the place step - home stays the map origin (Initial)")
