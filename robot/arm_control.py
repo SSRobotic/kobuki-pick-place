@@ -138,6 +138,9 @@ class ArmController:
         self.q.update(zip(msg.name, msg.position))
 
     def current(self):
+        start = time.time()
+        while "gripper" not in self.q and time.time() - start < 3.0:   # first /joint_states after start-up
+            rclpy.spin_once(self.node, timeout_sec=0.05)
         return [self.q.get(n, 0.0) for n in JOINTS[:4]] + [self.q.get("gripper", 0.0)]
 
     def move(self, q5, timeout=10.0, tol=0.03):
@@ -227,27 +230,37 @@ class ArmController:
     def gripper(self, value):
         return self.move(self.current()[:4] + [value], timeout=4.0)
 
+    def up(self, gripper):
+        """HOME (upper arm up, forearm out front) without changing the jaws: the way in and out of REST/CARRY.
+        Folded, the jaws hang next to the LiDAR (front left) and open sideways into it (1 Nov), so they open, close
+        and swing only up here."""
+        return self.move(HOME[:4] + [gripper])
+
     def pick(self, cube):
-        """cube = centre of the cube in base_link. Ends with the cube lifted 8 cm above the desk;
-        back the robot away before stow(), because CARRY holds it at about desk height."""
+        """cube = centre of the cube in base_link. Ends with the cube held up in HOME, clear of the desk."""
         grasp = np.asarray(cube, dtype=float) + [0, 0, GRASP_UP]
-        return (self.gripper(OPEN)
+        return (self.up(self.current()[4])                     # rise first, jaws as they are
+                and self.gripper(OPEN)                         # open up high
                 and self.reach(grasp + [0, 0, 0.07], OPEN)     # above it
                 and self.reach(grasp, OPEN)                    # jaws around it
                 and self.gripper(GRIP)                         # close
-                and self.reach(grasp + [0, 0, 0.08], GRIP))    # lift
+                and self.reach(grasp + [0, 0, 0.08], GRIP)     # straight up off the desk
+                and self.up(GRIP))
 
     def place(self, spot):
-        """spot = centre of the place marker on the desk top, in base_link. Ends with the open gripper 8 cm up."""
+        """spot = centre of the place marker on the desk top, in base_link. Ends with the open gripper up in HOME."""
         target = np.asarray(spot, dtype=float) + [0, 0, 0.02 + 0.005 + GRASP_UP]   # cube centre just above the desk
-        return (self.reach(target + [0, 0, 0.08], GRIP)
+        return (self.up(GRIP)
+                and self.reach(target + [0, 0, 0.08], GRIP)
                 and self.reach(target, GRIP)
                 and self.gripper(OPEN)
-                and self.reach(target + [0, 0, 0.08], OPEN))
+                and self.reach(target + [0, 0, 0.08], OPEN)   # straight up off the cube
+                and self.up(OPEN))
 
     def stow(self, holding):
-        """Fold for driving: CARRY with the cube, REST without."""
-        return self.move(CARRY if holding else REST)
+        """Fold for driving: CARRY with the cube, REST without - via HOME, jaws set before folding."""
+        pose = CARRY if holding else REST
+        return self.up(self.current()[4]) and self.up(pose[4]) and self.move(pose)
 
 
 def main():
