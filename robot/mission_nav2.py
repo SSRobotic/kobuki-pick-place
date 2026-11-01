@@ -80,8 +80,9 @@ except ImportError:  # RoboStack on Windows has no smach: use a tiny stand-in wi
 MAX_RETRY = int(sys.argv[sys.argv.index("--max-retry") + 1]) if "--max-retry" in sys.argv else 0
 NAV_TIMEOUT = 240.0    # seconds allowed for one navigation leg
 DETECT_TIMEOUT = 8.0   # seconds to wait for the camera to see the cube / marker
-REACH_X = 0.35         # m from the robot centre to the object when the arm works: cube on a 22 cm box, whose near face
-                       # is then 0.20 m out, clear of the Kobuki rim (0.176 m); the arm still reaches it (31 Oct)
+REACH_X = 0.31         # m from the robot centre to the object when the arm works. Cube at the near edge of its 9 cm box:
+                       # the box face is then ~0.29 m out, 11 cm clear of the Kobuki rim (0.176 m). The arm reaches
+                       # ~0.36 at most and reach_offset was measured here, so stay near 0.31 (0.35 left no margin, 1 Nov)
 BACK_OFF = 0.20        # m to drive away after picking / placing, so the arm can fold clear
 WORK = 1 if math.sin(MOUNT[3]) > 0 else -1   # +1 = arm reaches out of the front (final build), -1 = out of the rear
 
@@ -229,11 +230,15 @@ class Robot:
         off = math.atan2(WORK * b[1], WORK * b[0])         # how far the target is from the arm's straight-out line
         if abs(off) > 0.03:
             self.turn(off)
-        b = self.to_base(self.target[name])
-        move = WORK * max(-0.3, min(0.5, WORK * b[0] - REACH_X))
-        self.nav.info(f"  approach: {name} is {abs(b[0]):.2f} m {'ahead' if WORK > 0 else 'behind'}, "
-                      f"driving {move:+.2f} m")
-        self.drive(move)
+        for _ in range(3):   # drive in until it is REACH_X ahead (one leg used to stop at 0.5 m and the arm fell short)
+            b = self.to_base(self.target[name])
+            gap = WORK * b[0] - REACH_X
+            if abs(gap) < 0.01:
+                break
+            move = WORK * max(-0.3, min(1.2, gap))
+            self.nav.info(f"  approach: {name} is {abs(b[0]):.2f} m {'ahead' if WORK > 0 else 'behind'}, "
+                          f"driving {move:+.2f} m")
+            self.drive(move)
         # No second look from here: 31 cm out the cube sits at the bottom edge of the front camera's image and is cut
         # off, which puts it 1-4 cm too far (sim 31 Oct, real robot 1 Nov: a 2-3 cm "close view" made the jaws miss),
         # while the far view + odometry lands within ~1 cm.
