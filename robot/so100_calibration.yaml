@@ -41,5 +41,5 @@ readings:
     gripper: 1795
 date: '2026-11-01T14:21:18'
 note: angle = sign * (step - zero) * 2*pi/4096, angles as in kobuki_x2.urdf (so100_calibrate_app.py)
-reach_offset: [0.05, 0.0, 0.025]   # new arm 1 Nov: jaws landed 5 cm beyond and 2.5 cm above the target at 0.31 m (photo)
+reach_offset: [0.05, -0.03, 0.025]   # new arm 1 Nov: jaws landed 5 cm beyond, 2.5 cm above (photo) and with a fingertip on the cube: aim 3 cm further left
 grip: 0.20   # new arm 1 Nov: jaws touch the 4 cm cube at +0.30 rad (driver "gripper blocked at +0.30")
