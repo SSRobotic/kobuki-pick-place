@@ -104,7 +104,7 @@ def main():
         spread, turn = math.sqrt(max(c[0], c[7])), math.degrees(math.sqrt(max(c[35], 0.0)))
         p = a.pose.pose
         text = f"AMCL: หุ่นอยู่ x={p.position.x:.2f} y={p.position.y:.2f} หัน {math.degrees(yaw_of(p.orientation)):.0f}° (คลาด ±{spread:.2f} m, ±{turn:.0f}°)"
-        if spread > 0.25 or turn > 20:
+        if spread > 0.6 or turn > 20:   # RViz 2D Pose Estimate itself sets 0.5 m / 15 deg
             fail(text + " → ยังไม่แน่ใจตำแหน่ง: กด 2D Pose Estimate ให้ตรงหุ่นจริง")
         else:
             ok(text)

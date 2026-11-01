@@ -68,8 +68,8 @@ def main():
         while True:
             x, y = click(f"[{key}] คลิกตรงกลาง{label}")
             ax, ay = click(f"[{key}] คลิกพื้นฝั่งที่หุ่นจะวิ่งเข้าไปหา{label} (ฝั่งที่โล่ง ห่างประมาณ 1 ม.)")
-            if math.hypot(x - ax, y - ay) < 0.4:
-                print("  สองจุดใกล้กันเกินไป (< 0.4 ม.): คลิกใหม่ทั้งคู่\n")
+            if math.hypot(x - ax, y - ay) < 0.25:
+                print("  สองจุดใกล้กันเกินไป (< 0.25 ม. ต้องคลิกจุดที่ 2 ห่างวัตถุอย่างน้อยครึ่งเมตร): คลิกใหม่ทั้งคู่\n")
                 continue
             heading = math.atan2(y - ay, x - ax)
             px, py, pyaw = park_pose(x, y, heading)

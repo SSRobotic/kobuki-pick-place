@@ -121,9 +121,9 @@
   </link>
   <joint name="laser_joint" type="fixed">
     <parent link="base_link"/><child link="laser"/>
-    <!-- yaw -90 deg + the driver's mirror option: calibrated on the real robot (lidar_calib.py, 18 Oct). The LiDAR moved
-         to the front left in the final build: run lidar_calib.py again and put its yaw here if it was turned too -->
-    <origin xyz="0.085 0.085 0.247" rpy="0 0 -1.5708"/>
+    <!-- yaw 168 deg + the driver's mirror option: calibrated on the real robot in the final build (lidar_calib.py, 1 Nov:
+         yaw=168 mirrored=False with lidar_ros2.py --mirror). Re-run lidar_calib.py if the LiDAR is turned on its bracket -->
+    <origin xyz="0.085 0.085 0.247" rpy="0 0 2.9322"/>
   </joint>
   <!-- the spinning navy cap (own link: its own colour) -->
   <link name="laser_cap">
