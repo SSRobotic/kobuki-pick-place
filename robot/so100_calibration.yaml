@@ -1,46 +1,45 @@
 joints:
   shoulder_lift:
-    zero: 3072.9
+    zero: 3071.9
     sign: 1
   elbow_flex:
-    zero: 1052.1
+    zero: 1076.1
     sign: 1
   wrist_flex:
-    zero: 1991.1
+    zero: 2106.6
     sign: 1
   gripper:
-    zero: 1114.8
+    zero: 1092.8
     sign: 1
   shoulder_pan:
-    zero: 2060.0
-    sign: 1
+    zero: 2086.0
+    sign: -1
   wrist_roll:
-    zero: 3171.0
+    zero: 3081.0
     sign: 1
 readings:
   REST:
-    shoulder_pan: 2060
-    shoulder_lift: 884
-    elbow_flex: 3065
-    wrist_flex: 2793
-    wrist_roll: 2147
-    gripper: 1004
+    shoulder_pan: 2086
+    shoulder_lift: 916
+    elbow_flex: 3119
+    wrist_flex: 2886
+    wrist_roll: 2057
+    gripper: 982
   HOME:
-    shoulder_pan: 2070
-    shoulder_lift: 2074
-    elbow_flex: 2090
-    wrist_flex: 2982
-    wrist_roll: 2147
-    gripper: 1004
+    shoulder_pan: 2079
+    shoulder_lift: 2040
+    elbow_flex: 2084
+    wrist_flex: 3120
+    wrist_roll: 2050
+    gripper: 1795
   PAN_90:
-    shoulder_pan: 3080
-    shoulder_lift: 2074
-    elbow_flex: 2090
-    wrist_flex: 2976
-    wrist_roll: 2146
-    gripper: 1004
-date: '2026-10-31T13:15:47'
-note: angle = sign * (step - zero) * 2*pi/4096, angles as in kobuki_x2.urdf
-gripper_note: 'gripper set by hand 31 Oct: jaws were not opened in HOME. Measured
-  by hand: 945 closed .. 2375 fully open (opening raises the steps -> sign 1); zero
-  from the REST (closed) reading 1004.'
+    shoulder_pan: 1079
+    shoulder_lift: 2052
+    elbow_flex: 2095
+    wrist_flex: 3118
+    wrist_roll: 2049
+    gripper: 1795
+date: '2026-11-01T14:21:18'
+note: angle = sign * (step - zero) * 2*pi/4096, angles as in kobuki_x2.urdf (so100_calibrate_app.py)
+reach_offset: [0.05, 0.0, 0.025]   # new arm 1 Nov: jaws landed 5 cm beyond and 2.5 cm above the target at 0.31 m (photo)
+grip: 0.20   # new arm 1 Nov: jaws touch the 4 cm cube at +0.30 rad (driver "gripper blocked at +0.30")

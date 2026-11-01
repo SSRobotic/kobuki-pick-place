@@ -32,10 +32,15 @@ WRIST_ROLL = -math.pi / 2       # held still: jaws open sideways
 # gripper angle: 0.8 = 74 mm open. The real jaw touches the 4 cm cube at 0.20 rad (measured 31 Oct; the model's
 # 0.27 never touched it and the cube fell out): GRIP aims 0.1 rad past that so the jaw really squeezes
 OPEN, GRIP = 0.8, 0.10
-try:   # so100_calibrate_app.py measures it with the cube between the jaws and saves it with the calibration
+# where the real jaw centre lands minus where it was sent (m, base_link x y z) near the pick spot 0.31 m ahead: a hand
+# calibration a few degrees off moves the tip by centimetres there. Measured per arm, saved as reach_offset in the yaml
+REACH_OFFSET = np.zeros(3)
+try:   # so100_calibrate_app.py measures GRIP with the cube between the jaws and saves it with the calibration
     import yaml
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "so100_calibration.yaml"), encoding="utf-8") as f:
-        GRIP = float((yaml.safe_load(f) or {}).get("grip", GRIP))
+        _cal = yaml.safe_load(f) or {}
+    GRIP = float(_cal.get("grip", GRIP))
+    REACH_OFFSET = np.array([float(v) for v in _cal.get("reach_offset", [0, 0, 0])])
 except (OSError, ValueError, ImportError):
     pass
 REST = [0.0, -3.32, 3.11, 1.18, -0.17]   # so_arm100.xml "rest" key (folded), gripper closed
@@ -211,6 +216,7 @@ class ArmController:
         return True
 
     def reach(self, target, gripper):
+        target = np.asarray(target, dtype=float) - REACH_OFFSET
         q, error = inverse(target, self.current())
         if error > 0.015:
             self.node.get_logger().warn(f"target ({target[0]:.2f}, {target[1]:.2f}, {target[2]:.2f}) is "

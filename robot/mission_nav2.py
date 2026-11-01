@@ -18,6 +18,7 @@ Needs, each in its own window (simulation; on demo day the real drivers replace 
     pixi run python robot\\mission_nav2.py      (Windows)
     python3 mission_nav2.py                     (Ubuntu)
 Driving only (no camera, no arm needed): add --nav-only
+Camera + arm only, no Nav2 (cube or marker on its box ~0.65 m in front of the robot): add --pick-here / --place-here
 Arm moves planned by MoveIt (start moveit.launch.py rviz:=false first): add --moveit
 Station positions come from stations.yaml (save_stations.py writes it) if it exists; --default-stations ignores it (simulator)
 """
@@ -240,6 +241,16 @@ class Init(smach.State):
         return "succeeded"
 
 
+class Here(Init):
+    """--pick-here / --place-here: no Nav2, the robot already stands in front of the cube or marker."""
+
+    def execute(self, ud):
+        ud.retry = 0
+        self.robot.nav.info("[INIT] practice here: no Nav2 - folding the arm")
+        self.robot.arm.stow(holding="--place-here" in sys.argv)
+        return "succeeded"
+
+
 class Navigate(smach.State):
     """Send one Nav2 goal and wait for the result."""
 
@@ -345,11 +356,19 @@ def main():
         ("PLACE", Manipulate(robot, "PLACE", "station", picking=False), "RETURN_HOME", "DETECT_STATION"),
         ("RETURN_HOME", Navigate(robot, "RETURN_HOME", "HOME"), "succeeded", "RETURN_HOME"),
     ]
+    first = "NAV_STATION1"
     if "--nav-only" in sys.argv:  # driving practice without camera and arm: Station 1 -> Station 2 -> home
         tasks = [(name, state, {"DETECT_OBJECT": "NAV_STATION2", "DETECT_STATION": "RETURN_HOME"}.get(nxt, nxt), again)
                  for name, state, nxt, again in tasks if name.startswith(("NAV", "RETURN"))]
+    elif "--pick-here" in sys.argv or "--place-here" in sys.argv:  # camera + arm practice, no Nav2: cube/marker ~0.65 m ahead
+        what = "OBJECT" if "--pick-here" in sys.argv else "STATION"
+        act = "PICK" if what == "OBJECT" else "PLACE"
+        tasks = [(name, state, "succeeded" if name == act else nxt, again)
+                 for name, state, nxt, again in tasks if name in (f"DETECT_{what}", act)]
+        first = f"DETECT_{what}"
     with sm:
-        smach.StateMachine.add("INIT", Init(robot), transitions={"succeeded": "NAV_STATION1"})
+        smach.StateMachine.add("INIT", Here(robot) if first.startswith("DETECT") else Init(robot),
+                               transitions={"succeeded": first})
         for name, state, nxt, again in tasks:
             smach.StateMachine.add(name, state,
                                    transitions={"succeeded": nxt, "failed": again, "aborted": "aborted"})

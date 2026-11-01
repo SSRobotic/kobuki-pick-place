@@ -122,7 +122,9 @@
   <joint name="laser_joint" type="fixed">
     <parent link="base_link"/><child link="laser"/>
     <!-- yaw 168 deg + the driver's mirror option: calibrated on the real robot in the final build (lidar_calib.py, 1 Nov:
-         yaw=168 mirrored=False with lidar_ros2.py --mirror). Re-run lidar_calib.py if the LiDAR is turned on its bracket -->
+         yaw=168 mirrored=False with the driver's mirror option on). Re-run lidar_calib.py if the LiDAR is turned on its
+         bracket. No double hyphen inside these comments: Python's XML parser then rejects the whole file -->
+
     <origin xyz="0.085 0.085 0.247" rpy="0 0 2.9322"/>
   </joint>
   <!-- the spinning navy cap (own link: its own colour) -->
