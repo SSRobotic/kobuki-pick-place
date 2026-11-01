@@ -6,11 +6,13 @@ Nav2 + RViz (mission.rviz) running, robot localised (2D Pose Estimate done), cub
 For each object, in RViz with the Publish Point tool:
   click 1 = on the object, click 2 = on the floor where the robot should come from (the clear side, ~1 m away).
 The mission parks PARK m in front of the object on that line, facing it, then drives in to REACH_X.
+--via: 2 more clicks = a point to drive through on the way to Station 2 and one on the way home (your own route).
 """
 import datetime
 import math
 import os
 import shutil
+import sys
 import time
 
 import numpy as np
@@ -84,12 +86,20 @@ def main():
             print()
             break
 
+    vias = {}
+    if "--via" in sys.argv:   # your own route: one point to drive through on each long leg
+        print("ทางที่จะให้หุ่นเดิน (Publish Point ก่อนคลิกเหมือนเดิม):")
+        vias["VIA_STATION2"] = click("[VIA] คลิกพื้นตรงที่หุ่นต้องผ่าน ตอนไป Station 2 (กลางทางเดินฝั่งที่อยากให้ไป)")
+        vias["VIA_HOME"] = click("[VIA] คลิกพื้นตรงที่หุ่นต้องผ่าน ตอนกลับจุดเริ่ม (กลางทางเดินฝั่งที่อยากให้กลับ)")
+
     if os.path.exists(STATIONS_FILE):
         shutil.copy(STATIONS_FILE, STATIONS_FILE + ".bak")
     with open(STATIONS_FILE, "w", encoding="utf-8") as f:
         f.write(f"# saved by save_stations.py {datetime.datetime.now():%Y-%m-%d %H:%M}: [x, y, heading rad] in the map frame\n")
         for key, v in saved.items():
             f.write(f"{key}: [{v[0]}, {v[1]}, {v[2]}]   # heading {math.degrees(v[2]):.0f} deg\n")
+        for key, (x, y) in vias.items():
+            f.write(f"{key}: [{x:.3f}, {y:.3f}]   # the robot drives through here on that leg\n")
     print(f"เซฟแล้ว: {STATIONS_FILE}")
     print("ซ้อมวิ่ง (ยกหุ่นกลับ Initial ก่อน): python3 mission_nav2.py --nav-only")
     node.destroy_node()

@@ -92,9 +92,12 @@ STATIONS = {
     "STATION2": (2.85, -2.90, -math.pi / 2),  # place marker on the floor at Station 2, robot comes from +y
 }
 STATIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stations.yaml")
+VIAS = {}   # goal -> (x, y) the robot drives through on its way there (save_stations.py --via): your own route
 if os.path.exists(STATIONS_FILE) and "--default-stations" not in sys.argv:   # clicked on the real map by save_stations.py
     with open(STATIONS_FILE, encoding="utf-8") as f:
-        STATIONS.update({k: tuple(float(n) for n in v) for k, v in yaml.safe_load(f).items() if k in STATIONS})
+        _saved = yaml.safe_load(f) or {}
+    STATIONS.update({k: tuple(float(n) for n in v) for k, v in _saved.items() if k in STATIONS})
+    VIAS = {k[4:]: tuple(float(n) for n in v[:2]) for k, v in _saved.items() if k.startswith("VIA_")}
     STATIONS_FROM = STATIONS_FILE
 else:
     STATIONS_FROM = "built-in STATIONS"
@@ -258,7 +261,13 @@ class Navigate(smach.State):
         self.nav.info(f"[{self.name}] go to {self.goal} x={x:.2f} y={y:.2f} yaw={math.degrees(yaw):.0f} deg")
         self.robot.event("go_" + self.goal.lower())
         start = time.time()
-        self.nav.goToPose(make_pose(self.nav, x, y, yaw))
+        via = VIAS.get(self.goal)
+        if via:   # your route: through the clicked point first (facing on towards the goal), then the goal
+            self.nav.info(f"[{self.name}] via x={via[0]:.2f} y={via[1]:.2f}")
+            self.nav.goThroughPoses([make_pose(self.nav, via[0], via[1], math.atan2(y - via[1], x - via[0])),
+                                     make_pose(self.nav, x, y, yaw)])
+        else:
+            self.nav.goToPose(make_pose(self.nav, x, y, yaw))
         last_print = 0.0
         while not self.nav.isTaskComplete():
             fb = self.nav.getFeedback()
