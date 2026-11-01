@@ -80,7 +80,7 @@ except ImportError:  # RoboStack on Windows has no smach: use a tiny stand-in wi
 MAX_RETRY = int(sys.argv[sys.argv.index("--max-retry") + 1]) if "--max-retry" in sys.argv else 0
 NAV_TIMEOUT = 240.0    # seconds allowed for one navigation leg
 DETECT_TIMEOUT = 8.0   # seconds to wait for the camera to see the cube / marker
-REACH_X = 0.31         # m from the robot centre to the object when the arm works: cube on a 22 cm box, whose near face
+REACH_X = 0.35         # m from the robot centre to the object when the arm works: cube on a 22 cm box, whose near face
                        # is then 0.20 m out, clear of the Kobuki rim (0.176 m); the arm still reaches it (31 Oct)
 BACK_OFF = 0.20        # m to drive away after picking / placing, so the arm can fold clear
 WORK = 1 if math.sin(MOUNT[3]) > 0 else -1   # +1 = arm reaches out of the front (final build), -1 = out of the rear

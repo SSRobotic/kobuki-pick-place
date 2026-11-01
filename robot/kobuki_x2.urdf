@@ -155,7 +155,7 @@
     <!-- body centre 42.5 mm above the bottom deck; yaw 0 = looking forward; pitch = tilt down (rad). MEASURE x, z -->
     <!-- 1 Nov: pitch and yaw from camera_check.py with the cube 0.65 m ahead (the parking distance). Closer than ~0.55 m
          the cube is cut off at the bottom of the image and reads too far, so do not calibrate there -->
-    <origin xyz="0.14 0 0.1775" rpy="0 0.003 -0.156"/>
+    <origin xyz="0.14 0 0.1775" rpy="0 0.004 -0.199"/>
   </joint>
   <!-- colour lens (right end of the face as seen from behind the robot - estimate) -> optical frame: z forward, x right, y down -->
   <link name="camera_color_optical_frame"/>
