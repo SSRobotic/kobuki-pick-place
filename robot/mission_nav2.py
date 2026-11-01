@@ -322,12 +322,26 @@ class Manipulate(smach.State):
         r.nav.info(f"[{self.name}] {self.what} at {b[0]:.3f} {b[1]:+.3f} {b[2]:.3f} (base_link) - moving the arm")
         ok = r.arm.pick(b) if self.picking else r.arm.place(b)
         r.drive(-WORK * (BACK_OFF if ok else PARK - REACH_X))   # failed: back to where the camera sees it again
-        r.arm.stow(holding=self.picking and ok)
+        r.arm.stow(holding=self.picking == ok)                   # picked, or a place that did not let go
         if not ok:
             return fail(r, self.name, "arm could not finish", ud)
         r.nav.info(f"[{self.name}] done")
         r.event("picked" if self.picking else "placed")
         ud.retry = 0
+        return "succeeded"
+
+
+class GiveUp(smach.State):
+    """MAX_RETRY failures in a row: nobody may touch the robot during the run, so skip that part and carry on
+    (Station 2, then home) instead of stopping where it is."""
+
+    def __init__(self, robot, what, then):
+        super().__init__(outcomes=["succeeded"], input_keys=["retry"], output_keys=["retry"])
+        self.robot, self.what, self.then = robot, what, then
+
+    def execute(self, ud):
+        ud.retry = 0
+        self.robot.nav.warn(f"[GIVE_UP] {self.what} failed {MAX_RETRY} times - moving on to {self.then}")
         return "succeeded"
 
 
@@ -347,11 +361,17 @@ def main():
         ("DETECT_STATION", Detect(robot, "DETECT_STATION", "station"), "PLACE", "DETECT_STATION"),
         ("PLACE", Manipulate(robot, "PLACE", "station", picking=False), "RETURN_HOME", "DETECT_STATION"),
         ("RETURN_HOME", Navigate(robot, "RETURN_HOME", "HOME"), "succeeded", "RETURN_HOME"),
+        # no cube after MAX_RETRY tries: still drive to Station 2 (no marker to look for), then home
+        ("NAV_STATION2_EMPTY", Navigate(robot, "NAV_STATION2", "STATION2"), "RETURN_HOME", "NAV_STATION2_EMPTY"),
     ]
+    give_up = {"NAV_STATION1": "NAV_STATION2_EMPTY", "DETECT_OBJECT": "NAV_STATION2_EMPTY",
+               "PICK": "NAV_STATION2_EMPTY", "NAV_STATION2": "RETURN_HOME", "NAV_STATION2_EMPTY": "RETURN_HOME",
+               "DETECT_STATION": "RETURN_HOME", "PLACE": "RETURN_HOME"}
     first = "NAV_STATION1"
     if "--nav-only" in sys.argv:  # driving practice without camera and arm: Station 1 -> Station 2 -> home
         tasks = [(name, state, {"DETECT_OBJECT": "NAV_STATION2", "DETECT_STATION": "RETURN_HOME"}.get(nxt, nxt), again)
                  for name, state, nxt, again in tasks if name.startswith(("NAV", "RETURN"))]
+        give_up["NAV_STATION1"] = "NAV_STATION2"
     elif "--pick-here" in sys.argv or "--place-here" in sys.argv:  # camera + arm practice, no Nav2: cube/marker ~0.65 m ahead
         what = "OBJECT" if "--pick-here" in sys.argv else "STATION"
         act = "PICK" if what == "OBJECT" else "PLACE"
@@ -361,9 +381,13 @@ def main():
     with sm:
         smach.StateMachine.add("INIT", Here(robot) if first.startswith("DETECT") else Init(robot),
                                transitions={"succeeded": first})
+        names = {name for name, *_ in tasks}
         for name, state, nxt, again in tasks:
-            smach.StateMachine.add(name, state,
-                                   transitions={"succeeded": nxt, "failed": again, "aborted": "aborted"})
+            then = give_up.get(name)
+            if then in names:
+                smach.StateMachine.add(f"GIVE_UP_{name}", GiveUp(robot, name, then), transitions={"succeeded": then})
+            smach.StateMachine.add(name, state, transitions={
+                "succeeded": nxt, "failed": again, "aborted": f"GIVE_UP_{name}" if then in names else "aborted"})
 
     start = time.time()
     result = sm.execute()

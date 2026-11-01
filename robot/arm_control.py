@@ -237,16 +237,28 @@ class ArmController:
         and swing only up here."""
         return self.move(HOME[:4] + [gripper])
 
+    def holding(self):
+        """True when the jaws stopped on something: closing on nothing they get down to GRIP, on the cube they stop
+        about 0.1 rad short of it (the cube is in the way)."""
+        return self.current()[4] > GRIP + 0.05
+
     def pick(self, cube):
-        """cube = centre of the cube in base_link. Ends with the cube held up in HOME, clear of the desk."""
+        """cube = centre of the cube in base_link. Ends with the cube held up in HOME, clear of the desk.
+        False (and the arm up in HOME, out of the way) when the jaws closed on nothing or the cube slipped out."""
         grasp = np.asarray(cube, dtype=float) + [0, 0, GRASP_UP]
-        return (self.up(self.current()[4])                     # rise first, jaws as they are
-                and self.gripper(OPEN)                         # open up high
-                and self.reach(grasp + [0, 0, 0.07], OPEN)     # above it
-                and self.reach(grasp, OPEN)                    # jaws around it
-                and self.gripper(GRIP)                         # close
-                and self.reach(grasp + [0, 0, 0.08], GRIP)     # straight up off the desk
-                and self.up(GRIP))
+        closed = (self.up(self.current()[4])                   # rise first, jaws as they are
+                  and self.gripper(OPEN)                       # open up high
+                  and self.reach(grasp + [0, 0, 0.07], OPEN)   # above it
+                  and self.reach(grasp, OPEN)                  # jaws around it
+                  and self.gripper(GRIP))                      # close
+        missed = closed and not self.holding()
+        lifted = self.reach(grasp + [0, 0, 0.08], GRIP) and self.up(GRIP)   # straight up off the desk, then up high
+        if closed and lifted and self.holding():
+            return True
+        self.node.get_logger().warn("pick: the jaws closed on nothing - missed the cube" if missed else
+                                    "pick: the cube is not in the jaws after lifting" if closed and lifted else
+                                    "pick: the arm could not finish")
+        return False
 
     def place(self, spot):
         """spot = centre of the place marker on the desk top, in base_link. Ends with the open gripper up in HOME."""
