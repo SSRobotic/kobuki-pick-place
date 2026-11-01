@@ -141,6 +141,24 @@ class Robot:
     def spin(self, sec=0.05):
         rclpy.spin_once(self.nav, timeout_sec=sec)
 
+    def map_pose(self, timeout=5.0):
+        """(x, y, yaw) of base_link in the map frame (AMCL's estimate), or None."""
+        from rclpy.time import Time
+        from tf2_ros import Buffer, TransformListener
+        if not hasattr(self, "tf"):
+            self.tf = Buffer()
+            self.tf_listener = TransformListener(self.tf, self.nav)
+        start = time.time()
+        while time.time() - start < timeout:
+            self.spin(0.1)
+            try:
+                t = self.tf.lookup_transform("map", "base_link", Time()).transform
+            except Exception:   # not there yet
+                continue
+            q = t.rotation
+            return t.translation.x, t.translation.y, 2 * math.atan2(q.z, q.w)
+        return None
+
     def event(self, name):
         """Tell the world what just happened (voice_lines.py has one sentence per name)."""
         self.events.publish(String(data=name))
@@ -230,9 +248,20 @@ class Init(smach.State):
     def execute(self, ud):
         nav = self.robot.nav
         ud.retry = 0
-        nav.info("[INIT] robot is at Initial Location - telling AMCL and waiting for Nav2")
-        nav.setInitialPose(make_pose(nav, *GOALS["HOME"]))
-        nav.waitUntilNav2Active()
+        if "--keep-pose" in sys.argv:   # you set 2D Pose Estimate in RViz: keep it, and come back to where it stands now
+            nav._waitForNodeToActivate("amcl")   # not waitUntilNav2Active: that waits for a new initial pose
+            nav._waitForNodeToActivate("bt_navigator")
+            home = self.robot.map_pose()
+            if home is None:
+                nav.warn("[INIT] no map -> base_link TF: is AMCL localised? coming back to the map origin instead")
+            else:
+                GOALS["HOME"] = home
+                nav.info(f"[INIT] start kept from RViz: x={home[0]:.2f} y={home[1]:.2f} "
+                         f"yaw={math.degrees(home[2]):.0f} deg - the robot comes back here")
+        else:
+            nav.info("[INIT] robot is at Initial Location - telling AMCL and waiting for Nav2")
+            nav.setInitialPose(make_pose(nav, *GOALS["HOME"]))
+            nav.waitUntilNav2Active()
         nav.info("[INIT] Nav2 is active - folding the arm")
         self.robot.arm.stow(holding=False)
         return "succeeded"
