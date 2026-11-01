@@ -109,7 +109,7 @@ pixi run python robot\camera_check.py 0.65 0.0
 ```powershell
 pixi run python robot\mission_nav2.py --pick-here
 ```
-✅ หุ่นขับเข้าไปเอง หยิบ ยก ถอย 20 ซม. · `Mission finished: succeeded` · หน้าต่าง 4 ขึ้น `gripper blocked ... holding gently` = คีบติด · พลาด = มันลองใหม่เองสูงสุด 3 ครั้ง
+✅ หุ่นขับเข้าไปเอง หยิบ ยก ถอย 20 ซม. · `Mission finished: succeeded` · หน้าต่าง 4 ขึ้น `gripper blocked ... holding gently` = คีบติด · พลาด = มันถอย หาใหม่ แล้วหยิบใหม่เองจนกว่าจะได้ (ห้ามช่วย · หยุดเอง `Ctrl+C`)
 ```powershell
 pixi run python robot\mission_nav2.py --place-here
 ```

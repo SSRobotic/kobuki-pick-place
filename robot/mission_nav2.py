@@ -75,7 +75,9 @@ except ImportError:  # RoboStack on Windows has no smach: use a tiny stand-in wi
     class smach:  # noqa: N801  (mimics the smach module)
         State, StateMachine = _State, _StateMachine
 
-MAX_RETRY = 3
+# failures in a row before that part is skipped (GiveUp). Default: never - the exam allows as many tries as needed
+# (30 min + 1 h), so the robot keeps at it on its own. --max-retry N brings a limit back
+MAX_RETRY = int(sys.argv[sys.argv.index("--max-retry") + 1]) if "--max-retry" in sys.argv else 0
 NAV_TIMEOUT = 240.0    # seconds allowed for one navigation leg
 DETECT_TIMEOUT = 8.0   # seconds to wait for the camera to see the cube / marker
 REACH_X = 0.31         # m from the robot centre to the object when the arm works: cube on a 22 cm box, whose near face
@@ -277,10 +279,11 @@ class Navigate(smach.State):
 
 def fail(robot, name, why, ud):
     ud.retry += 1
-    robot.nav.warn(f"[{name}] {why} ({ud.retry}/{MAX_RETRY})")
-    if ud.retry < MAX_RETRY:
-        robot.event("retry")
-    return "aborted" if ud.retry >= MAX_RETRY else "failed"
+    robot.nav.warn(f"[{name}] {why} (try {ud.retry}{f'/{MAX_RETRY}' if MAX_RETRY else ''})")
+    if MAX_RETRY and ud.retry >= MAX_RETRY:
+        return "aborted"
+    robot.event("retry")
+    return "failed"
 
 
 class Detect(smach.State):
@@ -382,6 +385,11 @@ def main():
         smach.StateMachine.add("INIT", Here(robot) if first.startswith("DETECT") else Init(robot),
                                transitions={"succeeded": first})
         names = {name for name, *_ in tasks}
+        if not MAX_RETRY:   # no limit: cube / marker not seen -> drive to the station again with Nav2 (it parks the
+            # robot where the camera sees it) instead of stepping back and turning a little more every time
+            again_for = {"DETECT_OBJECT": "NAV_STATION1", "DETECT_STATION": "NAV_STATION2"}
+            tasks = [(name, state, nxt, again_for[name] if again_for.get(name) in names else again)
+                     for name, state, nxt, again in tasks]
         for name, state, nxt, again in tasks:
             then = give_up.get(name)
             if then in names:

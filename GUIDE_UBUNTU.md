@@ -125,7 +125,7 @@ python3 camera_check.py 0.65 0.0
 ```bash
 python3 mission_nav2.py --pick-here
 ```
-✅ หุ่นขับเข้าไปเอง หยิบ ยก ถอย 20 ซม. · `Mission finished: succeeded` · หน้าต่าง 4 ขึ้น `gripper blocked ... holding gently` = คีบติด · พลาด = มันลองใหม่เองสูงสุด 3 ครั้ง
+✅ หุ่นขับเข้าไปเอง หยิบ ยก ถอย 20 ซม. · `Mission finished: succeeded` · หน้าต่าง 4 ขึ้น `gripper blocked ... holding gently` = คีบติด · พลาด = มันถอย หาใหม่ แล้วหยิบใหม่เองจนกว่าจะได้ (ห้ามช่วย · หยุดเอง `Ctrl+C`)
 ```bash
 python3 mission_nav2.py --place-here
 ```
@@ -250,7 +250,7 @@ python3 announcer.py
 
 **ก่อนกดเริ่ม:** RViz **2D Pose Estimate** ให้ตรงหุ่น · หน้าต่างสำรอง `python3 nav_check.py` → `ผ่านหมด`
 
-**11 ภารกิจ**
+**11 ภารกิจ** (หยิบ/วางพลาด = ลองใหม่เองไม่จำกัด · อยากให้ข้ามหลังพลาด N ครั้ง: เติม `--max-retry N`)
 ```bash
 python3 mission_nav2.py --moveit
 ```
