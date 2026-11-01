@@ -28,17 +28,45 @@ def list_cameras(n=6):
         cap.release()
 
 
+def patch_openni_for_py314():
+    """openni 2.3.0 builds its enum constants inside the ctypes metaclass __new__; Python 3.14 finishes ctypes
+    simple types in __init__ instead ("TypeError: abstract class"), so do that step in __init__."""
+    if sys.version_info < (3, 14):
+        return
+    import ctypes
+    from openni import utils
+    meta, base = utils.CEnumMeta, type(ctypes.c_int)
+    if getattr(meta, "_py314_patched", False):
+        return
+
+    def new(cls, name, bases, namespace):
+        return base.__new__(cls, name, bases, namespace)
+
+    def init(cls2, name, bases, namespace):
+        base.__init__(cls2, name, bases, namespace)
+        if namespace.get("__module__") != utils.__name__:
+            namespace["_values_"].clear()
+            for key in list(namespace["_names_"]):
+                if not key.startswith("_"):
+                    setattr(cls2, key, cls2(namespace[key]))
+                    namespace["_values_"][namespace[key]] = key
+
+    meta.__new__, meta.__init__, meta._py314_patched = new, init, True
+
+
 class OpenNIColor:
     """Xtion colour stream via the `openni` Python package (OpenNI2)."""
 
     def __init__(self, path, width, height, fps):
         try:
+            patch_openni_for_py314()
             from openni import _openni2 as c_api
             from openni import openni2
         except ImportError:
             raise SystemExit("Python package `openni` missing: Windows `pixi add --pypi openni` (in the project folder), "
                              "Ubuntu `pip3 install openni` (and `sudo apt install libopenni2-0`)")
-        openni2.initialize(path or None)   # Windows: folder with OpenNI2.dll, e.g. C:\Program Files\OpenNI2\Redist
+        # Windows: folder with OpenNI2.dll, e.g. C:\Program Files\OpenNI2\Redist (default: $OPENNI2_REDIST64 from the installer)
+        openni2.initialize(path) if path else openni2.initialize()
         self.dev = openni2.Device.open_any()
         self.stream = self.dev.create_color_stream()
         self.stream.set_video_mode(c_api.OniVideoMode(pixelFormat=c_api.OniPixelFormat.ONI_PIXEL_FORMAT_RGB888,
