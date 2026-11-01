@@ -87,10 +87,17 @@ def main():
             break
 
     vias = {}
-    if "--via" in sys.argv:   # your own route: one point to drive through on each long leg
-        print("ทางที่จะให้หุ่นเดิน (Publish Point ก่อนคลิกเหมือนเดิม):")
-        vias["VIA_STATION2"] = click("[VIA] คลิกพื้นตรงที่หุ่นต้องผ่าน ตอนไป Station 2 (กลางทางเดินฝั่งที่อยากให้ไป)")
-        vias["VIA_HOME"] = click("[VIA] คลิกพื้นตรงที่หุ่นต้องผ่าน ตอนกลับจุดเริ่ม (กลางทางเดินฝั่งที่อยากให้กลับ)")
+    if "--via" in sys.argv:   # your own route: points to drive through, in order, on each leg (doors: several)
+        print("ทางที่จะให้หุ่นเดิน: ใส่จำนวนจุดของแต่ละช่วง แล้วคลิกเรียงตามลำดับที่หุ่นจะผ่าน (Publish Point ก่อนทุกคลิก)")
+        print("ผ่านประตู: คลิกก่อนถึงประตู 1 จุด กลางประตู 1 จุด และพ้นประตู 1 จุด (กลางช่อง ห่างขอบประตู)\n")
+        for key, leg in (("VIA_STATION1", "จุดเริ่ม -> Station 1"), ("VIA_STATION2", "Station 1 -> Station 2"),
+                         ("VIA_HOME", "Station 2 -> กลับจุดเริ่ม")):
+            try:
+                n = int(input(f"[{leg}] กี่จุด? (0 = ให้ Nav2 เลือกทางเอง) ").strip() or 0)
+            except ValueError:
+                n = 0
+            vias[key] = [click(f"  [{leg}] จุดที่ {i + 1}/{n}: คลิกพื้นกลางทางเดิน") for i in range(n)]
+            print()
 
     if os.path.exists(STATIONS_FILE):
         shutil.copy(STATIONS_FILE, STATIONS_FILE + ".bak")
@@ -98,8 +105,9 @@ def main():
         f.write(f"# saved by save_stations.py {datetime.datetime.now():%Y-%m-%d %H:%M}: [x, y, heading rad] in the map frame\n")
         for key, v in saved.items():
             f.write(f"{key}: [{v[0]}, {v[1]}, {v[2]}]   # heading {math.degrees(v[2]):.0f} deg\n")
-        for key, (x, y) in vias.items():
-            f.write(f"{key}: [{x:.3f}, {y:.3f}]   # the robot drives through here on that leg\n")
+        for key, points in vias.items():
+            if points:
+                f.write(f"{key}: [{', '.join(f'[{x:.3f}, {y:.3f}]' for x, y in points)}]   # driven through in this order\n")
     print(f"เซฟแล้ว: {STATIONS_FILE}")
     print("ซ้อมวิ่ง (ยกหุ่นกลับ Initial ก่อน): python3 mission_nav2.py --nav-only")
     node.destroy_node()

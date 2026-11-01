@@ -95,12 +95,14 @@ STATIONS = {
     "STATION2": (2.85, -2.90, -math.pi / 2),  # place marker on the floor at Station 2, robot comes from +y
 }
 STATIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stations.yaml")
-VIAS = {}   # goal -> (x, y) the robot drives through on its way there (save_stations.py --via): your own route
+VIAS = {}   # goal -> [(x, y), ...] driven through in order on the way there (save_stations.py --via): your own route
 if os.path.exists(STATIONS_FILE) and "--default-stations" not in sys.argv:   # clicked on the real map by save_stations.py
     with open(STATIONS_FILE, encoding="utf-8") as f:
         _saved = yaml.safe_load(f) or {}
     STATIONS.update({k: tuple(float(n) for n in v) for k, v in _saved.items() if k in STATIONS})
-    VIAS = {k[4:]: tuple(float(n) for n in v[:2]) for k, v in _saved.items() if k.startswith("VIA_")}
+    for _k, _v in _saved.items():
+        if _k.startswith("VIA_") and _v:   # [x, y] (one point, older files) or [[x, y], ...]
+            VIAS[_k[4:]] = [tuple(map(float, p[:2])) for p in (_v if isinstance(_v[0], list) else [_v])]
     STATIONS_FROM = STATIONS_FILE
 else:
     STATIONS_FROM = "built-in STATIONS"
@@ -300,10 +302,12 @@ class Navigate(smach.State):
         self.robot.event("go_" + self.goal.lower())
         start = time.time()
         via = VIAS.get(self.goal)
-        if via:   # your route: through the clicked point first (facing on towards the goal), then the goal
-            self.nav.info(f"[{self.name}] via x={via[0]:.2f} y={via[1]:.2f}")
-            self.nav.goThroughPoses([make_pose(self.nav, via[0], via[1], math.atan2(y - via[1], x - via[0])),
-                                     make_pose(self.nav, x, y, yaw)])
+        if via:   # your route: through the clicked points in order (each facing the next), then the goal
+            self.nav.info(f"[{self.name}] via " + " -> ".join(f"({px:.2f}, {py:.2f})" for px, py in via))
+            pts = via + [(x, y)]
+            poses = [make_pose(self.nav, px, py, math.atan2(qy - py, qx - px))
+                     for (px, py), (qx, qy) in zip(pts[:-1], pts[1:])]
+            self.nav.goThroughPoses(poses + [make_pose(self.nav, x, y, yaw)])
         else:
             self.nav.goToPose(make_pose(self.nav, x, y, yaw))
         last_print = 0.0
