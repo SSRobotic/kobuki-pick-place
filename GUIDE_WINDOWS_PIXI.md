@@ -88,6 +88,35 @@ pixi run python robot\arm_control.py rest
 ```
 ✅ ทุกบรรทัดจบ `done` · `joints 0.5 ...` แขนต้องหัน**ซ้าย** (หันขวา = คาลิเบรตใหม่) · `pick` ลูกบาศก์บนกล่อง 9 ซม. กลางลูกบาศก์ห่างกลางหุ่น 31 ซม. ต้องคีบขึ้นมาได้ · เสร็จแล้ว `Ctrl+C` ไดรเวอร์
 
+### B5. ทดสอบหยิบ-วางด้วยกล้อง (ไม่ต้องใช้ LiDAR / Nav2)
+
+ลูกบาศก์บนแผ่นม่วงบนกล่อง 9 ซม. **ห่างกลางหุ่น 65 ซม. ตรงหน้า** (ตลับเมตร) · เสียบสายชาร์จโน้ตบุ๊ก · เปิดค้าง 6 หน้าต่าง (แต่ละหน้าต่างเริ่มด้วย 2 บรรทัดกติกา):
+
+| # | อะไร | คำสั่ง | ✅ |
+|---|---|---|---|
+| 0 | กันเครื่องพัก | `powershell -ExecutionPolicy Bypass -File tools\keep_awake.ps1` | `Keeping the laptop awake` |
+| 2 | Kobuki | `pixi run python robot\kobuki_ros2.py --enable-motion` | `Motion ready` |
+| 3 | โมเดล | `pixi run ros2 launch robot\robot_model.launch.py arm:=none` | ไม่มีบรรทัดแดง |
+| 4 | แขน | `pixi run python robot\so100_driver.py` | `SO-100 ready` |
+| 6 | กล้อง | `pixi run python robot\camera_node.py` | `openni camera 640x480` |
+| 7 | หาวัตถุ | `pixi run python robot\cube_detector.py --ros-args -p surface_height:=0.09` + บรรทัดใน `hsv.txt` | `Cube detector on ...` |
+
+หน้าต่างสำรอง ทีละบรรทัด:
+```powershell
+pixi run python robot\camera_check.py 0.65 0.0
+```
+✅ `good enough (< 1 cm)` · ไม่ขึ้น = เติม `--write` รันอีกรอบ แล้วปิด/เปิดหน้าต่าง 3 ใหม่ แล้วเช็คซ้ำ (กล้องโดนกระแทก = ต้องทำใหม่)
+```powershell
+pixi run python robot\mission_nav2.py --pick-here
+```
+✅ หุ่นขับเข้าไปเอง หยิบ ยก ถอย 20 ซม. · `Mission finished: succeeded` · หน้าต่าง 4 ขึ้น `gripper blocked ... holding gently` = คีบติด · พลาด = มันลองใหม่เองสูงสุด 3 ครั้ง
+```powershell
+pixi run python robot\mission_nav2.py --place-here
+```
+✅ ขับเข้าไปวางบนแผ่นม่วง ถอย พับแขน · `Mission finished: succeeded`
+
+ปากคีบลงไม่ตรงลูกบาศก์ทุกครั้งทางเดียวกัน → แก้ `reach_offset: [x, y, z]` ใน `robot\so100_calibration.yaml`: x ใหม่ = x เดิม + (ระยะที่ปากคีบลง − ระยะลูกบาศก์) วัดจากกลางหุ่น หน่วยเมตร (ลงเลยไป 2 ซม. = x +0.02 · ขาด 2 ซม. = x −0.02 · นิ้วสูงไป 1 ซม. = z +0.01)
+
 ---
 
 ## C. ทำครั้งเดียวต่อสนาม (ย้ายกล่อง = ทำ C3 ใหม่อย่างเดียว)
@@ -191,6 +220,9 @@ pixi run python robot\hsv_tuner.py
 
 | อาการ | แก้ |
 |---|---|
+| เสียบ USB แล้ว Windows ไม่เห็นอะไรเลย (ไม่มีเสียงติ๊ง) | ลง VirtualBox กับ VMware ไว้พร้อมกัน = ตีกัน: ถอน VirtualBox แล้ว Restart (เจอจริง 1 พ.ย.) |
+| อุปกรณ์หลุดกลางทาง / `ClearCommError ... Access is denied` | เครื่องพักหน้าจอแล้ว Windows ตัด USB: เปิดหน้าต่าง 0 (`tools\keep_awake.ps1`) ห้ามพับจอ แล้วเปิดตัวที่หลุดใหม่ |
+| กล้องหาลูกบาศก์ไม่เจอ / หยิบพลาดทั้งที่เคยได้ | กล้องโดนกระแทกมุมเปลี่ยน: ลูกบาศก์ที่ 65 ซม. แล้ว `camera_check.py 0.65 0.0 --write` (B5) |
 | หาพอร์ตไม่เจอ | ใส่เอง `--port COM10` (เลขจาก Device Manager) · ปิดหน้าต่างเก่าที่จับพอร์ตอยู่ |
 | แขนใน RViz สีขาวกองที่พื้น | หน้าต่าง 4 ยังไม่ขึ้น `SO-100 ready` · ไม่ใช้แขน = หน้าต่าง 3 ใช้ `arm:=rest` |
 | `servos not answering` | แบตแขนดับ: กดปุ่มแดง · สายเซอร์โวหลวม |
