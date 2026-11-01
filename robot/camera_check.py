@@ -45,6 +45,10 @@ def main():
     if len(seen) < 3:
         raise SystemExit("no /detected/cube - is camera_node.py (or fake_camera.py) and cube_detector.py running, "
                          "and is the cube in the picture?")
+    start = time.time()   # the cube can be seen 8 times before the first TF arrives
+    while not (buf.can_transform("base_link", seen[-1].header.frame_id, Time())
+               and buf.can_transform("base_link", "camera_color_optical_frame", Time())) and time.time() - start < 5:
+        rclpy.spin_once(node, timeout_sec=0.1)
     try:
         to_base = buf.lookup_transform("base_link", seen[-1].header.frame_id, Time())
         cam = buf.lookup_transform("base_link", "camera_color_optical_frame", Time()).transform.translation
