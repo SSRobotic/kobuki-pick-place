@@ -78,6 +78,8 @@ except ImportError:  # RoboStack on Windows has no smach: use a tiny stand-in wi
 # failures in a row before that part is skipped (GiveUp). Default: never - the exam allows as many tries as needed
 # (30 min + 1 h), so the robot keeps at it on its own. --max-retry N brings a limit back
 MAX_RETRY = int(sys.argv[sys.argv.index("--max-retry") + 1]) if "--max-retry" in sys.argv else 0
+# --start place: begin at the drive to Station 2 (a re-run after the pick already scored; RViz pose kept)
+START_AT = sys.argv[sys.argv.index("--start") + 1] if "--start" in sys.argv else ""
 NAV_TIMEOUT = 240.0    # seconds allowed for one navigation leg
 DETECT_TIMEOUT = 8.0   # seconds to wait for the camera to see the cube / marker
 REACH_X = 0.31         # m from the robot centre to the object when the arm works. Cube at the near edge of its 9 cm box:
@@ -253,11 +255,13 @@ class Init(smach.State):
     def execute(self, ud):
         nav = self.robot.nav
         ud.retry = 0
-        if "--keep-pose" in sys.argv:   # you set 2D Pose Estimate in RViz: keep it, and come back to where it stands now
+        if "--keep-pose" in sys.argv or START_AT == "place":   # keep your RViz 2D Pose Estimate; come back here
             nav._waitForNodeToActivate("amcl")   # not waitUntilNav2Active: that waits for a new initial pose
             nav._waitForNodeToActivate("bt_navigator")
-            home = self.robot.map_pose()
-            if home is None:
+            home = None if START_AT == "place" else self.robot.map_pose()   # a re-run from mid-field: home stays (0,0)
+            if START_AT == "place":
+                nav.info("[INIT] starting at the place step - home stays the map origin (Initial)")
+            elif home is None:
                 nav.warn("[INIT] no map -> base_link TF: is AMCL localised? coming back to the map origin instead")
             else:
                 GOALS["HOME"] = home
@@ -268,7 +272,7 @@ class Init(smach.State):
             nav.setInitialPose(make_pose(nav, *GOALS["HOME"]))
             nav.waitUntilNav2Active()
         nav.info("[INIT] Nav2 is active - folding the arm")
-        self.robot.arm.stow(holding=False)
+        self.robot.arm.stow(holding=START_AT == "place")
         return "succeeded"
 
 
@@ -413,7 +417,9 @@ def main():
     give_up = {"NAV_STATION1": "NAV_STATION2_EMPTY", "DETECT_OBJECT": "NAV_STATION2_EMPTY",
                "PICK": "NAV_STATION2_EMPTY", "NAV_STATION2": "RETURN_HOME", "NAV_STATION2_EMPTY": "RETURN_HOME",
                "DETECT_STATION": "RETURN_HOME", "PLACE": "RETURN_HOME"}
-    first = "NAV_STATION1"
+    first = "NAV_STATION2" if START_AT == "place" else "NAV_STATION1"
+    if "--pick-retry" not in sys.argv and "--pick-here" not in sys.argv:   # exam: one pick attempt; a miss still drives on and places (points per part)
+        tasks = [(name, state, nxt, "NAV_STATION2" if name == "PICK" else again) for name, state, nxt, again in tasks]
     if "--nav-only" in sys.argv:  # driving practice without camera and arm: Station 1 -> Station 2 -> home
         tasks = [(name, state, {"DETECT_OBJECT": "NAV_STATION2", "DETECT_STATION": "RETURN_HOME"}.get(nxt, nxt), again)
                  for name, state, nxt, again in tasks if name.startswith(("NAV", "RETURN"))]
