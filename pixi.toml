@@ -20,3 +20,6 @@ ros-humble-moveit-kinematics = ">=2.5.10,<3"
 ros-humble-moveit-planners-ompl = ">=2.5.10,<3"
 ros-humble-moveit-simple-controller-manager = ">=2.5.10,<3"
 ros-humble-moveit-ros-visualization = ">=2.5.10,<3"
+
+[pypi-dependencies]
+openni = ">=2.3.0, <3"
