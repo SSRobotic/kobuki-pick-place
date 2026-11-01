@@ -1,0 +1,4 @@
+# arm_control.py: extra aim (m, base_link x y) that made picks grip, updated after every pick
+# 1 Nov: try 10 (3.5 cm further left) landed best on the real robot - start there
+pick_shift: [0.0000, 0.0350]
+picks: 0
